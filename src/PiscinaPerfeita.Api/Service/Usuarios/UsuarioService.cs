@@ -40,10 +40,8 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
 
         public async Task<UsuarioResponseDto> Create(UsuarioRequestDto dto)
         {
-            var novoId = dto.Id == Guid.Empty ? Guid.NewGuid() : dto.Id;
             var usuario = new Usuario
             {
-                Id = novoId,
                 Nome = dto.Nome,
                 Email = dto.Email,
                 Senhahash = BCrypt.Net.BCrypt.HashPassword(dto.SenhaHash)

@@ -8,7 +8,8 @@ namespace PiscinaPerfeita.Api.Dtos.Response
 
         public string Nome { get; set; } = string.Empty;
 
-        public string Email { get; set; } = string.Empty;
+
+        public string?Email { get; set; } = string.Empty;
 
         public DateTimeOffset? CreatedAt { get; set; }
 

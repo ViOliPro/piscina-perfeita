@@ -98,7 +98,6 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
                 TipoMovimentacao = (Models.Tipo)dto.TipoMovimentacao,
                 Quantidade = dto.Quantidade,
                 Valor = dto.Valor,
-                DataMovimentacao = dto.DataMovimentacao
             };
 
             await _movimentacaoRepository.Update(id, movimentacaoUpdated);
@@ -110,8 +109,7 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
                 ProdutoId = dto.ProdutoId,
                 TipoMovimentacao = (Dtos.Response.Tipo)dto.TipoMovimentacao,
                 Quantidade = dto.Quantidade,
-                Valor = dto.Valor,
-                DataMovimentacao = dto.DataMovimentacao
+                Valor = dto.Valor
             };
         }
 

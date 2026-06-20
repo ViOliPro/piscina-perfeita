@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PiscinaPerfeita.Api.Data;
 using PiscinaPerfeita.Api.Extension;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,7 +9,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+if (Assembly.GetEntryAssembly()?.GetName().Name != "ef")
+{
+    builder.Services.AddOpenApi();
+}
 
 // Configure DbContext
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -22,31 +26,35 @@ try
 {
     var app = builder.Build();
 
-    if (app.Environment.IsDevelopment())
+    if (app.Environment.IsDevelopment() && Assembly.GetEntryAssembly()?.GetName().Name != "ef")
     {
         app.MapOpenApi();
-
     }
-    // ... restante do pipeline
+
     app.UseHttpsRedirection();
-
     app.UseAuthorization();
-
     app.MapControllers();
 
-  
     app.Run();
+}
+catch (HostAbortedException)
+{
+    // Ignora silenciosamente. Esta exceção é gerada intencionalmente pelas ferramentas 
+    // do Entity Framework (dotnet ef) para parar a API após mapear os metadados.
+    throw;
 }
 catch (Exception ex)
 {
-    Console.WriteLine("========================================");
-    Console.WriteLine($"ERRO NA DI: {ex.Message}");
+    // Captura erros reais de verdade (banco fora do ar, DI quebrada, falta de configuração)
+    Console.Error.WriteLine("\n\n==================================================");
+    Console.Error.WriteLine($"ERRO REAL NA INICIALIZAÇÃO DA API: {ex.Message}");
     if (ex.InnerException != null)
     {
-        Console.WriteLine($"DETALHE: {ex.InnerException.Message}");
+        Console.Error.WriteLine($"DETALHE: {ex.InnerException.Message}");
     }
-    Console.WriteLine("========================================");
+    Console.Error.WriteLine("==================================================\n\n");
     throw;
 }
+
 
 
