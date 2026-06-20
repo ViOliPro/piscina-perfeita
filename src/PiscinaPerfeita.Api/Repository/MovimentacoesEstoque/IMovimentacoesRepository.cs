@@ -1,17 +1,17 @@
 ﻿using PiscinaPerfeita.Api.Models;
 
-namespace PiscinaPerfeita.Api.Repository.Movimentacoes
+namespace PiscinaPerfeita.Api.Repository.MovimentacoesEstoque
 {
     public interface IMovimentacoesRepository
     {
 
-        Task<List<MovimentacoesEstoque>> Show();
+        Task<List<MovimentacaoEstoque>> Show();
 
-        Task<MovimentacoesEstoque> GetById(Guid id);
+        Task<MovimentacaoEstoque> GetById(Guid id);
 
-        Task Create(MovimentacoesEstoque movimentacao);
+        Task Create(MovimentacaoEstoque movimentacao);
 
-        Task Update(Guid id, MovimentacoesEstoque movimentacao);
+        Task Update(Guid id, MovimentacaoEstoque movimentacao);
 
         Task Delete(Guid id);
     }

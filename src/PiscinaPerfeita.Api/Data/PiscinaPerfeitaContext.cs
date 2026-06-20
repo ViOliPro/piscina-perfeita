@@ -20,7 +20,7 @@ public partial class PiscinaPerfeitaContext : DbContext
 
     public virtual DbSet<Estoque> Estoques { get; set; }
 
-    public virtual DbSet<MovimentacoesEstoque> MovimentacoesEstoques { get; set; }
+    public virtual DbSet<MovimentacaoEstoque> MovimentacoesEstoques { get; set; }
 
     public virtual DbSet<Piscina> Piscinas { get; set; }
 
@@ -73,7 +73,7 @@ public partial class PiscinaPerfeitaContext : DbContext
                 .HasConstraintName("ProdutoId");
         });
 
-        modelBuilder.Entity<MovimentacoesEstoque>(entity =>
+        modelBuilder.Entity<MovimentacaoEstoque>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("MovimentacoesEstoque_pkey");
 

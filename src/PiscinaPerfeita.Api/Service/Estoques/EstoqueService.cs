@@ -7,9 +7,9 @@ namespace PiscinaPerfeita.Api.Service.Estoques
     {
         private readonly IEstoqueService _estoqueRepository;
 
-        public EstoqueService(IEstoqueService estoquesRepository)
+        public EstoqueService(IEstoqueService estoqueRepository)
         {
-            _estoqueRepository = estoquesRepository ?? throw new ArgumentNullException(nameof(estoquesRepository));
+            _estoqueRepository = estoqueRepository ?? throw new ArgumentNullException(nameof(estoqueRepository));
         }
 
 

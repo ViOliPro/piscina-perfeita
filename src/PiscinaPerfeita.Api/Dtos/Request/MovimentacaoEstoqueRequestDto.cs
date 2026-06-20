@@ -1,11 +1,8 @@
-﻿
-using System;
-using System.Collections.Generic;
-using PiscinaPerfeita.Api.Models;
+﻿using PiscinaPerfeita.Api.Models;
 
-namespace PiscinaPerfeita.Api.Dtos.Response;
+namespace PiscinaPerfeita.Api.Dtos.Request;
 
-public partial class MovimentacoesEstoqueResponseDto
+public partial class MovimentacaoEstoqueRequestDto
 {
     public Guid Id { get; set; }
 
