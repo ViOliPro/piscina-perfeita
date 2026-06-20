@@ -1,24 +1,24 @@
 ﻿using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Dtos.Request;
-using PiscinaPerfeita.Api.Models;
-using PiscinaPerfeita.Api.Repository.Usuarios;
-using PiscinaPerfeita.Api.Repository.Analises;
 
 
 namespace PiscinaPerfeita.Api.Service.Estoques
 {
     public class EstoqueService : IEstoqueService
     {
-        private readonly IEstoqueService _usuariosRepository;
+        private readonly IEstoqueService _estoqueRepository;
 
         public EstoqueService(IEstoqueService estoquesRepository)
         {
-            _usuariosRepository = estoquesRepository ?? throw new ArgumentNullException(nameof(estoquesRepository));
+            _estoqueRepository = estoquesRepository ?? throw new ArgumentNullException(nameof(estoquesRepository));
         }
 
+
+        // Implementação dos métodos do serviço
+        // Metodo Show: Retorna uma lista de todos os estoques, incluindo as informações relacionadas de piscina e produto.
         public async Task<List<EstoqueResponseDto>> Show()
         {
-            var estoques = await _usuariosRepository.Show();
+            var estoques = await _estoqueRepository.Show();
             return estoques.Select(u => new EstoqueResponseDto
             {
                 PiscinaId = u.PiscinaId,
@@ -27,9 +27,11 @@ namespace PiscinaPerfeita.Api.Service.Estoques
             }).ToList();
         }
 
+
+        // Metodo GetById: Retorna um estoque específico com base no ID, incluindo as informações relacionadas de piscina e produto.
         public async Task<EstoqueResponseDto> GetById(Guid id)
         {
-            var estoques = await _usuariosRepository.GetById(id);
+            var estoques = await _estoqueRepository.GetById(id);
             return new EstoqueResponseDto
             {
                 PiscinaId = estoques.PiscinaId,
@@ -38,58 +40,71 @@ namespace PiscinaPerfeita.Api.Service.Estoques
             };
         }
 
+
+        // Metodo Create: Cria um novo estoque com base nos dados fornecidos, incluindo as informações relacionadas de piscina e produto.
         public async Task<EstoqueResponseDto> Create(EstoqueRequestDto dto)
         {
             var estoqueId = dto.Id == Guid.Empty ? Guid.NewGuid() : dto.Id;
-            var estoque = new Usuario
+            var estoque = new EstoqueRequestDto
             {
-                PiscinaId = estoqueId.PiscinaId,
-                ProdutoId = estoqueId.ProdutoId,
-                QuantidadeAtual = estoqueId.QuantidadeAtual,
+                Id = estoqueId,
+                PiscinaId = dto.PiscinaId,
+                ProdutoId = dto.ProdutoId,
+                QuantidadeAtual = dto.QuantidadeAtual,
             };
 
-            await _estoquesRepository.Create(estoque);
+            await _estoqueRepository.Create(estoque);
 
 
             return new EstoqueResponseDto
             {
-                Id = usuario.Id,
-                Nome = usuario.Nome,
-                Email = usuario.Email
+                Id = estoque.Id,
+                PiscinaId = estoque.PiscinaId,
+                ProdutoId = estoque.ProdutoId,
+                QuantidadeAtual = estoque.QuantidadeAtual
             };
         }
 
-        public async Task<UsuarioResponseDto> Update(Guid id, UsuarioRequestDto dto)
+
+        // Metodo Update: Atualiza um estoque existente com base no ID e nos dados fornecidos, incluindo as informações relacionadas de piscina e produto.
+        public async Task<EstoqueResponseDto> Update(Guid id, EstoqueRequestDto dto)
         {
-            var usuarioDb = await _usuariosRepository.GetById(id);
-            if (usuarioDb == null)
+            var estoqueDb = await _estoqueRepository.GetById(id);
+            if (estoqueDb == null)
             {
-                throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
+                throw new KeyNotFoundException($"Estoque com id {id} não encontrado.");
             }
 
-            usuarioDb.Nome = dto.Nome;
-            usuarioDb.Email = dto.Email;
-            usuarioDb.Senhahash = dto.SenhaHash;
-
-            await _usuariosRepository.Update(id, usuarioDb);
-
-            return new UsuarioResponseDto
+            var estoqueUpdated = new EstoqueRequestDto
             {
-                Id = usuarioDb.Id,
-                Nome = usuarioDb.Nome,
-                Email = usuarioDb.Email
+                Id = id,
+                PiscinaId = dto.PiscinaId,
+                ProdutoId = dto.ProdutoId,
+                QuantidadeAtual = dto.QuantidadeAtual,
+            };
+
+            await _estoqueRepository.Update(id, estoqueUpdated);
+
+            return new EstoqueResponseDto
+            {
+                Id = estoqueDb.Id,
+                PiscinaId = estoqueDb.PiscinaId,
+                ProdutoId = estoqueDb.ProdutoId,
+                QuantidadeAtual = estoqueDb.QuantidadeAtual
             };
         }
 
+
+        // Metodo Delete: Exclui um estoque existente com base no ID.
         public async Task Delete(Guid id)
         {
-            var usuarioDb = await _usuariosRepository.GetById(id);
-            if (usuarioDb == null)
+            var estoqueDb = await _estoqueRepository.GetById(id);
+            if (estoqueDb == null)
             {
-                throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
+                throw new KeyNotFoundException($"Estoque com id {id} não encontrado.");
             }
 
-            await _usuariosRepository.Delete(id);
+            await _estoqueRepository.Delete(id);
 
         }
     }

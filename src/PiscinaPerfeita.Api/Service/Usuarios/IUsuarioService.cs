@@ -3,7 +3,7 @@ using PiscinaPerfeita.Api.Dtos.Response;
 
 namespace PiscinaPerfeita.Api.Service.Usuarios
 {
-    public interface IEstoquesService
+    public interface IUsuarioService
     {
         Task<List<UsuarioResponseDto>> Show();
         Task<UsuarioResponseDto> GetById(Guid id);

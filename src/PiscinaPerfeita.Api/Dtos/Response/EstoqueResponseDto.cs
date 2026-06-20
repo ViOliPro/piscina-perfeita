@@ -7,6 +7,7 @@ namespace PiscinaPerfeita.Api.Dtos.Response;
 
 public partial class EstoqueResponseDto
 {
+    public Guid Id { get; set; }
     public Guid PiscinaId { get; set; }
 
     public Guid ProdutoId { get; set; }

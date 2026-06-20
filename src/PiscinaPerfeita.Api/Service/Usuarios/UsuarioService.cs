@@ -7,11 +7,11 @@ using PiscinaPerfeita.Api.Repository.Analises;
 
 namespace PiscinaPerfeita.Api.Service.Usuarios
 {
-    public class EstoqueService : IEstoquesService
+    public class UsuarioService : IUsuarioService
     {
         private readonly IUsuarioRepository _usuariosRepository;
 
-        public EstoqueService(IUsuarioRepository usuariosRepository)
+        public UsuarioService(IUsuarioRepository usuariosRepository)
         {
             _usuariosRepository = usuariosRepository ?? throw new ArgumentNullException(nameof(usuariosRepository));
         }

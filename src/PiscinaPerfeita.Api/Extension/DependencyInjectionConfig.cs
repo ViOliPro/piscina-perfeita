@@ -11,8 +11,8 @@ namespace PiscinaPerfeita.Api.Extension
         public static IServiceCollection ResolveDependencies(this IServiceCollection services)
         {
             // 1. Registre aqui todos os seus Services
-            services.AddScoped<IEstoquesService, EstoqueService>();
-            services.AddScoped<IEstoquesService, EstoquesService>();
+            services.AddScoped<IUsuarioService, UsuarioService>();
+            services.AddScoped<IEstoqueService, EstoqueService>();
             // services.AddScoped<IPiscinaService, PiscinaService>();
 
             // 2. Registre aqui todos os seus Repositories

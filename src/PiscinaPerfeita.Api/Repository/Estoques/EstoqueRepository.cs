@@ -12,12 +12,17 @@ public class EstoqueRepository : IEstoqueRepository
         _context = context ?? throw new ArgumentNullException(nameof(context));
     }
 
+
+    // Implementação dos métodos do repositório
+    // Metodo Show: Retorna uma lista de todos os estoques, incluindo as informações relacionadas de piscina e produto.
     public async Task<List<Estoque>> Show()
     {
         var query = _context.Estoques.Include(p => p.Piscina).Include(p => p.Produto);
         return await query.ToListAsync();
     }
 
+
+    // Metodo GetById: Retorna um estoque específico com base no ID fornecido, incluindo as informações relacionadas de piscina e produto.
     public async Task<Estoque> GetById(Guid id)
     {
         var estoque = await _context.Estoques.FirstOrDefaultAsync(e => e.Id == id);
@@ -27,12 +32,16 @@ public class EstoqueRepository : IEstoqueRepository
         return estoque;
     }
 
+
+    // Metodo Create: Adiciona um novo estoque ao banco de dados.
     public async Task Create(Estoque estoque)
     {
         _context.Estoques.Add(estoque);
         await _context.SaveChangesAsync();
     }
 
+
+    // Metodo Update: Atualiza as informações de um estoque existente com base no ID fornecido.
     public async Task Update(Guid id, Estoque estoque)
     {
         var estoqueToUpdate = await _context.Estoques.FindAsync(id);
@@ -47,6 +56,8 @@ public class EstoqueRepository : IEstoqueRepository
 
     }
 
+
+    // Metodo Delete: Remove um estoque do banco de dados com base no ID fornecido.
     public async Task Delete(Guid id)
     {
         var estoque = await _context.Estoques.FirstOrDefaultAsync(e => e.Id == id);
