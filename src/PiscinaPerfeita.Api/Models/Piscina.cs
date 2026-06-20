@@ -1,9 +1,4 @@
-﻿using PiscinaPerfeita.Api.Dtos.Request;
-using PiscinaPerfeita.Api.Dtos.Response;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PiscinaPerfeita.Api.Models;
 
@@ -21,15 +16,13 @@ public partial class Piscina
     public decimal? ProfundidadeMedia { get; set; }
 
     [Column(TypeName = "date")]
-    public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.Now;
 
-    public virtual ICollection<AnaliseRequestDto> Analises { get; set; } = new List<AnaliseRequestDto>();
+    public virtual ICollection<Analise> Analises { get; set; } = new List<Analise>();
 
-    public virtual ICollection<EstoqueResponseDto> Estoques { get; set; } = new List<EstoqueResponseDto>();
+    public virtual ICollection<Estoque> Estoques { get; set; } = new List<Estoque>();
 
-    public virtual ICollection<MovimentacoesEstoqueRequestDto> MovimentacoesEstoques { get; set; } = new List<MovimentacoesEstoqueRequestDto>();
+    public virtual ICollection<MovimentacaoEstoque> MovimentacoesEstoques { get; set; } = new List<MovimentacaoEstoque>();
 
-    public virtual Usuario1 Usuario { get; set; } = null!;
-
-    public virtual ICollection<Usuario1> Usuario1s { get; set; } = new List<Usuario1>();
+    public virtual Usuario Usuario { get; set; } = null!;
 }

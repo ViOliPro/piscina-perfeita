@@ -23,5 +23,5 @@ public partial class PiscinaRequestDto
 
     public virtual ICollection<EstoqueResponseDto> Estoques { get; set; } = new List<EstoqueResponseDto>();
 
-    public virtual ICollection<MovimentacoesEstoqueRequestDto> MovimentacoesEstoques { get; set; } = new List<MovimentacoesEstoqueRequestDto>();
+    public virtual ICollection<MovimentacaoEstoqueRequestDto> MovimentacoesEstoques { get; set; } = new List<MovimentacaoEstoqueRequestDto>();
 }

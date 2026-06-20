@@ -7,10 +7,6 @@ namespace PiscinaPerfeita.Api.Data;
 
 public partial class PiscinaPerfeitaContext : DbContext
 {
-    public PiscinaPerfeitaContext()
-    {
-    }
-
     public PiscinaPerfeitaContext(DbContextOptions<PiscinaPerfeitaContext> options)
         : base(options)
     {
@@ -27,8 +23,6 @@ public partial class PiscinaPerfeitaContext : DbContext
     public virtual DbSet<Produto> Produtos { get; set; }
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
-
-    public virtual DbSet<Usuario1> Usuarios1 { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -157,10 +151,6 @@ public partial class PiscinaPerfeitaContext : DbContext
             entity.Property(e => e.Nome).HasMaxLength(100);
             entity.Property(e => e.SenhaHash).HasMaxLength(100);
 
-            entity.HasOne(d => d.Piscina).WithMany(p => p.Usuario1s)
-                .HasForeignKey(d => d.PiscinaId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("PiscinaId");
         });
 
         OnModelCreatingPartial(modelBuilder);

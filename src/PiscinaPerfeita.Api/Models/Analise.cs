@@ -7,12 +7,12 @@ namespace PiscinaPerfeita.Api.Models
     public class Analise
     {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public Guid Id { get; set; }
 
-        [Required()]
         public Guid PiscinaId { get; set; }
 
-        public DateTimeOffset DataAnalise { get; set; }
+        public DateTimeOffset DataAnalise { get; set; } = DateTimeOffset.Now;
 
         public decimal? Ph { get; set; }
 

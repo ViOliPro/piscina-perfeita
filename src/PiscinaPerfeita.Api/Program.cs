@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PiscinaPerfeita.Api.Data;
 using PiscinaPerfeita.Api.Extension;
-using PiscinaPerfeita.Api.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,20 +15,38 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<PiscinaPerfeitaContext>(options =>
     options.UseNpgsql(connectionString));
 
+// Injecao de dependecias
 builder.Services.ResolveDependencies();
 
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+try
 {
-    app.MapOpenApi();
+    var app = builder.Build();
+
+    if (app.Environment.IsDevelopment())
+    {
+        app.MapOpenApi();
+
+    }
+    // ... restante do pipeline
+    app.UseHttpsRedirection();
+
+    app.UseAuthorization();
+
+    app.MapControllers();
+
+  
+    app.Run();
+}
+catch (Exception ex)
+{
+    Console.WriteLine("========================================");
+    Console.WriteLine($"ERRO NA DI: {ex.Message}");
+    if (ex.InnerException != null)
+    {
+        Console.WriteLine($"DETALHE: {ex.InnerException.Message}");
+    }
+    Console.WriteLine("========================================");
+    throw;
 }
 
-app.UseHttpsRedirection();
 
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();

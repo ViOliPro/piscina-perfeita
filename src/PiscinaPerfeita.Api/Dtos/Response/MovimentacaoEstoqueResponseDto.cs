@@ -3,25 +3,32 @@ using System;
 using System.Collections.Generic;
 using PiscinaPerfeita.Api.Models;
 
-namespace PiscinaPerfeita.Api.Dtos.Response;
-
-public partial class MovimentacaoEstoqueResponseDto
+namespace PiscinaPerfeita.Api.Dtos.Response
 {
-    public Guid Id { get; set; }
 
-    public Guid PiscinaId { get; set; }
+    public partial class MovimentacaoEstoqueResponseDto
+    {
+        public Guid Id { get; set; }
 
-    public Guid ProdutoId { get; set; }
+        public Guid PiscinaId { get; set; }
 
-    public char TipoMovimentacao { get; set; }
+        public Guid ProdutoId { get; set; }
 
-    public decimal? Quantidade { get; set; }
+        public Tipo TipoMovimentacao { get; set; }
 
-    public decimal? Valor { get; set; }
+        public decimal? Quantidade { get; set; }
 
-    public DateTimeOffset? DataMovimentacao { get; set; }
+        public decimal? Valor { get; set; }
 
-    public virtual Piscina Piscina { get; set; } = null!;
+        public DateTimeOffset? DataMovimentacao { get; set; }
 
-    public virtual Produto Produto { get; set; } = null!;
+        public virtual Piscina Piscina { get; set; } = null!;
+
+        public virtual Produto Produto { get; set; } = null!;
+    }
+    public enum Tipo
+    {
+        Entrada,
+        Saida
+    }
 }

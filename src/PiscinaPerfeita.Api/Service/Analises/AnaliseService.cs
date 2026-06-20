@@ -1,13 +1,15 @@
 ﻿using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
+using PiscinaPerfeita.Api.Repository.Analises;
+using PiscinaPerfeita.Api.Models;
 
 namespace PiscinaPerfeita.Api.Service.Analises
 {
     public class AnaliseService : IAnaliseService
     {
-        private readonly IAnaliseService _analiseRepository;
+        private readonly IAnaliseRepository _analiseRepository;
 
-        public AnaliseService(IAnaliseService analisesRepository)
+        public AnaliseService(IAnaliseRepository analisesRepository)
         {
             _analiseRepository = analisesRepository ?? throw new ArgumentNullException(nameof(analisesRepository));
         }
@@ -53,12 +55,9 @@ namespace PiscinaPerfeita.Api.Service.Analises
         // Metodo Create: Cria um novo estoque com base nos dados fornecidos, incluindo as informações relacionadas de piscina e produto.
         public async Task<AnaliseResponseDto> Create(AnaliseRequestDto dto)
         {
-            var analiseId = dto.Id == Guid.Empty ? Guid.NewGuid() : dto.Id;
-            var analise = new AnaliseRequestDto
+            var analise = new Analise
             {
-                Id = analiseId,
                 PiscinaId = dto.PiscinaId,
-                DataAnalise = dto.DataAnalise,
                 Ph = dto.Ph,
                 CloroLivre = dto.CloroLivre,
                 Alcalinidade = dto.Alcalinidade,
@@ -92,11 +91,10 @@ namespace PiscinaPerfeita.Api.Service.Analises
                 throw new KeyNotFoundException($"Estoque com id {id} não encontrado.");
             }
 
-            var analisesUpdated = new AnaliseRequestDto
+            var analisesUpdated = new Analise
             {
                 Id = id,
                 PiscinaId = dto.PiscinaId,
-                DataAnalise = dto.DataAnalise,
                 Ph = dto.Ph,
                 CloroLivre = dto.CloroLivre,
                 Alcalinidade = dto.Alcalinidade,

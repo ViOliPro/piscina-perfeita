@@ -19,14 +19,14 @@ namespace PiscinaPerfeita.Api.Extension
             services.AddScoped<IEstoqueService, EstoqueService>();
             services.AddScoped<IAnaliseService, AnaliseService>();
             services.AddScoped<IMovimentacaoService, MovimentacaoService>();
-            // services.AddScoped<IPiscinaService, PiscinaService>();
+            
 
             // 2. Registre aqui todos os seus Repositories
             services.AddScoped<IUsuarioRepository, UsuarioRepository>();
             services.AddScoped<IEstoqueRepository, EstoqueRepository>();
             services.AddScoped<IAnaliseRepository, AnaliseRepository>();
-            services.AddScoped<IMovimentacoesRepository, MovimentacoesRepository>();
-            // services.AddScoped<IPiscinaRepository, PiscinaRepository>();
+            services.AddScoped<IMovimentacaoRepository, MovimentacaoRepository>();
+            
 
             // Qualquer outra injeção (Validadores, Helpers, etc) entra aqui embaixo
 

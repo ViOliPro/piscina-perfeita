@@ -3,11 +3,11 @@ using PiscinaPerfeita.Api.Models;
 
 namespace PiscinaPerfeita.Api.Repository.MovimentacoesEstoque;
 
-public class MovimentacoesRepository : IMovimentacoesRepository
+public class MovimentacaoRepository : IMovimentacaoRepository
 {
     private readonly Data.PiscinaPerfeitaContext _context;
 
-    public MovimentacoesRepository(Data.PiscinaPerfeitaContext context)
+    public MovimentacaoRepository(Data.PiscinaPerfeitaContext context)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
     }

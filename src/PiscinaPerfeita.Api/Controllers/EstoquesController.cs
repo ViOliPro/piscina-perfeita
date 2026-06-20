@@ -9,9 +9,9 @@ namespace PiscinaPerfeita.Api.Controllers
     [Route("api/[controller]")]
     public class EstoquesController : ControllerBase
     {
-        private readonly IAnaliseService _estoquesService;
+        private readonly IEstoqueService _estoquesService;
 
-        public EstoquesController(IAnaliseService estoquesService)
+        public EstoquesController(IEstoqueService estoquesService)
         {
             _estoquesService = estoquesService ?? throw new ArgumentNullException(nameof(estoquesService));
         }

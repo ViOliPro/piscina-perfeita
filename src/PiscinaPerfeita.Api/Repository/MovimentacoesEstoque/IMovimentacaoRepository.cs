@@ -2,7 +2,7 @@
 
 namespace PiscinaPerfeita.Api.Repository.MovimentacoesEstoque
 {
-    public interface IMovimentacoesRepository
+    public interface IMovimentacaoRepository
     {
 
         Task<List<MovimentacaoEstoque>> Show();
