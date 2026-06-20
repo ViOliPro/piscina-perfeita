@@ -1,10 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PiscinaPerfeita.Api.Models;
 
 public partial class Piscina
 {
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    [Key]
     public Guid Id { get; set; }
 
     public Guid UsuarioId { get; set; }
@@ -15,8 +17,7 @@ public partial class Piscina
 
     public decimal? ProfundidadeMedia { get; set; }
 
-    [Column(TypeName = "date")]
-    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.Now;
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     public virtual ICollection<Analise> Analises { get; set; } = new List<Analise>();
 
@@ -24,5 +25,6 @@ public partial class Piscina
 
     public virtual ICollection<MovimentacaoEstoque> MovimentacoesEstoques { get; set; } = new List<MovimentacaoEstoque>();
 
+    [ForeignKey(nameof(UsuarioId))]
     public virtual Usuario Usuario { get; set; } = null!;
 }

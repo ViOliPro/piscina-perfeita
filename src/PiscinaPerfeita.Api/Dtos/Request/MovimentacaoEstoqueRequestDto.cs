@@ -21,7 +21,6 @@ namespace PiscinaPerfeita.Api.Dtos.Request
         [Required(ErrorMessage = "O valor é obrigatório.")]
         [Range(0.00, 999999.99, ErrorMessage = "O valor não pode ser negativo.")]
         public decimal? Valor { get; set; }
-        public DateTimeOffset? DataMovimentacao { get; internal set; }
     }
 
     public enum Tipo

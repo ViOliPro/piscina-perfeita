@@ -21,7 +21,7 @@ namespace PiscinaPerfeita.Api.Models
 
         public decimal? Valor { get; set; }
 
-        public DateTimeOffset? DataMovimentacao { get; set; } = DateTimeOffset.Now;
+        public DateTimeOffset? DataMovimentacao { get; set; } = DateTimeOffset.UtcNow;
 
         [ForeignKey("PiscinaId")]
         public virtual Piscina Piscina { get; set; } = null!;

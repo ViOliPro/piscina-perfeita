@@ -12,7 +12,7 @@ namespace PiscinaPerfeita.Api.Models
 
         public Guid PiscinaId { get; set; }
 
-        public DateTimeOffset DataAnalise { get; set; } = DateTimeOffset.Now;
+        public DateTimeOffset DataAnalise { get; set; } = DateTimeOffset.UtcNow;
 
         public decimal? Ph { get; set; }
 

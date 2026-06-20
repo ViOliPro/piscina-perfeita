@@ -1,18 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using PiscinaPerfeita.Api.Dtos.Response;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace PiscinaPerfeita.Api.Dtos.Request;
 
 public partial class ProdutoRequestDto
 {
-    public Guid Id { get; set; }
+    [Required(ErrorMessage = "O campo Nome é obrigatório.")]
+    public string Nome { get; set; } = null!;
 
-    public char Nome { get; set; }
-
+    [Required(ErrorMessage = "O campo unidade de medida é obrigatório.")]
+    [DisplayName("Unidade de Medida")]
     public char UnidadeMedida { get; set; }
 
-    public virtual ICollection<EstoqueRequestDto> Estoques { get; set; } = new List<EstoqueRequestDto>();
-
-    public virtual ICollection<MovimentacaoEstoqueRequestDto> MovimentacoesEstoques { get; set; } = new List<MovimentacaoEstoqueRequestDto>();
 }
