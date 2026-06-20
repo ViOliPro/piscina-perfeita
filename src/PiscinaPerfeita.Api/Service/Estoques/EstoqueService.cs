@@ -1,7 +1,6 @@
 ﻿using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Dtos.Request;
 
-
 namespace PiscinaPerfeita.Api.Service.Estoques
 {
     public class EstoqueService : IEstoqueService
