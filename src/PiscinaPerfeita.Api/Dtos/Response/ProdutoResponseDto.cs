@@ -8,9 +8,9 @@ public partial class ProdutoResponseDto
 {
     public Guid Id { get; set; }
 
-    public char Nome { get; set; }
+    public string Nome { get; set; } = string.Empty;
 
-    public char UnidadeMedida { get; set; }
+    public string UnidadeMedida { get; set; } = string.Empty;
 
     public virtual ICollection<EstoqueResponseDto> Estoques { get; set; } = new List<EstoqueResponseDto>();
 

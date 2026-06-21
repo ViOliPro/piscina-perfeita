@@ -2,7 +2,7 @@
 
 namespace PiscinaPerfeita.Api.Repository.Analises
 {
-    public interface IAnaliseRepository
+    public interface IPiscinaRepository
     {
 
         Task<List<Analise>> Show();

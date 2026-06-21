@@ -10,6 +10,6 @@ public partial class ProdutoRequestDto
 
     [Required(ErrorMessage = "O campo unidade de medida é obrigatório.")]
     [DisplayName("Unidade de Medida")]
-    public char UnidadeMedida { get; set; }
+    public string UnidadeMedida { get; set; } = string.Empty;
 
 }

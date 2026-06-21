@@ -1,37 +1,37 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
-using PiscinaPerfeita.Api.Service.Analises;
+using PiscinaPerfeita.Api.Service.MovimentacoesEstoque;
 
 namespace PiscinaPerfeita.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AnalisesController : ControllerBase
+    public class MovimentacoesController : ControllerBase
     {
-        private readonly IProdutosService _analisesService;
+        private readonly IMovimentacaoService _movimentacoesService;
 
-        public AnalisesController(IProdutosService analisesService)
+        public MovimentacoesController(IMovimentacaoService movimentacoesService)
         {
-            _analisesService = analisesService ?? throw new ArgumentNullException(nameof(analisesService));
+            _movimentacoesService = movimentacoesService ?? throw new ArgumentNullException(nameof(movimentacoesService));
         }
 
         // 1. GET: api/clientes (Retorna todos os registros do banco)
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<AnaliseResponseDto>>> Get()
+        public async Task<ActionResult<IEnumerable<MovimentacaoEstoqueResponseDto>>> Get()
         {
-            var analises = await _analisesService.Show();
-            return Ok(analises);
+            var movimentacoes = await _movimentacoesService.Show();
+            return Ok(movimentacoes);
         }
 
         // 2. GET: api/clientes/id (Retorna o registro com id)
         [HttpGet("{id}")]
-        public async Task<ActionResult<AnaliseResponseDto>> GetById(Guid id)
+        public async Task<ActionResult<MovimentacaoEstoqueResponseDto>> GetById(Guid id)
         {
             try
             {
-                var analises = await _analisesService.GetById(id);
-                return Ok(analises);
+                var movimentacoes = await _movimentacoesService.GetById(id);
+                return Ok(movimentacoes);
             }
             catch (KeyNotFoundException ex)
             {
@@ -41,19 +41,19 @@ namespace PiscinaPerfeita.Api.Controllers
 
         // 3. POST: api/clientes (Insere um dado novo que aparecerá no pgAdmin)
         [HttpPost]
-        public async Task<ActionResult<AnaliseResponseDto>> Create(AnaliseRequestDto dto)
+        public async Task<ActionResult<MovimentacaoEstoqueResponseDto>> Create(MovimentacaoEstoqueRequestDto dto)
         {
-            var user = await _analisesService.Create(dto);
+            var user = await _movimentacoesService.Create(dto);
 
             return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<AnaliseResponseDto>> Update(Guid id, AnaliseRequestDto dto)
+        public async Task<ActionResult<MovimentacaoEstoqueResponseDto>> Update(Guid id, MovimentacaoEstoqueRequestDto dto)
         {
             try
             {
-                await _analisesService.Update(id, dto);
+                await _movimentacoesService.Update(id, dto);
                 return NoContent();
             }
             catch (KeyNotFoundException ex)
@@ -68,7 +68,7 @@ namespace PiscinaPerfeita.Api.Controllers
         {
             try
             {
-                await _analisesService.Delete(id);
+                await _movimentacoesService.Delete(id);
                 return NoContent();
             }
             catch (KeyNotFoundException ex)

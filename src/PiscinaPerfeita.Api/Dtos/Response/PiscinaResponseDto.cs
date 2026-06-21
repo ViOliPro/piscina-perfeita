@@ -16,7 +16,7 @@ public partial class PiscinaResponseDto
 
     public decimal? ProfundidadeMedia { get; set; }
 
-    public TimeOnly? CreatedAt { get; set; }
+    public DateTimeOffset? CreatedAt { get; set; }
 
     public virtual ICollection<AnaliseRequestDto> Analises { get; set; } = new List<AnaliseRequestDto>();
 

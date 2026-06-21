@@ -3,7 +3,7 @@ using PiscinaPerfeita.Api.Dtos.Response;
 
 namespace PiscinaPerfeita.Api.Service.Analises
 {
-    public interface IAnaliseService
+    public interface IProdutosService
     {
         Task<List<AnaliseResponseDto>> Show();
         Task<AnaliseResponseDto> GetById(Guid id);

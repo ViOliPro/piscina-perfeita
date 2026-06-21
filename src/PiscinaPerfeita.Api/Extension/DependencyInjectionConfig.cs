@@ -17,14 +17,14 @@ namespace PiscinaPerfeita.Api.Extension
             // 1. Registre aqui todos os seus Services
             services.AddScoped<IUsuarioService, UsuarioService>();
             services.AddScoped<IEstoqueService, EstoqueService>();
-            services.AddScoped<IAnaliseService, AnaliseService>();
+            services.AddScoped<IProdutosService, ProdtosService>();
             services.AddScoped<IMovimentacaoService, MovimentacaoService>();
             
 
             // 2. Registre aqui todos os seus Repositories
             services.AddScoped<IUsuarioRepository, UsuarioRepository>();
             services.AddScoped<IEstoqueRepository, EstoqueRepository>();
-            services.AddScoped<IAnaliseRepository, AnaliseRepository>();
+            services.AddScoped<IPiscinaRepository, PiscinaRepository>();
             services.AddScoped<IMovimentacaoRepository, MovimentacaoRepository>();
             
 

@@ -1,37 +1,37 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
-using PiscinaPerfeita.Api.Service.Analises;
+using PiscinaPerfeita.Api.Service.Piscinas;
 
 namespace PiscinaPerfeita.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AnalisesController : ControllerBase
+    public class PiscinasController : ControllerBase
     {
-        private readonly IProdutosService _analisesService;
+        private readonly IPiscinaService _piscinasService;
 
-        public AnalisesController(IProdutosService analisesService)
+        public PiscinasController(IPiscinaService piscinasService)
         {
-            _analisesService = analisesService ?? throw new ArgumentNullException(nameof(analisesService));
+            _piscinasService = piscinasService ?? throw new ArgumentNullException(nameof(piscinasService));
         }
 
         // 1. GET: api/clientes (Retorna todos os registros do banco)
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<AnaliseResponseDto>>> Get()
+        public async Task<ActionResult<IEnumerable<PiscinaResponseDto>>> Get()
         {
-            var analises = await _analisesService.Show();
-            return Ok(analises);
+            var piscinas = await _piscinasService.Show();
+            return Ok(piscinas);
         }
 
         // 2. GET: api/clientes/id (Retorna o registro com id)
         [HttpGet("{id}")]
-        public async Task<ActionResult<AnaliseResponseDto>> GetById(Guid id)
+        public async Task<ActionResult<PiscinaResponseDto>> GetById(Guid id)
         {
             try
             {
-                var analises = await _analisesService.GetById(id);
-                return Ok(analises);
+                var piscinas = await _piscinasService.GetById(id);
+                return Ok(piscinas);
             }
             catch (KeyNotFoundException ex)
             {
@@ -41,19 +41,19 @@ namespace PiscinaPerfeita.Api.Controllers
 
         // 3. POST: api/clientes (Insere um dado novo que aparecerá no pgAdmin)
         [HttpPost]
-        public async Task<ActionResult<AnaliseResponseDto>> Create(AnaliseRequestDto dto)
+        public async Task<ActionResult<PiscinaResponseDto>> Create(PiscinaRequestDto dto)
         {
-            var user = await _analisesService.Create(dto);
+            var user = await _piscinasService.Create(dto);
 
             return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<AnaliseResponseDto>> Update(Guid id, AnaliseRequestDto dto)
+        public async Task<ActionResult<PiscinaResponseDto>> Update(Guid id, PiscinaRequestDto dto)
         {
             try
             {
-                await _analisesService.Update(id, dto);
+                await _piscinasService.Update(id, dto);
                 return NoContent();
             }
             catch (KeyNotFoundException ex)
@@ -64,11 +64,11 @@ namespace PiscinaPerfeita.Api.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult<UsuarioResponseDto>> Delete(Guid id)
+        public async Task<ActionResult<PiscinaResponseDto>> Delete(Guid id)
         {
             try
             {
-                await _analisesService.Delete(id);
+                await _piscinasService.Delete(id);
                 return NoContent();
             }
             catch (KeyNotFoundException ex)
