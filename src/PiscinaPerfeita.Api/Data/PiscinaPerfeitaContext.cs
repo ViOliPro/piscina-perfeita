@@ -69,11 +69,12 @@ public partial class PiscinaPerfeitaContext : DbContext
         {
             // Note que a sua tabela de usuário estava mapeada em minúsculo "usuarios" sem o schema! 
             // Mantive igual ao seu banco original para não perder dados.
-            entity.ToTable("usuarios");
+            entity.ToTable("usuarios", "piscina-perfeita");
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
             entity.Property(e => e.Email).HasMaxLength(256).HasColumnName("email");
             entity.Property(e => e.Nome).HasMaxLength(150).HasColumnName("nome");
-            entity.Property(e => e.Senhahash).HasMaxLength(255).HasColumnName("senhahash");
+            entity.Property(e => e.SenhaHash).HasMaxLength(255).HasColumnName("password");
+            entity.Property(e => e.CreatedAt).HasColumnType("timestamp with time zone").HasColumnName("createtat");
         });
 
         OnModelCreatingPartial(modelBuilder);

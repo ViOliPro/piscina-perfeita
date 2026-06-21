@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PiscinaPerfeita.Api.Models
 {
-    [Table("MovimentacoesEstoque")]
+    [Table("MovimentacoesEstoque", Schema = "piscina-perfeita")]
     public partial class MovimentacaoEstoque
     {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]

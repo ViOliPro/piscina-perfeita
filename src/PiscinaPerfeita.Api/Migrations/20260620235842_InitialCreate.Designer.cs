@@ -13,8 +13,8 @@ using PiscinaPerfeita.Api.Data;
 namespace PiscinaPerfeita.Api.Migrations
 {
     [DbContext(typeof(PiscinaPerfeitaContext))]
-    [Migration("20260620225425_EstadoInicialBanco")]
-    partial class EstadoInicialBanco
+    [Migration("20260620235842_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -34,32 +34,42 @@ namespace PiscinaPerfeita.Api.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
+                        .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<decimal?>("Alcalinidade")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("alcalinidade");
 
                     b.Property<decimal?>("CloroLivre")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("clorolivre");
 
                     b.Property<DateTimeOffset>("DataAnalise")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("dataanalise");
 
                     b.Property<string>("Observacoes")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("observacoes");
 
                     b.Property<decimal?>("Ph")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("ph");
 
                     b.Property<Guid>("PiscinaId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("piscinaid");
 
                     b.PrimitiveCollection<List<decimal>>("Temperatura")
-                        .HasColumnType("numeric[]");
+                        .HasColumnType("numeric[]")
+                        .HasColumnName("temperatura");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_analises");
 
-                    b.HasIndex("PiscinaId");
+                    b.HasIndex("PiscinaId")
+                        .HasDatabaseName("ix_analises_piscinaid");
 
                     b.ToTable("Analises", "piscina-perfeita");
                 });
@@ -69,22 +79,29 @@ namespace PiscinaPerfeita.Api.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
+                        .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<Guid>("PiscinaId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("piscinaid");
 
                     b.Property<Guid>("ProdutoId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("produtoid");
 
                     b.Property<decimal?>("QuantidadeAtual")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("quantidadeatual");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_estoque");
 
-                    b.HasIndex("PiscinaId");
+                    b.HasIndex("PiscinaId")
+                        .HasDatabaseName("ix_estoque_piscinaid");
 
-                    b.HasIndex("ProdutoId");
+                    b.HasIndex("ProdutoId")
+                        .HasDatabaseName("ix_estoque_produtoid");
 
                     b.ToTable("Estoque", "piscina-perfeita");
                 });
@@ -94,31 +111,41 @@ namespace PiscinaPerfeita.Api.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
+                        .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<DateTimeOffset?>("DataMovimentacao")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("datamovimentacao");
 
                     b.Property<Guid>("PiscinaId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("piscinaid");
 
                     b.Property<Guid>("ProdutoId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("produtoid");
 
                     b.Property<decimal?>("Quantidade")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("quantidade");
 
                     b.Property<int>("TipoMovimentacao")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("tipomovimentacao");
 
                     b.Property<decimal?>("Valor")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("valor");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_movimentacoesestoque");
 
-                    b.HasIndex("PiscinaId");
+                    b.HasIndex("PiscinaId")
+                        .HasDatabaseName("ix_movimentacoesestoque_piscinaid");
 
-                    b.HasIndex("ProdutoId");
+                    b.HasIndex("ProdutoId")
+                        .HasDatabaseName("ix_movimentacoesestoque_produtoid");
 
                     b.ToTable("MovimentacoesEstoque", "piscina-perfeita");
                 });
@@ -128,27 +155,35 @@ namespace PiscinaPerfeita.Api.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
+                        .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("createdat");
 
                     b.Property<string>("Nome")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("nome");
 
                     b.Property<decimal?>("ProfundidadeMedia")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("profundidademedia");
 
                     b.Property<Guid>("UsuarioId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("usuarioid");
 
                     b.Property<decimal?>("VolumeLitros")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("volumelitros");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_piscinas");
 
-                    b.HasIndex("UsuarioId");
+                    b.HasIndex("UsuarioId")
+                        .HasDatabaseName("ix_piscinas_usuarioid");
 
                     b.ToTable("Piscinas", "piscina-perfeita");
                 });
@@ -158,17 +193,21 @@ namespace PiscinaPerfeita.Api.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
+                        .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<string>("Nome")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("nome");
 
                     b.Property<string>("UnidadeMedida")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("unidademedida");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_produtos");
 
                     b.ToTable("Produtos", "piscina-perfeita");
                 });
@@ -182,12 +221,13 @@ namespace PiscinaPerfeita.Api.Migrations
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("createtat");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)")
-                        .HasColumnName("email");
+                        .HasColumnName("emmail");
 
                     b.Property<string>("Nome")
                         .IsRequired()
@@ -196,16 +236,18 @@ namespace PiscinaPerfeita.Api.Migrations
                         .HasColumnName("nome");
 
                     b.Property<int>("Role")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("role");
 
-                    b.Property<string>("Senhahash")
+                    b.Property<string>("SenhaHash")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
-                        .HasColumnName("senhahash");
+                        .HasColumnName("password");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_usuarios");
 
-                    b.ToTable("usuarios", (string)null);
+                    b.ToTable("usuarios", "piscina-perfeita");
                 });
 
             modelBuilder.Entity("PiscinaPerfeita.Api.Models.Analise", b =>
@@ -214,7 +256,8 @@ namespace PiscinaPerfeita.Api.Migrations
                         .WithMany("Analises")
                         .HasForeignKey("PiscinaId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_analises_piscinas_piscinaid");
 
                     b.Navigation("Piscina");
                 });
@@ -225,13 +268,15 @@ namespace PiscinaPerfeita.Api.Migrations
                         .WithMany("Estoques")
                         .HasForeignKey("PiscinaId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_estoque_piscinas_piscinaid");
 
                     b.HasOne("PiscinaPerfeita.Api.Models.Produto", "Produto")
                         .WithMany("Estoques")
                         .HasForeignKey("ProdutoId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_estoque_produtos_produtoid");
 
                     b.Navigation("Piscina");
 
@@ -244,13 +289,15 @@ namespace PiscinaPerfeita.Api.Migrations
                         .WithMany("MovimentacoesEstoques")
                         .HasForeignKey("PiscinaId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_movimentacoesestoque_piscinas_piscinaid");
 
                     b.HasOne("PiscinaPerfeita.Api.Models.Produto", "Produto")
                         .WithMany("MovimentacoesEstoques")
                         .HasForeignKey("ProdutoId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_movimentacoesestoque_produtos_produtoid");
 
                     b.Navigation("Piscina");
 
@@ -263,7 +310,8 @@ namespace PiscinaPerfeita.Api.Migrations
                         .WithMany("Piscinas")
                         .HasForeignKey("UsuarioId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_piscinas_usuarios_usuarioid");
 
                     b.Navigation("Usuario");
                 });

@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace PiscinaPerfeita.Api.Migrations
 {
     /// <inheritdoc />
-    public partial class EstadoInicialBanco : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -25,29 +25,30 @@ namespace PiscinaPerfeita.Api.Migrations
                 schema: "piscina-perfeita",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
-                    Nome = table.Column<string>(type: "text", nullable: false),
-                    UnidadeMedida = table.Column<string>(type: "text", nullable: false)
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    nome = table.Column<string>(type: "text", nullable: false),
+                    unidademedida = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Produtos", x => x.Id);
+                    table.PrimaryKey("pk_produtos", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
                 name: "usuarios",
+                schema: "piscina-perfeita",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     nome = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
-                    email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
-                    senhahash = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
-                    Role = table.Column<int>(type: "integer", nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                    emmail = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    password = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
+                    role = table.Column<int>(type: "integer", nullable: false),
+                    createtat = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_usuarios", x => x.id);
+                    table.PrimaryKey("pk_usuarios", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -55,19 +56,20 @@ namespace PiscinaPerfeita.Api.Migrations
                 schema: "piscina-perfeita",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
-                    UsuarioId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Nome = table.Column<string>(type: "text", nullable: false),
-                    VolumeLitros = table.Column<decimal>(type: "numeric", nullable: true),
-                    ProfundidadeMedia = table.Column<decimal>(type: "numeric", nullable: true),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    usuarioid = table.Column<Guid>(type: "uuid", nullable: false),
+                    nome = table.Column<string>(type: "text", nullable: false),
+                    volumelitros = table.Column<decimal>(type: "numeric", nullable: true),
+                    profundidademedia = table.Column<decimal>(type: "numeric", nullable: true),
+                    createdat = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Piscinas", x => x.Id);
+                    table.PrimaryKey("pk_piscinas", x => x.id);
                     table.ForeignKey(
-                        name: "FK_Piscinas_usuarios_UsuarioId",
-                        column: x => x.UsuarioId,
+                        name: "fk_piscinas_usuarios_usuarioid",
+                        column: x => x.usuarioid,
+                        principalSchema: "piscina-perfeita",
                         principalTable: "usuarios",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -78,24 +80,24 @@ namespace PiscinaPerfeita.Api.Migrations
                 schema: "piscina-perfeita",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
-                    PiscinaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    DataAnalise = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    Ph = table.Column<decimal>(type: "numeric", nullable: true),
-                    CloroLivre = table.Column<decimal>(type: "numeric", nullable: true),
-                    Alcalinidade = table.Column<decimal>(type: "numeric", nullable: true),
-                    Temperatura = table.Column<List<decimal>>(type: "numeric[]", nullable: true),
-                    Observacoes = table.Column<string>(type: "text", nullable: true)
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    piscinaid = table.Column<Guid>(type: "uuid", nullable: false),
+                    dataanalise = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    ph = table.Column<decimal>(type: "numeric", nullable: true),
+                    clorolivre = table.Column<decimal>(type: "numeric", nullable: true),
+                    alcalinidade = table.Column<decimal>(type: "numeric", nullable: true),
+                    temperatura = table.Column<List<decimal>>(type: "numeric[]", nullable: true),
+                    observacoes = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Analises", x => x.Id);
+                    table.PrimaryKey("pk_analises", x => x.id);
                     table.ForeignKey(
-                        name: "FK_Analises_Piscinas_PiscinaId",
-                        column: x => x.PiscinaId,
+                        name: "fk_analises_piscinas_piscinaid",
+                        column: x => x.piscinaid,
                         principalSchema: "piscina-perfeita",
                         principalTable: "Piscinas",
-                        principalColumn: "Id",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -104,27 +106,27 @@ namespace PiscinaPerfeita.Api.Migrations
                 schema: "piscina-perfeita",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
-                    PiscinaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ProdutoId = table.Column<Guid>(type: "uuid", nullable: false),
-                    QuantidadeAtual = table.Column<decimal>(type: "numeric", nullable: true)
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    piscinaid = table.Column<Guid>(type: "uuid", nullable: false),
+                    produtoid = table.Column<Guid>(type: "uuid", nullable: false),
+                    quantidadeatual = table.Column<decimal>(type: "numeric", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Estoque", x => x.Id);
+                    table.PrimaryKey("pk_estoque", x => x.id);
                     table.ForeignKey(
-                        name: "FK_Estoque_Piscinas_PiscinaId",
-                        column: x => x.PiscinaId,
+                        name: "fk_estoque_piscinas_piscinaid",
+                        column: x => x.piscinaid,
                         principalSchema: "piscina-perfeita",
                         principalTable: "Piscinas",
-                        principalColumn: "Id",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Estoque_Produtos_ProdutoId",
-                        column: x => x.ProdutoId,
+                        name: "fk_estoque_produtos_produtoid",
+                        column: x => x.produtoid,
                         principalSchema: "piscina-perfeita",
                         principalTable: "Produtos",
-                        principalColumn: "Id",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -133,68 +135,68 @@ namespace PiscinaPerfeita.Api.Migrations
                 schema: "piscina-perfeita",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
-                    PiscinaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ProdutoId = table.Column<Guid>(type: "uuid", nullable: false),
-                    TipoMovimentacao = table.Column<int>(type: "integer", nullable: false),
-                    Quantidade = table.Column<decimal>(type: "numeric", nullable: true),
-                    Valor = table.Column<decimal>(type: "numeric", nullable: true),
-                    DataMovimentacao = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    piscinaid = table.Column<Guid>(type: "uuid", nullable: false),
+                    produtoid = table.Column<Guid>(type: "uuid", nullable: false),
+                    tipomovimentacao = table.Column<int>(type: "integer", nullable: false),
+                    quantidade = table.Column<decimal>(type: "numeric", nullable: true),
+                    valor = table.Column<decimal>(type: "numeric", nullable: true),
+                    datamovimentacao = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_MovimentacoesEstoque", x => x.Id);
+                    table.PrimaryKey("pk_movimentacoesestoque", x => x.id);
                     table.ForeignKey(
-                        name: "FK_MovimentacoesEstoque_Piscinas_PiscinaId",
-                        column: x => x.PiscinaId,
+                        name: "fk_movimentacoesestoque_piscinas_piscinaid",
+                        column: x => x.piscinaid,
                         principalSchema: "piscina-perfeita",
                         principalTable: "Piscinas",
-                        principalColumn: "Id",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_MovimentacoesEstoque_Produtos_ProdutoId",
-                        column: x => x.ProdutoId,
+                        name: "fk_movimentacoesestoque_produtos_produtoid",
+                        column: x => x.produtoid,
                         principalSchema: "piscina-perfeita",
                         principalTable: "Produtos",
-                        principalColumn: "Id",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Analises_PiscinaId",
+                name: "ix_analises_piscinaid",
                 schema: "piscina-perfeita",
                 table: "Analises",
-                column: "PiscinaId");
+                column: "piscinaid");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Estoque_PiscinaId",
+                name: "ix_estoque_piscinaid",
                 schema: "piscina-perfeita",
                 table: "Estoque",
-                column: "PiscinaId");
+                column: "piscinaid");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Estoque_ProdutoId",
+                name: "ix_estoque_produtoid",
                 schema: "piscina-perfeita",
                 table: "Estoque",
-                column: "ProdutoId");
+                column: "produtoid");
 
             migrationBuilder.CreateIndex(
-                name: "IX_MovimentacoesEstoque_PiscinaId",
+                name: "ix_movimentacoesestoque_piscinaid",
                 schema: "piscina-perfeita",
                 table: "MovimentacoesEstoque",
-                column: "PiscinaId");
+                column: "piscinaid");
 
             migrationBuilder.CreateIndex(
-                name: "IX_MovimentacoesEstoque_ProdutoId",
+                name: "ix_movimentacoesestoque_produtoid",
                 schema: "piscina-perfeita",
                 table: "MovimentacoesEstoque",
-                column: "ProdutoId");
+                column: "produtoid");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Piscinas_UsuarioId",
+                name: "ix_piscinas_usuarioid",
                 schema: "piscina-perfeita",
                 table: "Piscinas",
-                column: "UsuarioId");
+                column: "usuarioid");
         }
 
         /// <inheritdoc />
@@ -221,7 +223,8 @@ namespace PiscinaPerfeita.Api.Migrations
                 schema: "piscina-perfeita");
 
             migrationBuilder.DropTable(
-                name: "usuarios");
+                name: "usuarios",
+                schema: "piscina-perfeita");
         }
     }
 }

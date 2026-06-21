@@ -19,12 +19,13 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
         public async Task<List<UsuarioResponseDto>> Show()
         {
             var usuarios = await _usuariosRepository.Show();
-            return usuarios.Select(u => new UsuarioResponseDto
+            return [.. usuarios.Select(u => new UsuarioResponseDto
             {
                 Id = u.Id,
                 Nome = u.Nome,
-                Email = u.Email
-            }).ToList();
+                Email = u.Email,
+                CreatedAt = u.CreatedAt
+            })];
         }
 
         public async Task<UsuarioResponseDto> GetById(Guid id)
@@ -34,7 +35,8 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             {
                 Id = usuario.Id,
                 Nome = usuario.Nome,
-                Email = usuario.Email
+                Email = usuario.Email,
+                CreatedAt = usuario.CreatedAt
             };
         }
 
@@ -44,7 +46,7 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             {
                 Nome = dto.Nome,
                 Email = dto.Email,
-                Senhahash = BCrypt.Net.BCrypt.HashPassword(dto.SenhaHash)
+                SenhaHash = BCrypt.Net.BCrypt.HashPassword(dto.SenhaHash)
             };
 
             await _usuariosRepository.Create(usuario);
@@ -68,7 +70,7 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
 
             usuarioDb.Nome = dto.Nome;
             usuarioDb.Email = dto.Email;
-            usuarioDb.Senhahash = dto.SenhaHash;
+            usuarioDb.SenhaHash = dto.SenhaHash;
 
             await _usuariosRepository.Update(id, usuarioDb);
 

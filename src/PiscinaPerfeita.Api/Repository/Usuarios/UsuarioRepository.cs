@@ -40,7 +40,7 @@ public class UsuarioRepository : IUsuarioRepository
 
         user.Nome = usuario.Nome;
         user.Email = usuario.Email;
-        user.Senhahash = usuario.Senhahash;
+        user.SenhaHash = usuario.SenhaHash;
 
         await _context.SaveChangesAsync();
 

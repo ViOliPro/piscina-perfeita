@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PiscinaPerfeita.Api.Models
 {
-    [Table("Analises")]
+    [Table("Analises", Schema = "piscina-perfeita")]
     public class Analise
     {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]

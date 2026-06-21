@@ -1,17 +1,18 @@
 @host=localhost
 @port=5258
-@PiscinaPerfeita.Api_HostAddress=http://{{host}}:{{port}}
+@path=api/Usuarios
+@PiscinaPerfeita.Api_HostAddress=http://{{host}}:{{port}}/{{path}}
 
 
-GET {{PiscinaPerfeita.Api_HostAddress}}/api/Usuarios/
+GET {{PiscinaPerfeita.Api_HostAddress}}/
 Accept: application/json
 ###
 
-GET {{PiscinaPerfeita.Api_HostAddress}}/api/Usuarios/16c61e28-2613-4f73-b0e7-131331812432
+GET {{PiscinaPerfeita.Api_HostAddress}}/483e0c0c-69fa-4684-a800-c5448f1bfcac
 Accept: application/json
 ###
 
-POST {{PiscinaPerfeita.Api_HostAddress}}/api/Usuarios/
+POST {{PiscinaPerfeita.Api_HostAddress}}
 Content-Type: application/json
 Accept: application/json
 
@@ -22,7 +23,7 @@ Accept: application/json
 }
 ###
 
-PUT {{PiscinaPerfeita.Api_HostAddress}}/api/Usuarios/d89d2bba-7c91-4a34-a51c-7486e2e6bbcc
+PUT {{PiscinaPerfeita.Api_HostAddress}}/d89d2bba-7c91-4a34-a51c-7486e2e6bbcc
 Accept: application/json
 Content-Type: application/json
 {
@@ -32,6 +33,6 @@ Content-Type: application/json
 }
 ###
 
-DELETE {{PiscinaPerfeita.Api_HostAddress}}/api/Usuarios/16c61e28-2613-4f73-b0e7-131331812432
+DELETE {{PiscinaPerfeita.Api_HostAddress}}/16c61e28-2613-4f73-b0e7-131331812432
 Accept: application/json
 ###

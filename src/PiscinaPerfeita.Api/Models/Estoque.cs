@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PiscinaPerfeita.Api.Models;
 
-[Table("Estoques")]
+[Table("Estoques", Schema = "piscina-perfeita")]
 public partial class Estoque
 {
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]

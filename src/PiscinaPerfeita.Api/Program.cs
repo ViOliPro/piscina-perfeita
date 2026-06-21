@@ -16,8 +16,10 @@ if (Assembly.GetEntryAssembly()?.GetName().Name != "ef")
 
 // Configure DbContext
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
 builder.Services.AddDbContext<PiscinaPerfeitaContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseNpgsql(connectionString)
+            .UseLowerCaseNamingConvention());
 
 // Injecao de dependecias
 builder.Services.ResolveDependencies();
