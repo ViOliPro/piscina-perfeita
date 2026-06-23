@@ -4,7 +4,7 @@ using PiscinaPerfeita.Api.Dtos.Request;
 
 namespace PiscinaPerfeita.Api.Dtos.Response;
 
-public partial class PiscinaResponseDto
+public class PiscinaResponseDto
 {
     public Guid Id { get; set; }
 
@@ -23,5 +23,10 @@ public partial class PiscinaResponseDto
     public virtual ICollection<EstoqueResponseDto> Estoques { get; set; } = new List<EstoqueResponseDto>();
 
     public virtual ICollection<MovimentacaoEstoqueRequestDto> MovimentacoesEstoques { get; set; } = new List<MovimentacaoEstoqueRequestDto>();
+}
 
+public class UsuarioPiscinaResponseDto
+{
+    public Guid Id { get; set; }
+    public string Nome { get; set; } = null!;
 }

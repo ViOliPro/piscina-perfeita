@@ -1,6 +1,7 @@
 ﻿using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Repository.Piscinas;
+using PiscinaPerfeita.Api.Repository.Usuarios;
 using PiscinaPerfeita.Api.Models;
 
 namespace PiscinaPerfeita.Api.Service.Piscinas
@@ -8,10 +9,12 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
     public class PiscinaService : IPiscinaService
     {
         private readonly IPiscinaRepository _piscinaRepository;
+        private readonly IUsuarioRepository _usuarioRepository;
 
-        public PiscinaService(IPiscinaRepository piscinaRepository)
+        public PiscinaService(IPiscinaRepository piscinaRepository, IUsuarioRepository usuarioRepository)
         {
             _piscinaRepository = piscinaRepository ?? throw new ArgumentNullException(nameof(piscinaRepository));
+            _usuarioRepository = usuarioRepository ?? throw new ArgumentNullException(nameof(usuarioRepository));
         }
 
 
@@ -47,11 +50,19 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
         // Metodo Create: Cria um novo estoque com base nos dados fornecidos, incluindo as informações relacionadas de piscina e produto.
         public async Task<PiscinaResponseDto> Create(PiscinaRequestDto dto)
         {
+            var usuario = await _usuarioRepository.GetById(dto.UsuarioId);
+
+            if(usuario == null)
+            {
+                throw new KeyNotFoundException($"Não foi possível criar a piscina usuario{dto.UsuarioId} não existe.");
+            }
+
             var piscina = new Piscina
             {
                 Nome = dto.Nome,
                 VolumeLitros = dto.VolumeLitros,
-                ProfundidadeMedia = dto.ProfundidadeMedia
+                ProfundidadeMedia = dto.ProfundidadeMedia,
+                UsuarioId = usuario.Id
             };
 
             await _piscinaRepository.Create(piscina);

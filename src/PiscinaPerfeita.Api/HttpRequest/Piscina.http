@@ -18,9 +18,10 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "Nome": "Shayene Fernandes Rabelo",
-  "Email": "rabelo@mail.com.br",
-  "SenhaHash": "123asd"
+  "Nome": "Jequitiba - Piscina grande",
+  "VolumeLitros": "180.000",
+  "ProfundidadeMedia": "1.70",
+  "UsuarioId": "4892fb54-5e8b-4eb0-8293-7d5dc911ae7d"
 }
 ###
 

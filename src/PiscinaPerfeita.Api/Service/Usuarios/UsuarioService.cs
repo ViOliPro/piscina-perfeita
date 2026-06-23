@@ -18,36 +18,18 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
 
         public async Task<List<UsuarioResponseDto>> Show()
         {
-            var usuarios = await _usuariosRepository.Show();
-            return [.. usuarios.Select(u => new UsuarioResponseDto
-            {
-                Id = u.Id,
-                Nome = u.Nome,
-                Email = u.Email,
-                CreatedAt = u.CreatedAt,
-                Piscinas = u.Piscinas.Select(p => new PiscinaResponseDto
-                {
-                    Id = p.Id,
-                    Nome = p.Nome,
-                 }).ToList()
-            })];
+            return await _usuariosRepository.Show();
         }
 
         public async Task<UsuarioResponseDto> GetById(Guid id)
         {
-            var usuario = await _usuariosRepository.GetById(id);
-            return new UsuarioResponseDto
+            var usuarioDb = await _usuariosRepository.GetById(id);
+            if(usuarioDb == null)
             {
-                Id = usuario.Id,
-                Nome = usuario.Nome,
-                Email = usuario.Email,
-                CreatedAt = usuario.CreatedAt,
-                Piscinas = usuario.Piscinas.Select(p => new PiscinaResponseDto
-                {
-                    Id = p.Id,
-                    Nome = p.Nome
-                }).ToList(),
-            };
+                throw new KeyNotFoundException("Usuario não encontrado");
+            }
+
+            return usuarioDb;
         }
 
         public async Task<UsuarioResponseDto> Create(UsuarioRequestDto dto)
@@ -71,12 +53,7 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             {
                 Id = usuario.Id,
                 Nome = usuario.Nome,
-                Email = usuario.Email,
-                Piscinas = usuario.Piscinas.Select(p => new PiscinaResponseDto
-                {
-                    Id = p.Id,
-                    Nome = p.Nome
-                }).ToList(),
+                Email = usuario.Email
             };
         }
 
@@ -87,15 +64,19 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 throw new ArgumentException($"O id informado não pode ser vazio {nameof(id)} .");
             }
 
-            var usuarioDb = await _usuariosRepository.GetById(id);
-            if (usuarioDb == null)
+            var usuario = await _usuariosRepository.GetById(id);
+            if (usuario == null)
             {
                 throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
             }
 
-            usuarioDb.Nome = dto.Nome;
-            usuarioDb.Email = dto.Email;
-            usuarioDb.SenhaHash = dto.SenhaHash;
+            var usuarioDb = new Usuario
+            {
+                Id = usuario.Id,
+                Nome = dto.Nome,
+                Email = dto.Email,
+                SenhaHash = dto.SenhaHash,
+            };
        
             await _usuariosRepository.Update(id, usuarioDb);
 
@@ -104,7 +85,6 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 Id = usuarioDb.Id,
                 Nome = usuarioDb.Nome,
                 Email = usuarioDb.Email
-
             };
         }
 
