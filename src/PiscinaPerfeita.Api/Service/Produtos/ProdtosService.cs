@@ -5,13 +5,13 @@ using PiscinaPerfeita.Api.Models;
 
 namespace PiscinaPerfeita.Api.Service.Produtos
 {
-    public class ProdtosService : IProdutosService
+    public class ProdutoService : IProdutoService
     {
-        private readonly IProdutoRepository _produtosRepository;
+        private readonly IProdutoRepository _produtoRepository;
 
-        public ProdtosService(IProdutoRepository produtosRepository)
+        public ProdutoService(IProdutoRepository produtoRepository)
         {
-            _produtosRepository = produtosRepository ?? throw new ArgumentNullException(nameof(produtosRepository));
+            _produtoRepository = produtoRepository ?? throw new ArgumentNullException(nameof(produtoRepository));
         }
 
 
@@ -19,7 +19,7 @@ namespace PiscinaPerfeita.Api.Service.Produtos
         // Metodo Show: Retorna uma lista de todos os estoques, incluindo as informações relacionadas de piscina e produto.
         public async Task<List<ProdutoResponseDto>> Show()
         {
-            var produtos = await _produtosRepository.Show();
+            var produtos = await _produtoRepository.Show();
             return produtos.Select(u => new ProdutoResponseDto
             {
                 Nome = u.Nome,
@@ -31,7 +31,7 @@ namespace PiscinaPerfeita.Api.Service.Produtos
         // Metodo GetById: Retorna um estoque específico com base no ID, incluindo as informações relacionadas de piscina e produto.
         public async Task<ProdutoResponseDto> GetById(Guid id)
         {
-            var produtos = await _produtosRepository.GetById(id);
+            var produtos = await _produtoRepository.GetById(id);
             return new ProdutoResponseDto
             {
                 Nome = produtos.Nome,
@@ -49,7 +49,7 @@ namespace PiscinaPerfeita.Api.Service.Produtos
                 UnidadeMedida = dto.UnidadeMedida
             };
 
-            await _produtosRepository.Create(produtos);
+            await _produtoRepository.Create(produtos);
 
 
             return new ProdutoResponseDto
@@ -63,7 +63,7 @@ namespace PiscinaPerfeita.Api.Service.Produtos
         // Metodo Update: Atualiza um estoque existente com base no ID e nos dados fornecidos, incluindo as informações relacionadas de piscina e produto.
         public async Task<ProdutoResponseDto> Update(Guid id, ProdutoRequestDto dto)
         {
-            var produtosDb = await _produtosRepository.GetById(id);
+            var produtosDb = await _produtoRepository.GetById(id);
             if (produtosDb == null)
             {
                 throw new KeyNotFoundException($"Produto com id {id} não encontrado.");
@@ -74,7 +74,7 @@ namespace PiscinaPerfeita.Api.Service.Produtos
                 UnidadeMedida = dto.UnidadeMedida
             };
 
-            await _produtosRepository.Update(id, u);
+            await _produtoRepository.Update(id, u);
 
             return new ProdutoResponseDto
             {
@@ -87,13 +87,13 @@ namespace PiscinaPerfeita.Api.Service.Produtos
         // Metodo Delete: Exclui um estoque existente com base no ID.
         public async Task Delete(Guid id)
         {
-            var produtosDb = await _produtosRepository.GetById(id);
+            var produtosDb = await _produtoRepository.GetById(id);
             if (produtosDb == null)
             {
                 throw new KeyNotFoundException($"Estoque com id {id} não encontrado.");
             }
 
-            await _produtosRepository.Delete(id);
+            await _produtoRepository.Delete(id);
 
         }
     }

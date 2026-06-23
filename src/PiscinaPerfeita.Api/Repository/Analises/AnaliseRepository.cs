@@ -3,11 +3,11 @@ using PiscinaPerfeita.Api.Models;
 
 namespace PiscinaPerfeita.Api.Repository.Analises;
 
-public class PiscinaRepository : IPiscinaRepository
+public class AnaliseRepository : IAnaliseRepository
 {
     private readonly Data.PiscinaPerfeitaContext _context;
 
-    public PiscinaRepository(Data.PiscinaPerfeitaContext context)
+    public AnaliseRepository(Data.PiscinaPerfeitaContext context)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
     }

@@ -5,11 +5,11 @@ using PiscinaPerfeita.Api.Models;
 
 namespace PiscinaPerfeita.Api.Service.Analises
 {
-    public class ProdtosService : IProdutosService
+    public class AnaliseService : IAnaliseService
     {
-        private readonly IPiscinaRepository _analiseRepository;
+        private readonly IAnaliseRepository _analiseRepository;
 
-        public ProdtosService(IPiscinaRepository analisesRepository)
+        public AnaliseService(IAnaliseRepository analisesRepository)
         {
             _analiseRepository = analisesRepository ?? throw new ArgumentNullException(nameof(analisesRepository));
         }

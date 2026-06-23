@@ -9,9 +9,9 @@ namespace PiscinaPerfeita.Api.Controllers
     [Route("api/[controller]")]
     public class ProdutosController : ControllerBase
     {
-        private readonly IProdutosService _produtosService;
+        private readonly IProdutoService _produtosService;
 
-        public ProdutosController(IProdutosService produtosService)
+        public ProdutosController(IProdutoService produtosService)
         {
             _produtosService = produtosService ?? throw new ArgumentNullException(nameof(produtosService));
         }

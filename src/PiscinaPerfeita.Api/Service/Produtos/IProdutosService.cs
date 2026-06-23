@@ -4,7 +4,7 @@ using PiscinaPerfeita.Api.Dtos.Response;
 namespace PiscinaPerfeita.Api.Service.Produtos
 
 {
-    public interface IProdutosService
+    public interface IProdutoService
     {
         Task<List<ProdutoResponseDto>> Show();
         Task<ProdutoResponseDto> GetById(Guid id);
