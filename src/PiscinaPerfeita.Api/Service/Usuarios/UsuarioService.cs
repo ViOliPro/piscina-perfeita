@@ -24,7 +24,12 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 Id = u.Id,
                 Nome = u.Nome,
                 Email = u.Email,
-                CreatedAt = u.CreatedAt
+                CreatedAt = u.CreatedAt,
+                Piscinas = u.Piscinas.Select(p => new PiscinaResponseDto
+                {
+                    Id = p.Id,
+                    Nome = p.Nome,
+                 }).ToList()
             })];
         }
 
@@ -36,7 +41,12 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 Id = usuario.Id,
                 Nome = usuario.Nome,
                 Email = usuario.Email,
-                CreatedAt = usuario.CreatedAt
+                CreatedAt = usuario.CreatedAt,
+                Piscinas = usuario.Piscinas.Select(p => new PiscinaResponseDto
+                {
+                    Id = p.Id,
+                    Nome = p.Nome
+                }).ToList(),
             };
         }
 
@@ -46,7 +56,12 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             {
                 Nome = dto.Nome,
                 Email = dto.Email,
-                SenhaHash = BCrypt.Net.BCrypt.HashPassword(dto.SenhaHash)
+                SenhaHash = BCrypt.Net.BCrypt.HashPassword(dto.SenhaHash),
+                Piscinas = dto.Piscinas.Select(p => new Piscina
+                {
+                    Id = p.Id,
+                    Nome = p.Nome
+                }).ToList()
             };
 
             await _usuariosRepository.Create(usuario);
@@ -56,12 +71,22 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             {
                 Id = usuario.Id,
                 Nome = usuario.Nome,
-                Email = usuario.Email
+                Email = usuario.Email,
+                Piscinas = usuario.Piscinas.Select(p => new PiscinaResponseDto
+                {
+                    Id = p.Id,
+                    Nome = p.Nome
+                }).ToList(),
             };
         }
 
         public async Task<UsuarioResponseDto> Update(Guid id, UsuarioRequestDto dto)
         {
+            if(id == Guid.Empty)
+            {
+                throw new ArgumentException($"O id informado não pode ser vazio {nameof(id)} .");
+            }
+
             var usuarioDb = await _usuariosRepository.GetById(id);
             if (usuarioDb == null)
             {
@@ -71,7 +96,7 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             usuarioDb.Nome = dto.Nome;
             usuarioDb.Email = dto.Email;
             usuarioDb.SenhaHash = dto.SenhaHash;
-
+       
             await _usuariosRepository.Update(id, usuarioDb);
 
             return new UsuarioResponseDto
@@ -79,6 +104,7 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 Id = usuarioDb.Id,
                 Nome = usuarioDb.Nome,
                 Email = usuarioDb.Email
+
             };
         }
 

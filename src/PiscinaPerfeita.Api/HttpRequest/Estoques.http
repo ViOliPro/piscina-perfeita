@@ -1,6 +1,6 @@
 @host=localhost
 @port=5258
-@path=api/Estoque
+@path=api/Estoques
 @query = 483e0c0c-69fa-4684-a800-c5448f1bfcac
 @PiscinaPerfeita.Api_HostAddress=http://{{host}}:{{port}}/{{path}}
 

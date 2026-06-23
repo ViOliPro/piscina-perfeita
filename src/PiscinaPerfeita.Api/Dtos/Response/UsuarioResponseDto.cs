@@ -12,6 +12,6 @@ namespace PiscinaPerfeita.Api.Dtos.Response
 
         public DateTimeOffset? CreatedAt { get; set; }
 
-        public Guid PiscinaId { get; set; }
+        public ICollection<PiscinaResponseDto> Piscinas { get; set; } = new List<PiscinaResponseDto>();
     }
 }

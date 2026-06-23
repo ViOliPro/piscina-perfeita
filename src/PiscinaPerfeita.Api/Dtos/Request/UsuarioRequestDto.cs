@@ -19,5 +19,6 @@ namespace PiscinaPerfeita.Api.Dtos.Request
         [DisplayName("Password")]
         public string SenhaHash { get; set; } = string.Empty;
         public Role Role { get; set; }
+        public virtual ICollection<Piscina> Piscinas { get; set; } = new List<Piscina>();
     }
 }

@@ -8,7 +8,7 @@ GET {{PiscinaPerfeita.Api_HostAddress}}/
 Accept: application/json
 ###
 
-GET {{PiscinaPerfeita.Api_HostAddress}}/483e0c0c-69fa-4684-a800-c5448f1bfcac
+GET {{PiscinaPerfeita.Api_HostAddress}}/22525252
 Accept: application/json
 ###
 
@@ -17,8 +17,8 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "Nome": "Shayene Fernandes Rabelo",
-  "Email": "rabelo@mail.com.br",
+  "Nome": "Vinicius Oliveira",
+  "Email": "vinicius@mail.com",
   "SenhaHash": "123asd"
 }
 ###
