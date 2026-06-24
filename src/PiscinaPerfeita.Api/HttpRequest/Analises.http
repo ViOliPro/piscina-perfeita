@@ -1,7 +1,8 @@
 @host=localhost
 @port=5258
 @path=api/Analises
-@query = 483e0c0c-69fa-4684-a800-c5448f1bfcac
+@query = 1e571394-97d7-4656-9f50-079bd4ab159f
+@queryPost = 1e571394-97d7-4656-9f50-079bd4ab159f
 @PiscinaPerfeita.Api_HostAddress=http://{{host}}:{{port}}/{{path}}
 
 
@@ -18,9 +19,12 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "Nome": "Shayene Fernandes Rabelo",
-  "Email": "rabelo@mail.com.br",
-  "SenhaHash": "123asd"
+  "PiscinaId": "{{queryPost}}",
+  "Ph": "7.2",
+  "CloroLivre": "5.0",
+  "Alcalinidade": 12,
+  "Temperatura": 28,
+  "Observacao": "Observacao teste"
 }
 ###
 

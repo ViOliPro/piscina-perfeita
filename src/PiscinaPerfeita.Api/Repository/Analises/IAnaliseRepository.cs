@@ -1,13 +1,14 @@
 ﻿using PiscinaPerfeita.Api.Models;
+using PiscinaPerfeita.Api.Dtos.Response;
 
 namespace PiscinaPerfeita.Api.Repository.Analises
 {
     public interface IAnaliseRepository
     {
 
-        Task<List<Analise>> Show();
+        Task<List<AnaliseResponseDto>> Show();
 
-        Task<Analise> GetById(Guid id);
+        Task<AnaliseResponseDto?> GetById(Guid id);
 
         Task Create(Analise analise);
 

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PiscinaPerfeita.Api.Models;
+using PiscinaPerfeita.Api.Dtos.Response;
 
 namespace PiscinaPerfeita.Api.Repository.Analises;
 
@@ -12,18 +13,44 @@ public class AnaliseRepository : IAnaliseRepository
         _context = context ?? throw new ArgumentNullException(nameof(context));
     }
 
-    public async Task<List<Analise>> Show()
+    public async Task<List<AnaliseResponseDto>> Show()
     {
-        return await _context.Analises.ToListAsync();
+        return await _context.Analises.Select(a => new AnaliseResponseDto
+        {
+            Id = a.Id,
+            DataAnalise = a.DataAnalise,
+            Ph = a.Ph,
+            CloroLivre = a.CloroLivre,
+            Alcalinidade = a.Alcalinidade,
+            Temperatura = a.Temperatura,
+            Observacoes = a.Observacoes,
+            Piscina = a.Piscina != null ? new PiscinaOrigem
+            {
+                Id = a.Piscina.Id,
+                Nome = a.Piscina.Nome
+            } : null
+        }).ToListAsync();
     }
 
-    public async Task<Analise> GetById(Guid id)
+    public async Task<AnaliseResponseDto?> GetById(Guid id)
     {
-        var analise = await _context.Analises.FirstOrDefaultAsync(a => a.Id == id);
-        if(analise == null)
-            throw new KeyNotFoundException($"Análise com ID {id} não encontrada.");
+        var analise = await _context.Analises.Select(a => new AnaliseResponseDto
+        {
+            Id = a.Id,
+            DataAnalise = a.DataAnalise,
+            Ph = a.Ph,
+            CloroLivre = a.CloroLivre,
+            Alcalinidade = a.Alcalinidade,
+            Temperatura = a.Temperatura,
+            Observacoes = a.Observacoes,
+            Piscina = a.Piscina != null ? new PiscinaOrigem
+            {
+                Id = a.Piscina.Id,
+                Nome = a.Piscina.Nome
+            } : null
+        }).FirstOrDefaultAsync();
 
-        return analise;
+        return analise ?? null;
     }
 
     public async Task Create(Analise analise)

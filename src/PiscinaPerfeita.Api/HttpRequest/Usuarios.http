@@ -23,7 +23,7 @@ Accept: application/json
 }
 ###
 
-PUT {{PiscinaPerfeita.Api_HostAddress}}/d89d2bba-7c91-4a34-a51c-7486e2e6bbcc
+PUT {{PiscinaPerfeita.Api_HostAddress}}/ed880ca1-e74a-4c16-8791-a9f8da0a2efa
 Accept: application/json
 Content-Type: application/json
 {
@@ -33,6 +33,6 @@ Content-Type: application/json
 }
 ###
 
-DELETE {{PiscinaPerfeita.Api_HostAddress}}/16c61e28-2613-4f73-b0e7-131331812432
+DELETE {{PiscinaPerfeita.Api_HostAddress}}/4892fb54-5e8b-4eb0-8293-7d5dc911ae7d
 Accept: application/json
 ###

@@ -19,35 +19,28 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
 
 
         // Implementação dos métodos do serviço
-        // Metodo Show: Retorna uma lista de todos os estoques, incluindo as informações relacionadas de piscina e produto.
+        // Metodo Show: Retorna uma lista de todos as piscinas.
         public async Task<List<PiscinaResponseDto>> Show()
         {
-            var piscinas = await _piscinaRepository.Show();
-            return piscinas.Select(u => new PiscinaResponseDto
-            {
-                Id = u.Id,
-                Nome = u.Nome,
-                VolumeLitros = u.VolumeLitros,
-                ProfundidadeMedia = u.ProfundidadeMedia
-            }).ToList();
+            return await _piscinaRepository.Show();
         }
 
 
-        // Metodo GetById: Retorna um estoque específico com base no ID, incluindo as informações relacionadas de piscina e produto.
+        // Metodo GetById: Retorna uma piscina específico com base no ID.
         public async Task<PiscinaResponseDto> GetById(Guid id)
         {
-            var u = await _piscinaRepository.GetById(id);
-            return new PiscinaResponseDto
+            var piscina = await _piscinaRepository.GetById(id);
+
+            if(piscina == null)
             {
-                Id = u.Id,
-                Nome = u.Nome,
-                VolumeLitros = u.VolumeLitros,
-                ProfundidadeMedia = u.ProfundidadeMedia
-            };
+                throw new KeyNotFoundException($"Piscina com ID {id} não encontrada.");
+            }
+
+            return piscina;
         }
 
 
-        // Metodo Create: Cria um novo estoque com base nos dados fornecidos, incluindo as informações relacionadas de piscina e produto.
+        // Metodo Create: Cria um novo piscina com base nos dados fornecidos.
         public async Task<PiscinaResponseDto> Create(PiscinaRequestDto dto)
         {
             var usuario = await _usuarioRepository.GetById(dto.UsuarioId);
@@ -78,7 +71,7 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
         }
 
 
-        // Metodo Update: Atualiza um estoque existente com base no ID e nos dados fornecidos, incluindo as informações relacionadas de piscina e produto.
+        // Metodo Update: Atualiza uma piscina existente com base no ID e nos dados fornecidos.
         public async Task<PiscinaResponseDto> Update(Guid id, PiscinaRequestDto dto)
         {
             var piscinaDb = await _piscinaRepository.GetById(id);
@@ -108,7 +101,7 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
         }
 
 
-        // Metodo Delete: Exclui um estoque existente com base no ID.
+        // Metodo Delete: Exclui uma piscina existente com base no ID.
         public async Task Delete(Guid id)
         {
             var piscinaDb = await _piscinaRepository.GetById(id);

@@ -20,7 +20,7 @@ namespace PiscinaPerfeita.Api.Dtos.Request
         public decimal? Alcalinidade { get; set; }
 
         // Ajustado para List<decimal> para bater com a sua Model
-        public List<decimal>? Temperatura { get; set; }
+        public decimal? Temperatura { get; set; }
 
         [StringLength(500, ErrorMessage = "As observações não podem passar de 500 caracteres.")]
         public string? Observacoes { get; set; }

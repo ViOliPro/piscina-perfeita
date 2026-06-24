@@ -20,7 +20,7 @@ namespace PiscinaPerfeita.Api.Models
 
         public decimal? Alcalinidade { get; set; }
 
-        public List<decimal>? Temperatura { get; set; }
+        public decimal? Temperatura { get; set; }
 
         public string? Observacoes { get; set; }
 

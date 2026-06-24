@@ -8,7 +8,6 @@ public class PiscinaResponseDto
 {
     public Guid Id { get; set; }
 
-    public Guid UsuarioId { get; set; }
 
     public string Nome { get; set; } = null!;
 
@@ -17,6 +16,7 @@ public class PiscinaResponseDto
     public decimal? ProfundidadeMedia { get; set; }
 
     public DateTimeOffset? CreatedAt { get; set; }
+    public UsuarioPiscinaResponseDto? UsuarioPiscina { get; set; } = new UsuarioPiscinaResponseDto();
 
     public virtual ICollection<AnaliseRequestDto> Analises { get; set; } = new List<AnaliseRequestDto>();
 

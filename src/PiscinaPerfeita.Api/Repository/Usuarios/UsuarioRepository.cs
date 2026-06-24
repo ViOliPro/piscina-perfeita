@@ -48,12 +48,7 @@ public class UsuarioRepository : IUsuarioRepository
                             }).ToList()
             }).FirstOrDefaultAsync();
 
-        if (usuarioDto == null)
-        {
-            return null;
-        }
-
-        return usuarioDto;
+        return usuarioDto ?? null;
     }
 
     public async Task Create(Usuario usuario)

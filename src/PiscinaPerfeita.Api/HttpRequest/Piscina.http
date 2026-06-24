@@ -1,7 +1,7 @@
 @host=localhost
 @port=5258
 @path=api/Piscinas
-@query = 483e0c0c-69fa-4684-a800-c5448f1bfcac
+@query = 1e571394-97d7-4656-9f50-079bd4ab159f
 @PiscinaPerfeita.Api_HostAddress=http://{{host}}:{{port}}/{{path}}
 
 
@@ -21,7 +21,7 @@ Accept: application/json
   "Nome": "Jequitiba - Piscina grande",
   "VolumeLitros": "180.000",
   "ProfundidadeMedia": "1.70",
-  "UsuarioId": "4892fb54-5e8b-4eb0-8293-7d5dc911ae7d"
+  "UsuarioId": "{{query}}"
 }
 ###
 

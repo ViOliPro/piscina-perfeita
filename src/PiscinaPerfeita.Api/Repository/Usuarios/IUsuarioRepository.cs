@@ -8,7 +8,7 @@ namespace PiscinaPerfeita.Api.Repository.Usuarios
 
         Task<List<UsuarioResponseDto>> Show();
 
-        Task<UsuarioResponseDto> GetById(Guid id);
+        Task<UsuarioResponseDto?> GetById(Guid id);
 
         Task Create(Usuario usuario);
 

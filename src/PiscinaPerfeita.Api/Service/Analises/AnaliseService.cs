@@ -19,36 +19,21 @@ namespace PiscinaPerfeita.Api.Service.Analises
         // Metodo Show: Retorna uma lista de todos os estoques, incluindo as informações relacionadas de piscina e produto.
         public async Task<List<AnaliseResponseDto>> Show()
         {
-            var analises = await _analiseRepository.Show();
-            return analises.Select(u => new AnaliseResponseDto
-            {
-                Id = u.Id,
-                PiscinaId = u.PiscinaId,
-                DataAnalise = u.DataAnalise,
-                Ph = u.Ph,
-                CloroLivre = u.CloroLivre,
-                Alcalinidade = u.Alcalinidade,
-                Temperatura = u.Temperatura,
-                Observacoes = u.Observacoes
-            }).ToList();
+            return await _analiseRepository.Show();
         }
 
 
         // Metodo GetById: Retorna um estoque específico com base no ID, incluindo as informações relacionadas de piscina e produto.
         public async Task<AnaliseResponseDto> GetById(Guid id)
         {
-            var analises = await _analiseRepository.GetById(id);
-            return new AnaliseResponseDto
+            var analiseDb = await _analiseRepository.GetById(id);
+
+            if (analiseDb == null)
             {
-                Id = analises.Id,
-                PiscinaId = analises.PiscinaId,
-                DataAnalise = analises.DataAnalise,
-                Ph = analises.Ph,
-                CloroLivre = analises.CloroLivre,
-                Alcalinidade = analises.Alcalinidade,
-                Temperatura = analises.Temperatura,
-                Observacoes = analises.Observacoes
-            };
+                throw new KeyNotFoundException($"Não possivel localizar uma analise com o id {id} informado");
+            }
+
+            return analiseDb;
         }
 
 
@@ -71,7 +56,7 @@ namespace PiscinaPerfeita.Api.Service.Analises
             return new AnaliseResponseDto
             {
                 Id = analise.Id,
-                PiscinaId = analise.PiscinaId,
+                Piscina = new PiscinaOrigem {Id = analise.PiscinaId },
                 DataAnalise = analise.DataAnalise,
                 Ph = analise.Ph,
                 CloroLivre = analise.CloroLivre,
@@ -108,7 +93,7 @@ namespace PiscinaPerfeita.Api.Service.Analises
             return new AnaliseResponseDto
             {
                 Id = analisesUpdated.Id,
-                PiscinaId = analisesUpdated.PiscinaId,
+                Piscina = new PiscinaOrigem { Id = analisesUpdated.PiscinaId },
                 DataAnalise = analisesUpdated.DataAnalise,
                 Ph = analisesUpdated.Ph,
                 CloroLivre = analisesUpdated.CloroLivre,

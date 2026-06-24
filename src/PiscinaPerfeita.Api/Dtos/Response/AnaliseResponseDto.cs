@@ -1,5 +1,4 @@
 ﻿using PiscinaPerfeita.Api.Models;
-using PiscinaPerfeita.Api.Dtos.Request;
 
 namespace PiscinaPerfeita.Api.Dtos.Response
 {
@@ -7,7 +6,7 @@ namespace PiscinaPerfeita.Api.Dtos.Response
     {
         public Guid Id { get; set; }
 
-        public Guid PiscinaId { get; set; }
+        public PiscinaOrigem? Piscina { get; set; } = new PiscinaOrigem();
 
         public DateTimeOffset DataAnalise { get; set; }
 
@@ -17,11 +16,15 @@ namespace PiscinaPerfeita.Api.Dtos.Response
 
         public decimal? Alcalinidade { get; set; }
 
-        public List<decimal>? Temperatura { get; set; }
+        public decimal? Temperatura { get; set; }
 
         public string? Observacoes { get; set; }
+    }
 
-        public virtual PiscinaRequestDto Piscina { get; set; } = null!;
+    public class PiscinaOrigem
+    {
+        public Guid Id { get; set; }
+        public string Nome { get; set; } = null!;
     }
 }
 

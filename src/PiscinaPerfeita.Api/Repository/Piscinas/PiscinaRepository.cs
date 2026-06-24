@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PiscinaPerfeita.Api.Models;
+using PiscinaPerfeita.Api.Dtos.Response;
 
 namespace PiscinaPerfeita.Api.Repository.Piscinas;
 
@@ -12,18 +13,42 @@ public class PiscinaRepository : IPiscinaRepository
         _context = context ?? throw new ArgumentNullException(nameof(context));
     }
 
-    public async Task<List<Piscina>> Show()
+    public async Task<List<PiscinaResponseDto>> Show()
     {
-        return await _context.Piscinas.ToListAsync();
+        return await _context.Piscinas.Select(u => new PiscinaResponseDto
+        {
+            Id = u.Id,
+            Nome = u.Nome,
+            VolumeLitros = u.VolumeLitros,
+            ProfundidadeMedia = u.ProfundidadeMedia,
+            CreatedAt = u.CreatedAt,
+            UsuarioPiscina = u.Usuario != null ? new UsuarioPiscinaResponseDto
+            {
+                Id = u.Usuario.Id,
+                Nome = u.Usuario.Nome
+            } : null
+        }).ToListAsync();
     }
 
-    public async Task<Piscina> GetById(Guid id)
+    public async Task<PiscinaResponseDto?> GetById(Guid id)
     {
-        var piscina = await _context.Piscinas.FirstOrDefaultAsync(p => p.Id == id);
-        if(piscina == null)
-            throw new KeyNotFoundException($"Piscina com ID {id} não encontrada.");
+        var piscinaDto = await _context.Piscinas
+            .Where(p => p.Id == id)
+            .Select(u => new PiscinaResponseDto
+            {
+                Id = u.Id,
+                Nome = u.Nome,
+                VolumeLitros = u.VolumeLitros,
+                ProfundidadeMedia = u.ProfundidadeMedia,
+                CreatedAt = u.CreatedAt,
+                UsuarioPiscina = u.Usuario != null ? new UsuarioPiscinaResponseDto
+                {
+                    Id = u.Usuario.Id,
+                    Nome = u.Usuario.Nome
+                } : null
+            }).FirstOrDefaultAsync();
 
-        return piscina;
+        return piscinaDto == null ? null : piscinaDto;
     }
 
     public async Task Create(Piscina piscina)
