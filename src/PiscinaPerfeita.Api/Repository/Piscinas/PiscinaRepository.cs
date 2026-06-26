@@ -25,8 +25,24 @@ public class PiscinaRepository : IPiscinaRepository
             UsuarioPiscina = u.Usuario != null ? new UsuarioPiscinaResponseDto
             {
                 Id = u.Usuario.Id,
-                Nome = u.Usuario.Nome
-            } : null
+                Nome = u.Usuario.Nome,
+            } : null,
+            AnalisePiscina = u.Analises != null ? u.Analises.Select(a => new AnalisePiscinaResponseDto
+            {
+                Id = a.Id,
+                DataAnalise = a.DataAnalise
+            }).ToList() : new List<AnalisePiscinaResponseDto>(),
+            Estoques = u.Estoques != null ? u.Estoques.Select(e => new EstoquePiscinaResponseDto
+            {
+                Id = e.Id,
+                Nome = e.Produto.Nome
+            }).ToList() : new List<EstoquePiscinaResponseDto>(),
+            MovimentacoesEstoques = u.MovimentacoesEstoques != null ? u.MovimentacoesEstoques.Select(m => new MovimentacaoEstoquePiscinaResponsetDto
+            {
+                Id = m.Id,
+                Nome = m.TipoMovimentacao.ToString(),
+                DataMovimentacao = m.DataMovimentacao,
+            }).ToList() : new List<MovimentacaoEstoquePiscinaResponsetDto>(),
         }).ToListAsync();
     }
 
@@ -45,7 +61,23 @@ public class PiscinaRepository : IPiscinaRepository
                 {
                     Id = u.Usuario.Id,
                     Nome = u.Usuario.Nome
-                } : null
+                } : null,
+                AnalisePiscina = u.Analises != null ? u.Analises.Select(a => new AnalisePiscinaResponseDto
+                {
+                    Id = a.Id,
+                    DataAnalise = a.DataAnalise
+                }).ToList() : new List<AnalisePiscinaResponseDto>(),
+                Estoques = u.Estoques != null ? u.Estoques.Select(e => new EstoquePiscinaResponseDto
+                {
+                    Id = e.Id,
+                    Nome = e.Produto.Nome
+                }).ToList() : new List<EstoquePiscinaResponseDto>(),
+                MovimentacoesEstoques = u.MovimentacoesEstoques != null ? u.MovimentacoesEstoques.Select(m => new MovimentacaoEstoquePiscinaResponsetDto
+                {
+                    Id = m.Id,
+                    Nome = m.TipoMovimentacao.ToString(),
+                    DataMovimentacao = m.DataMovimentacao,
+                }).ToList() : new List<MovimentacaoEstoquePiscinaResponsetDto>(),
             }).FirstOrDefaultAsync();
 
         return piscinaDto == null ? null : piscinaDto;
