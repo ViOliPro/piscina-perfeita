@@ -11,18 +11,24 @@
 @temp = 30.9
 @obs = Tudo certo, graças a Deus!
 
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Im5vdm9qZXF1aXRpYmFAZW1haWwuY29tIiwicm9sZSI6IkFkbWluIiwidW5pcXVlX25hbWUiOiJOb3ZvIFRlc3RlIEplcXVpdGliYSIsIm5iZiI6MTc4MjYwMTcyNywiZXhwIjoxNzgyNjMwNTI3LCJpYXQiOjE3ODI2MDE3MjcsImlzcyI6IlBpc2NpbmFQZXJmZWl0YSIsImF1ZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NTI1OCJ9.3x0ZcbDeqUdwwxQCoMwAKqmLmur4fFzR3aVdWNFeyvs
+  
+
 
 GET {{PiscinaPerfeita.Api_HostAddress}}/
 Accept: application/json
+Authorization: Bearer {{token}}
 ###
 
 GET {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
 Accept: application/json
+Authorization: Bearer {{token}}
 ###
 
 POST {{PiscinaPerfeita.Api_HostAddress}}
 Content-Type: application/json
 Accept: application/json
+Authorization: Bearer {{token}}
 
 {
   "PiscinaId": "{{piscinaId}}",
@@ -37,6 +43,7 @@ Accept: application/json
 PUT {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
 Accept: application/json
 Content-Type: application/json
+Authorization: Bearer {{token}}
 {
   "PiscinaId": "{{piscinaId}}",
   "Ph": {ph},
@@ -48,4 +55,5 @@ Content-Type: application/json
 ###
 
 DELETE {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
+Authorization: Bearer {{token}}
 ###

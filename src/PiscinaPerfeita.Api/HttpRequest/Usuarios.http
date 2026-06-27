@@ -9,18 +9,24 @@
 @senha = 123456
 @role = 0
 
+// Token JWT
+@token 
 
+###
 GET {{PiscinaPerfeita.Api_HostAddress}}/
 Accept: application/json
+Authorization: Bearer {{token}}
 ###
 
 GET {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
 Accept: application/json
+Authorization: Bearer {{token}}
 ###
 
 POST {{PiscinaPerfeita.Api_HostAddress}}
 Content-Type: application/json
 Accept: application/json
+Authorization: Bearer {{token}}
 
 {
   "Nome": "{{nome}}",
@@ -33,6 +39,8 @@ Accept: application/json
 PUT {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
 Accept: application/json
 Content-Type: application/json
+Authorization: Bearer {{token}}
+
 {
   "Nome": "{{nome}}",
   "Email": "{{email}}",
@@ -42,5 +50,5 @@ Content-Type: application/json
 ###
 
 DELETE {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
-Accept: application/json
+Authorization: Bearer {{token}}
 ###

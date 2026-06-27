@@ -30,13 +30,13 @@ namespace PiscinaPerfeita.Api.Service.Account
             var usuario = await _usuarioRepository.GetByEmail(request.Email);
 
             if (usuario == null)
-                throw new ArgumentException("Usuário não encontrado.");
+                throw new ArgumentException("E-mail ou Senha incorretos.");
 
             // Verifica se a senha fornecida corresponde à senha armazenada no banco de dados
             bool isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, usuario.SenhaHash);
 
             if (!isPasswordValid)
-                throw new ArgumentException("Senha incorreta.");
+                throw new ArgumentException("E-mail ou Senha incorretos.");
 
             // Geração do Token JWT
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -44,11 +44,11 @@ namespace PiscinaPerfeita.Api.Service.Account
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new Claim[]
+                Subject = new ClaimsIdentity(new[]
                 {
-                    new Claim(ClaimTypes.Email, usuario.Email),
-                    new Claim(ClaimTypes.Role, usuario.Role?.ToString() ?? string.Empty),
-                    new Claim(ClaimTypes.Name, usuario.Nome)
+                    new Claim(ClaimTypes.Email, usuario.Email ?? string.Empty),
+                    new Claim(ClaimTypes.Role, usuario.Role.ToString()),
+                    new Claim(ClaimTypes.Name, usuario.Nome ?? string.Empty)
                 }),
                 Expires = DateTime.UtcNow.AddHours(8),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)), SecurityAlgorithms.HmacSha256),
@@ -59,7 +59,7 @@ namespace PiscinaPerfeita.Api.Service.Account
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var stringToken = tokenHandler.WriteToken(token);
 
-            // CORREÇÃO: Instanciando e retornando o tipo correto (AccountResponseDto)
+            // Retorna o token JWT e informações do usuário
             return new AccountResponseDto
             {
                 AccessToken = stringToken,
@@ -67,9 +67,10 @@ namespace PiscinaPerfeita.Api.Service.Account
                 expiresIn = 28800, // 8 horas em segundos
                 User = new UserResponseDto
                 {
-                    UserId = usuario.Id.ToString(), // Adapte se o seu ID do banco for string/int/Guid
-                    Name = usuario.Nome,
-                    Role = usuario.Role ?? 0 // Garanta o mapeamento correto do tipo numérico da Role
+                    UserId = usuario.Id,
+                    Nome = usuario.Nome ?? string.Empty,
+                    Email = usuario.Email ?? string.Empty,
+                    Role = usuario.Role // Garanta o mapeamento correto do tipo numérico da Role
                 }
             };
         }

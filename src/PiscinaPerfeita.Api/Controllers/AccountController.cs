@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Service.Account;
@@ -16,12 +17,20 @@ namespace PiscinaPerfeita.Api.Controllers
             _accountService = accountService ?? throw new ArgumentNullException(nameof(accountService));
         }
 
-        // 1. GET: api/clientes (Retorna todos os registros do banco)
-        [HttpGet]
-        public async Task<ActionResult<ProdutoResponseDto>> Login(AccountRequestDto req)
+        // Login
+        [HttpPost("login")]
+        [AllowAnonymous]
+        public async Task<ActionResult<AccountResponseDto>> Login([FromBody] AccountRequestDto req)
         {
-            var res = await _accountService.Login(req);
-            return Ok(res);
+            try
+            {
+                var res = await _accountService.Login(req);
+                return Ok(res);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
     }

@@ -10,6 +10,7 @@ using PiscinaPerfeita.Api.Service.Piscinas;
 using PiscinaPerfeita.Api.Repository.Piscinas;
 using PiscinaPerfeita.Api.Service.Produtos;
 using PiscinaPerfeita.Api.Repository.Produtos;
+using PiscinaPerfeita.Api.Service.Account;
 
 
 
@@ -26,6 +27,7 @@ namespace PiscinaPerfeita.Api.Extension
             services.AddScoped<IProdutoService, ProdutoService>();
             services.AddScoped<IAnaliseService, AnaliseService>();
             services.AddScoped<IMovimentacaoService, MovimentacaoService>();
+            services.AddScoped<IAccountService, AccountService>();
 
 
             // 2. Registre aqui todos os seus Repositories
