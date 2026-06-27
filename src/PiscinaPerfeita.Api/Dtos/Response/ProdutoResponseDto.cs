@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using PiscinaPerfeita.Api.Dtos.Request;
+﻿
+using System.Text.Json.Serialization;
 
 namespace PiscinaPerfeita.Api.Dtos.Response;
 
-public partial class ProdutoResponseDto
+public class ProdutoResponseDto
 {
     public Guid Id { get; set; }
 
@@ -12,7 +11,26 @@ public partial class ProdutoResponseDto
 
     public string UnidadeMedida { get; set; } = string.Empty;
 
-    public virtual ICollection<EstoqueResponseDto> Estoques { get; set; } = new List<EstoqueResponseDto>();
 
-    public virtual ICollection<MovimentacaoEstoqueRequestDto> MovimentacoesEstoques { get; set; } = new List<MovimentacaoEstoqueRequestDto>();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public virtual ICollection<EstoqueProdutoResponseDto> Estoques { get; set; } = new List<EstoqueProdutoResponseDto>();
+
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public virtual ICollection<MovimentacaoEstoqueProdutoResponseDto> MovimentacoesEstoques { get; set; } = new List<MovimentacaoEstoqueProdutoResponseDto>();
+}
+
+public class EstoqueProdutoResponseDto
+{
+    public Guid Id { get; set; }
+    public string Nome { get; set; } = string.Empty;
+
+}
+
+public class MovimentacaoEstoqueProdutoResponseDto
+{
+    public Guid Id { get; set; }
+    public string Nome { get; set; } = string.Empty;
+    public DateTimeOffset DataMovimentacao { get; set; }
+
 }

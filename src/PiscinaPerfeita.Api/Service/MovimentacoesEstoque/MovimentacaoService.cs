@@ -1,7 +1,10 @@
-﻿using PiscinaPerfeita.Api.Dtos.Response;
-using PiscinaPerfeita.Api.Dtos.Request;
-using PiscinaPerfeita.Api.Repository.MovimentacoesEstoque;
+﻿using PiscinaPerfeita.Api.Dtos.Request;
+using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Models;
+using PiscinaPerfeita.Api.Repository.MovimentacoesEstoque;
+using PiscinaPerfeita.Api.Helpers;
+using System.Globalization;
+using System.Security.Cryptography;
 
 namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
 {
@@ -27,10 +30,8 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
                 ProdutoId = u.ProdutoId,
                 TipoMovimentacao = (Dtos.Response.Tipo)u.TipoMovimentacao,
                 Quantidade = u.Quantidade,
-                Valor = u.Valor,
-                DataMovimentacao = u.DataMovimentacao,
-                Piscina = u.Piscina,
-                Produto = u.Produto
+                Valor = u.Valor.ToPtBrCurrency(),
+                DataMovimentacao = u.DataMovimentacao
             }).ToList();
         }
 
@@ -46,10 +47,8 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
                 ProdutoId = u.ProdutoId,
                 TipoMovimentacao = (Dtos.Response.Tipo)u.TipoMovimentacao,
                 Quantidade = u.Quantidade,
-                Valor = u.Valor,
-                DataMovimentacao = u.DataMovimentacao,
-                Piscina = u.Piscina,
-                Produto = u.Produto
+                Valor = u.Valor.ToPtBrCurrency(),
+                DataMovimentacao = u.DataMovimentacao
             };
         }
 
@@ -75,7 +74,7 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
                 PiscinaId = movimentacao.PiscinaId,
                 ProdutoId = movimentacao.ProdutoId,
                 Quantidade = movimentacao.Quantidade,
-                Valor = movimentacao.Valor,
+                Valor = movimentacao.Valor.ToPtBrCurrency(),
                 DataMovimentacao = movimentacao.DataMovimentacao
             };
         }
@@ -105,11 +104,11 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
             return new MovimentacaoEstoqueResponseDto
             {
                 Id = id,
-                PiscinaId = dto.PiscinaId,
-                ProdutoId = dto.ProdutoId,
-                TipoMovimentacao = (Dtos.Response.Tipo)dto.TipoMovimentacao,
-                Quantidade = dto.Quantidade,
-                Valor = dto.Valor
+                PiscinaId = movimentacaoUpdated.PiscinaId,
+                ProdutoId = movimentacaoUpdated.ProdutoId,
+                TipoMovimentacao = (Dtos.Response.Tipo)movimentacaoUpdated.TipoMovimentacao,
+                Quantidade = movimentacaoUpdated.Quantidade,
+                Valor = movimentacaoUpdated.Valor.ToPtBrCurrency(),
             };
         }
 
@@ -126,5 +125,6 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
             await _movimentacaoRepository.Delete(id);
 
         }
+
     }
 }

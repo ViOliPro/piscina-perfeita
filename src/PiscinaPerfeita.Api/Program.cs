@@ -1,9 +1,20 @@
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using PiscinaPerfeita.Api.Data;
 using PiscinaPerfeita.Api.Extension;
+using System.Globalization;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var defaultCulture = new CultureInfo("pt-BR");
+
+var localizationOptions = new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture(defaultCulture),
+    SupportedCultures = new List<CultureInfo> { defaultCulture },
+    SupportedUICultures = new List<CultureInfo> { defaultCulture }
+};
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -33,6 +44,7 @@ try
         app.MapOpenApi();
     }
 
+    app.UseRequestLocalization(localizationOptions);
     app.UseHttpsRedirection();
     app.UseAuthorization();
     app.MapControllers();

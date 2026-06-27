@@ -18,13 +18,10 @@ namespace PiscinaPerfeita.Api.Dtos.Response
 
         public decimal? Quantidade { get; set; }
 
-        public decimal? Valor { get; set; }
+        public string Valor { get; set; } = string.Empty;
 
         public DateTimeOffset? DataMovimentacao { get; set; }
 
-        public virtual Piscina Piscina { get; set; } = null!;
-
-        public virtual Produto Produto { get; set; } = null!;
     }
     public enum Tipo
     {

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PiscinaPerfeita.Api.Models;
+using PiscinaPerfeita.Api.Dtos.Response;
 
 namespace PiscinaPerfeita.Api.Repository.Produtos;
 
@@ -13,19 +14,52 @@ public class ProdutoRepository : IProdutoRepository
     }
 
     // Método para listar todos os produtos
-    public async Task<List<Produto>> Show()
+    public async Task<List<ProdutoResponseDto>> Show()
     {
-        return await _context.Produtos.ToListAsync();
+        return await _context.Produtos.Select(p => new ProdutoResponseDto
+        {
+            Id = p.Id,
+            Nome = p.Nome,
+            UnidadeMedida = p.UnidadeMedida,
+            Estoques = p.Estoques.Select(e => new EstoqueProdutoResponseDto
+            {
+                Id = e.Id,
+                Nome = e.Produto.Nome,
+            }).ToList(),
+            MovimentacoesEstoques = p.MovimentacoesEstoques.Select(m => new MovimentacaoEstoqueProdutoResponseDto
+            {
+                Id = m.Id,
+                Nome = m.Produto.Nome,
+                DataMovimentacao = m.DataMovimentacao
+            }).ToList() 
+        }).ToListAsync();
     }
 
     // Método para obter um produto por ID
-    public async Task<Produto> GetById(Guid id)
+    public async Task<ProdutoResponseDto?> GetById(Guid id)
     {
-        var produto = await _context.Produtos.FirstOrDefaultAsync(p => p.Id == id);
-        if(produto == null)
-            throw new KeyNotFoundException($"Produto com ID {id} não encontrado.");
+        var produtoDto = await _context.Produtos
+            .Where(p => p.Id == id)
+            .Select(p => new ProdutoResponseDto
+            {
+                Id = p.Id,
+                Nome = p.Nome,
+                UnidadeMedida = p.UnidadeMedida,
+                Estoques = p.Estoques.Select(e => new EstoqueProdutoResponseDto
+                {
+                    Id = e.Id,
+                    Nome = e.Produto.Nome,
+                }).ToList(),
+                MovimentacoesEstoques = p.MovimentacoesEstoques.Select(m => new MovimentacaoEstoqueProdutoResponseDto
+                {
+                    Id = m.Id,
+                    Nome = m.Produto.Nome,
+                    DataMovimentacao = m.DataMovimentacao
+                }).ToList()
+            })
+            .FirstOrDefaultAsync();
 
-        return produto;
+        return produtoDto == null ? null : produtoDto;
     }
 
     // Método para criar um novo produto

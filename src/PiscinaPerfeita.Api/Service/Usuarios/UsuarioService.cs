@@ -26,7 +26,7 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             var usuarioDb = await _usuariosRepository.GetById(id);
             if(usuarioDb == null)
             {
-                throw new KeyNotFoundException("Usuario não encontrado");
+                throw new KeyNotFoundException($"Usuario com id {id} não encontrado");
             }
 
             return usuarioDb;
@@ -39,11 +39,7 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 Nome = dto.Nome,
                 Email = dto.Email,
                 SenhaHash = BCrypt.Net.BCrypt.HashPassword(dto.SenhaHash),
-                Piscinas = dto.Piscinas.Select(p => new Piscina
-                {
-                    Id = p.Id,
-                    Nome = p.Nome
-                }).ToList()
+                Role = dto.Role
             };
 
             await _usuariosRepository.Create(usuario);
@@ -53,7 +49,8 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             {
                 Id = usuario.Id,
                 Nome = usuario.Nome,
-                Email = usuario.Email
+                Email = usuario.Email,
+                Role = usuario.Role
             };
         }
 

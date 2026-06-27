@@ -37,7 +37,7 @@ namespace PiscinaPerfeita.Api.Service.Analises
         }
 
 
-        // Metodo Create: Cria um novo estoque com base nos dados fornecidos, incluindo as informações relacionadas de piscina e produto.
+        // Metodo Create: Cria um novo Analise com base nos dados fornecidos, incluindo as informações relacionadas de piscina e produto.
         public async Task<AnaliseResponseDto> Create(AnaliseRequestDto dto)
         {
             var analise = new Analise
@@ -56,7 +56,7 @@ namespace PiscinaPerfeita.Api.Service.Analises
             return new AnaliseResponseDto
             {
                 Id = analise.Id,
-                Piscina = new PiscinaOrigem {Id = analise.PiscinaId },
+                Piscina = new PiscinaOrigem {Id = analise.PiscinaId},
                 DataAnalise = analise.DataAnalise,
                 Ph = analise.Ph,
                 CloroLivre = analise.CloroLivre,

@@ -1,8 +1,11 @@
 @host=localhost
 @port=5258
 @path=api/Produtos
-@query = 483e0c0c-69fa-4684-a800-c5448f1bfcac
+@query = 1d1b7e36-9f9d-41d6-838a-7e7dd15cd68a
 @PiscinaPerfeita.Api_HostAddress=http://{{host}}:{{port}}/{{path}}
+
+@nome = PH
+@undMedida = ML
 
 
 GET {{PiscinaPerfeita.Api_HostAddress}}/
@@ -18,9 +21,8 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "Nome": "Shayene Fernandes Rabelo",
-  "Email": "rabelo@mail.com.br",
-  "SenhaHash": "123asd"
+  "Nome": "{{nome}}",
+  "UnidadeMedida": "{{undMedida}}"
 }
 ###
 
@@ -28,9 +30,8 @@ PUT {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
 Accept: application/json
 Content-Type: application/json
 {
-  "Nome": "Shay Rodrigues Gomes Souza",
-  "Email": "novoemail@mail.com.br",
-  "SenhaHash": "123asd"
+  "Nome": "{{nome}}",
+  "UnidadeMedida": "{{undMedida}}"
 }
 ###
 

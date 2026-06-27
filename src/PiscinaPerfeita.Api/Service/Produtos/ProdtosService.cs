@@ -20,11 +20,12 @@ namespace PiscinaPerfeita.Api.Service.Produtos
         public async Task<List<ProdutoResponseDto>> Show()
         {
             var produtos = await _produtoRepository.Show();
-            return produtos.Select(u => new ProdutoResponseDto
+            return [.. produtos.Select(u => new ProdutoResponseDto
             {
+                Id = u.Id,
                 Nome = u.Nome,
                 UnidadeMedida = u.UnidadeMedida
-            }).ToList();
+            })];
         }
 
 
@@ -32,8 +33,13 @@ namespace PiscinaPerfeita.Api.Service.Produtos
         public async Task<ProdutoResponseDto> GetById(Guid id)
         {
             var produtos = await _produtoRepository.GetById(id);
+
+            if (produtos == null)
+                throw new KeyNotFoundException($"Produto com id {id} não encontrado.");
+
             return new ProdutoResponseDto
             {
+                Id = produtos.Id,
                 Nome = produtos.Nome,
                 UnidadeMedida = produtos.UnidadeMedida
             };
@@ -54,6 +60,7 @@ namespace PiscinaPerfeita.Api.Service.Produtos
 
             return new ProdutoResponseDto
             {
+                Id = produtos.Id,
                 Nome = produtos.Nome,
                 UnidadeMedida = produtos.UnidadeMedida
             };

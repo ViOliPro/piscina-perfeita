@@ -1,5 +1,4 @@
-﻿using PiscinaPerfeita.Api.Dtos.Response;
-using PiscinaPerfeita.Api.Models;
+﻿using PiscinaPerfeita.Api.Models;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
@@ -19,6 +18,5 @@ namespace PiscinaPerfeita.Api.Dtos.Request
         [DisplayName("Password")]
         public string SenhaHash { get; set; } = string.Empty;
         public Role Role { get; set; }
-        public virtual ICollection<Piscina> Piscinas { get; set; } = new List<Piscina>();
     }
 }

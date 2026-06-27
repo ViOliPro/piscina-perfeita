@@ -63,6 +63,7 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
 
             return new PiscinaResponseDto
             {
+                Id = piscina.Id,
                 Nome = piscina.Nome,
                 VolumeLitros = piscina.VolumeLitros,
                 ProfundidadeMedia = piscina.ProfundidadeMedia

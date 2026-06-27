@@ -1,9 +1,15 @@
 @host=localhost
 @port=5258
 @path=api/Analises
-@query = 1e571394-97d7-4656-9f50-079bd4ab159f
-@queryPost = 1e571394-97d7-4656-9f50-079bd4ab159f
+@query = c713b416-8c0b-4cd1-9d3c-9e3235b39871
 @PiscinaPerfeita.Api_HostAddress=http://{{host}}:{{port}}/{{path}}
+
+@piscinaId = 97d00fb5-d9be-4242-b6b3-d36dd235a5ad
+@ph = 7.0
+@cloro = 7.2
+@alcalinidade = 110
+@temp = 30.9
+@obs = Tudo certo, graças a Deus!
 
 
 GET {{PiscinaPerfeita.Api_HostAddress}}/
@@ -19,12 +25,12 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "PiscinaId": "{{queryPost}}",
-  "Ph": "7.2",
-  "CloroLivre": "5.0",
-  "Alcalinidade": 12,
-  "Temperatura": 28,
-  "Observacao": "Observacao teste"
+  "PiscinaId": "{{piscinaId}}",
+  "Ph": {{ph}},
+  "CloroLivre": {{cloro}},
+  "Alcalinidade": {{alcalinidade}},
+  "Temperatura": {{temp}},
+  "Observacoes": "{{obs}}"
 }
 ###
 
@@ -32,9 +38,12 @@ PUT {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
 Accept: application/json
 Content-Type: application/json
 {
-  "Nome": "Shay Rodrigues Gomes Souza",
-  "Email": "novoemail@mail.com.br",
-  "SenhaHash": "123asd"
+  "PiscinaId": "{{piscinaId}}",
+  "Ph": {ph},
+  "CloroLivre": {{cloro}},
+  "Alcalinidade": {{alcalinidade}},
+  "Temperatura": {{temp}},
+  "Observacao": "{{obs}}"
 }
 ###
 

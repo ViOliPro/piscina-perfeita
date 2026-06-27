@@ -22,7 +22,7 @@ namespace PiscinaPerfeita.Api.Models
 
         public decimal? Temperatura { get; set; }
 
-        public string? Observacoes { get; set; }
+        public string? Observacoes { get; set; } = string.Empty;
 
         [ForeignKey("PiscinaId")]
         public virtual Piscina Piscina { get; set; } = null!;

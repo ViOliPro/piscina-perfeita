@@ -1,14 +1,20 @@
 @host=localhost
 @port=5258
 @path=api/Usuarios
+@query=44629be7-5863-4054-8cb6-5ca242662dcb
 @PiscinaPerfeita.Api_HostAddress=http://{{host}}:{{port}}/{{path}}
+
+@nome = Novo Teste Jequitiba
+@email = novojequitiba@email.com
+@senha = 123456
+@role = 0
 
 
 GET {{PiscinaPerfeita.Api_HostAddress}}/
 Accept: application/json
 ###
 
-GET {{PiscinaPerfeita.Api_HostAddress}}/4892fb54-5e8b-4eb0-8293-7d5dc911ae7d
+GET {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
 Accept: application/json
 ###
 
@@ -17,22 +23,24 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "Nome": "Vinicius Oliveira",
-  "Email": "vinicius@mail.com",
-  "SenhaHash": "123asd"
+  "Nome": "{{nome}}",
+  "Email": "{{email}}",
+  "SenhaHash": "{{senha}}",
+  "Role": {{role}}
 }
 ###
 
-PUT {{PiscinaPerfeita.Api_HostAddress}}/ed880ca1-e74a-4c16-8791-a9f8da0a2efa
+PUT {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
 Accept: application/json
 Content-Type: application/json
 {
-  "Nome": "Shay Rodrigues Gomes Souza",
-  "Email": "novoemail@mail.com.br",
-  "SenhaHash": "123asd"
+  "Nome": "{{nome}}",
+  "Email": "{{email}}",
+  "SenhaHash": "{{senha}}",
+  "Role": {{role}}
 }
 ###
 
-DELETE {{PiscinaPerfeita.Api_HostAddress}}/4892fb54-5e8b-4eb0-8293-7d5dc911ae7d
+DELETE {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
 Accept: application/json
 ###

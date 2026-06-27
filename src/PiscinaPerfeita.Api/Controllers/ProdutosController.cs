@@ -43,9 +43,16 @@ namespace PiscinaPerfeita.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<ProdutoResponseDto>> Create(ProdutoRequestDto dto)
         {
-            var user = await _produtosService.Create(dto);
+            try
+            {
+                var user = await _produtosService.Create(dto);
 
-            return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
+                return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
+            }
+            catch(KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
         }
 
         [HttpPut("{id}")]

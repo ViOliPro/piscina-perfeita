@@ -1,4 +1,5 @@
 ﻿using PiscinaPerfeita.Api.Models;
+using System.Text.Json.Serialization;
 
 namespace PiscinaPerfeita.Api.Dtos.Response
 {
@@ -9,9 +10,12 @@ namespace PiscinaPerfeita.Api.Dtos.Response
         public string Nome { get; set; } = string.Empty;
 
         public string?Email { get; set; } = string.Empty;
+        public Role Role { get; set; }
 
         public DateTimeOffset? CreatedAt { get; set; }
 
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public ICollection<UsuarioPiscinaResponseDto> Piscinas { get; set; } = new List<UsuarioPiscinaResponseDto>();
     }
 }

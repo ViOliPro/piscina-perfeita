@@ -34,7 +34,7 @@ public class AnaliseRepository : IAnaliseRepository
 
     public async Task<AnaliseResponseDto?> GetById(Guid id)
     {
-        var analise = await _context.Analises.Select(a => new AnaliseResponseDto
+        var analise = await _context.Analises.Where(e => e.Id == id).Select(a => new AnaliseResponseDto
         {
             Id = a.Id,
             DataAnalise = a.DataAnalise,

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using PiscinaPerfeita.Api.Dtos.Request;
+﻿using System.Text.Json.Serialization;
 
 namespace PiscinaPerfeita.Api.Dtos.Response;
 
@@ -15,12 +13,24 @@ public class PiscinaResponseDto
     public decimal? ProfundidadeMedia { get; set; }
 
     public DateTimeOffset? CreatedAt { get; set; }
+
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public UsuarioPiscinaResponseDto? UsuarioPiscina { get; set; } = new UsuarioPiscinaResponseDto();
 
+
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public virtual ICollection<AnalisePiscinaResponseDto> AnalisePiscina { get; set; } = new List<AnalisePiscinaResponseDto>();
 
+
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public virtual ICollection<EstoquePiscinaResponseDto> Estoques { get; set; } = new List<EstoquePiscinaResponseDto>();
 
+
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public virtual ICollection<MovimentacaoEstoquePiscinaResponsetDto> MovimentacoesEstoques { get; set; } = new List<MovimentacaoEstoquePiscinaResponsetDto>();
 }
 

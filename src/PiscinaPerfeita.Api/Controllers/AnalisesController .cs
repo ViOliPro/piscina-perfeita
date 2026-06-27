@@ -39,7 +39,7 @@ namespace PiscinaPerfeita.Api.Controllers
             }
         }
 
-        // 3. POST: api/clientes (Insere um dado novo que aparecerá no pgAdmin)
+        // 3. POST: api/analises
         [HttpPost]
         public async Task<ActionResult<AnaliseResponseDto>> Create(AnaliseRequestDto dto)
         {

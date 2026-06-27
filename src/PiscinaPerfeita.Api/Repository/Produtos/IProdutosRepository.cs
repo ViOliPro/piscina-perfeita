@@ -1,13 +1,14 @@
 ﻿using PiscinaPerfeita.Api.Models;
+using PiscinaPerfeita.Api.Dtos.Response;
 
 namespace PiscinaPerfeita.Api.Repository.Produtos
 {
     public interface IProdutoRepository
     {
 
-        Task<List<Produto>> Show();
+        Task<List<ProdutoResponseDto>> Show();
 
-        Task<Produto> GetById(Guid id);
+        Task<ProdutoResponseDto?> GetById(Guid id);
 
         Task Create(Produto produto);
 

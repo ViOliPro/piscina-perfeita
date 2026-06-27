@@ -1,4 +1,5 @@
 ﻿using PiscinaPerfeita.Api.Models;
+using System.Text.Json.Serialization;
 
 namespace PiscinaPerfeita.Api.Dtos.Response
 {
@@ -6,6 +7,7 @@ namespace PiscinaPerfeita.Api.Dtos.Response
     {
         public Guid Id { get; set; }
 
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public PiscinaOrigem? Piscina { get; set; } = new PiscinaOrigem();
 
         public DateTimeOffset DataAnalise { get; set; }
