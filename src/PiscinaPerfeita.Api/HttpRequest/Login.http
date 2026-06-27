@@ -1,0 +1,14 @@
+### --- AUTENTICAÇÃO (ACCOUNT) ---
+@host=localhost
+@port=5258
+@accountPath = api/Account
+
+# POST para realizar o login e obter o Token
+POST http://{{host}}:{{port}}/{{accountPath}}/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "novojequitiba@email.com",
+  "password": "123456"
+}

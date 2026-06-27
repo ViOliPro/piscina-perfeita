@@ -19,4 +19,5 @@ namespace PiscinaPerfeita.Api.Dtos.Request
         public string SenhaHash { get; set; } = string.Empty;
         public Role Role { get; set; }
     }
+
 }

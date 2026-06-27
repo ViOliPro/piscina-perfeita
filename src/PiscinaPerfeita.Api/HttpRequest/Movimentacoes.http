@@ -13,10 +13,12 @@
 
 GET {{PiscinaPerfeita.Api_HostAddress}}/
 Accept: application/json
+Authorization: Bearer {{token}}
 ###
 
 GET {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
 Accept: application/json
+Authorization: Bearer {{token}}
 ###
 
 POST {{PiscinaPerfeita.Api_HostAddress}}
@@ -35,6 +37,7 @@ Accept: application/json
 PUT {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
 Accept: application/json
 Content-Type: application/json
+Authorization: Bearer {{token}}
 {
   "PiscinaId": "{{piscinaId}}",
   "ProdutoId": "{{produtoId}}",
@@ -45,4 +48,5 @@ Content-Type: application/json
 ###
 
 DELETE {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
+Authorization: Bearer {{token}}
 ###

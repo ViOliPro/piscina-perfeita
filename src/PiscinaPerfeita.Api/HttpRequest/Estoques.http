@@ -8,8 +8,12 @@
 @produtoId= 1d1b7e36-9f9d-41d6-838a-7e7dd15cd68a
 @qtdAtual= 2
 
+//Token Jwt apos login
+@token
+
 GET {{PiscinaPerfeita.Api_HostAddress}}/
 Accept: application/json
+Authorization: Bearer {{token}}
 ###
 
 GET {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
@@ -19,6 +23,7 @@ Accept: application/json
 POST {{PiscinaPerfeita.Api_HostAddress}}
 Content-Type: application/json
 Accept: application/json
+Authorization: Bearer {{token}}
 
 {
   "PiscinaId": "{{piscinaId}}",
@@ -30,6 +35,7 @@ Accept: application/json
 PUT {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
 Accept: application/json
 Content-Type: application/json
+Authorization: Bearer {{token}}
 {
   "PiscinaId": "{{piscinaId}}",
   "ProdutoId": "{{produtoId}}",
@@ -38,4 +44,5 @@ Content-Type: application/json
 ###
 
 DELETE {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
+Authorization: Bearer {{token}}
 ###
