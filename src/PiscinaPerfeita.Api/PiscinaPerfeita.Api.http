@@ -1,0 +1,37 @@
+@host=localhost
+@port=5258
+@PiscinaPerfeita.Api_HostAddress=http://{{host}}:{{port}}
+
+
+GET {{PiscinaPerfeita.Api_HostAddress}}/api/Usuarios/
+Accept: application/json
+###
+
+GET {{PiscinaPerfeita.Api_HostAddress}}/api/Usuarios/16c61e28-2613-4f73-b0e7-131331812432
+Accept: application/json
+###
+
+POST {{PiscinaPerfeita.Api_HostAddress}}/api/Usuarios/
+Content-Type: application/json
+Accept: application/json
+
+{
+  "Nome": "Shayene Fernandes Rabelo",
+  "Email": "rabelo@mail.com.br",
+  "SenhaHash": "123asd"
+}
+###
+
+PUT {{PiscinaPerfeita.Api_HostAddress}}/api/Usuarios/d89d2bba-7c91-4a34-a51c-7486e2e6bbcc
+Accept: application/json
+Content-Type: application/json
+{
+  "Nome": "Shay Rodrigues Gomes Souza",
+  "Email": "novoemail@mail.com.br",
+  "SenhaHash": "123asd"
+}
+###
+
+DELETE {{PiscinaPerfeita.Api_HostAddress}}/api/Usuarios/16c61e28-2613-4f73-b0e7-131331812432
+Accept: application/json
+###
