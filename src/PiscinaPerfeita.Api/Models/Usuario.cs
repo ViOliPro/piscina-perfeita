@@ -12,7 +12,7 @@ namespace PiscinaPerfeita.Api.Models
         public string Nome { get; set; } = null!;
         public string? Email { get; set; }
         public string? SenhaHash { get; set; }
-        public Role Role { get; set; }
+        public Role? Role { get; set; }
 
         [Column("CreatedAt")]
         public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
@@ -20,7 +20,7 @@ namespace PiscinaPerfeita.Api.Models
     }
     public enum Role
     {
-        Admin,
-        User
+        Admin = 0,
+        User = 1
     }
 }
