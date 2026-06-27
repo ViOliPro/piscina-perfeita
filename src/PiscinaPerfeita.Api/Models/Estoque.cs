@@ -1,13 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PiscinaPerfeita.Api.Models;
 
-[Table("Estoque")]
+[Table("Estoques", Schema = "piscina-perfeita")]
 public partial class Estoque
 {
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    [Key]
     public Guid Id { get; set; }
 
     public Guid PiscinaId { get; set; }
@@ -16,7 +16,9 @@ public partial class Estoque
 
     public decimal? QuantidadeAtual { get; set; }
 
+    [ForeignKey("PiscinaId")]
     public virtual Piscina Piscina { get; set; } = null!;
 
+    [ForeignKey("ProdutoId")]
     public virtual Produto Produto { get; set; } = null!;
 }

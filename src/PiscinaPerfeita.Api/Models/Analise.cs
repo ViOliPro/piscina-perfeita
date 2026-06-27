@@ -3,16 +3,16 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PiscinaPerfeita.Api.Models
 {
-    [Table("Analises")]
+    [Table("Analises", Schema = "piscina-perfeita")]
     public class Analise
     {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public Guid Id { get; set; }
 
-        [Required()]
         public Guid PiscinaId { get; set; }
 
-        public DateTimeOffset DataAnalise { get; set; }
+        public DateTimeOffset DataAnalise { get; set; } = DateTimeOffset.UtcNow;
 
         public decimal? Ph { get; set; }
 
@@ -20,9 +20,9 @@ namespace PiscinaPerfeita.Api.Models
 
         public decimal? Alcalinidade { get; set; }
 
-        public List<decimal>? Temperatura { get; set; }
+        public decimal? Temperatura { get; set; }
 
-        public string? Observacoes { get; set; }
+        public string? Observacoes { get; set; } = string.Empty;
 
         [ForeignKey("PiscinaId")]
         public virtual Piscina Piscina { get; set; } = null!;

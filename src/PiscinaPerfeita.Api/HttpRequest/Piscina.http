@@ -1,0 +1,45 @@
+@host=localhost
+@port=5258
+@path=api/Piscinas
+@query = 97d00fb5-d9be-4242-b6b3-d36dd235a5ad
+@PiscinaPerfeita.Api_HostAddress=http://{{host}}:{{port}}/{{path}}
+
+@userId = 2a1a2b9b-fb0b-4084-93b0-9413e66c8e86
+@vlmL = 180000
+@nome = Nova Piscina Jequitiba
+@profundidadeMedia = 1.70
+
+
+GET {{PiscinaPerfeita.Api_HostAddress}}/
+Accept: application/json
+###
+
+GET {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
+Accept: application/json
+###
+
+POST {{PiscinaPerfeita.Api_HostAddress}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "UsuarioId": "{{userId}}",
+  "VolumeLitros": {{vlmL}},
+  "Nome": "{{nome}}",
+  "ProfundidadeMedia": {{profundidadeMedia}}
+}
+###
+
+PUT {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
+Accept: application/json
+Content-Type: application/json
+{
+  "UsuarioId": "{{userId}}",
+  "VolumeLitros": {{vlmL}},
+  "Nome": "{{nome}}",
+  "ProfundidadeMedia": {{profundidadeMedia}}
+}
+###
+
+DELETE {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
+###

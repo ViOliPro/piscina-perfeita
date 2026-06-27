@@ -1,13 +1,14 @@
 ﻿using PiscinaPerfeita.Api.Models;
+using PiscinaPerfeita.Api.Dtos.Response;
 
 namespace PiscinaPerfeita.Api.Repository.Usuarios
 {
     public interface IUsuarioRepository
     {
 
-        Task<List<Usuario>> Show();
+        Task<List<UsuarioResponseDto>> Show();
 
-        Task<Usuario> GetById(Guid id);
+        Task<UsuarioResponseDto?> GetById(Guid id);
 
         Task Create(Usuario usuario);
 

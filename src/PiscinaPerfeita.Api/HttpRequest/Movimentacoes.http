@@ -1,0 +1,48 @@
+@host=localhost
+@port=5258
+@path=api/Movimentacoes
+@query = de216e8d-a118-455e-94f1-f30aa125f59e
+@PiscinaPerfeita.Api_HostAddress=http://{{host}}:{{port}}/{{path}}
+
+@piscinaId = 97d00fb5-d9be-4242-b6b3-d36dd235a5ad
+@produtoId = 1d1b7e36-9f9d-41d6-838a-7e7dd15cd68a
+@tipo = 0
+@qtd = 5
+@valor = 19,99
+
+
+GET {{PiscinaPerfeita.Api_HostAddress}}/
+Accept: application/json
+###
+
+GET {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
+Accept: application/json
+###
+
+POST {{PiscinaPerfeita.Api_HostAddress}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "PiscinaId": "{{piscinaId}}",
+  "ProdutoId": "{{produtoId}}",
+  "TipoMovimentacao": {{tipo}},
+  "Quantidade": {{qtd}},
+  "Valor": {{valor}}
+}
+###
+
+PUT {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
+Accept: application/json
+Content-Type: application/json
+{
+  "PiscinaId": "{{piscinaId}}",
+  "ProdutoId": "{{produtoId}}",
+  "TipoMovimentacao": {{tipo}},
+  "Quantidade": {{qtd}},
+  "Valor": {{valor}}
+}
+###
+
+DELETE {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
+###

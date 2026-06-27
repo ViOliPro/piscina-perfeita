@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using PiscinaPerfeita.Api.Dtos.Request;
+﻿using System.Text.Json.Serialization;
 
 namespace PiscinaPerfeita.Api.Dtos.Response;
 
-public partial class PiscinaResponseDto
+public class PiscinaResponseDto
 {
     public Guid Id { get; set; }
-
-    public Guid UsuarioId { get; set; }
 
     public string Nome { get; set; } = null!;
 
@@ -16,12 +12,49 @@ public partial class PiscinaResponseDto
 
     public decimal? ProfundidadeMedia { get; set; }
 
-    public TimeOnly? CreatedAt { get; set; }
+    public DateTimeOffset? CreatedAt { get; set; }
 
-    public virtual ICollection<AnaliseRequestDto> Analises { get; set; } = new List<AnaliseRequestDto>();
 
-    public virtual ICollection<EstoqueResponseDto> Estoques { get; set; } = new List<EstoqueResponseDto>();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public UsuarioPiscinaResponseDto? UsuarioPiscina { get; set; } = new UsuarioPiscinaResponseDto();
 
-    public virtual ICollection<MovimentacoesEstoqueRequestDto> MovimentacoesEstoques { get; set; } = new List<MovimentacoesEstoqueRequestDto>();
 
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public virtual ICollection<AnalisePiscinaResponseDto> AnalisePiscina { get; set; } = new List<AnalisePiscinaResponseDto>();
+
+
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public virtual ICollection<EstoquePiscinaResponseDto> Estoques { get; set; } = new List<EstoquePiscinaResponseDto>();
+
+
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public virtual ICollection<MovimentacaoEstoquePiscinaResponsetDto> MovimentacoesEstoques { get; set; } = new List<MovimentacaoEstoquePiscinaResponsetDto>();
+}
+
+public class UsuarioPiscinaResponseDto
+{
+    public Guid Id { get; set; }
+    public string Nome { get; set; } = null!;
+}
+
+public class AnalisePiscinaResponseDto
+{
+    public Guid Id { get; set; }
+    public DateTimeOffset DataAnalise { get; set; }
+}
+
+public class EstoquePiscinaResponseDto
+{
+    public Guid Id { get; set; }
+    public string Nome { get; set; } = null!;
+}
+
+public class MovimentacaoEstoquePiscinaResponsetDto
+{
+    public Guid Id { get; set; }
+    public string Nome { get; set; } = null!;
+    public DateTimeOffset DataMovimentacao { get; set; }
 }

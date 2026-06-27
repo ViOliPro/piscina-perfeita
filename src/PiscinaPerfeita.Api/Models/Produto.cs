@@ -1,19 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using PiscinaPerfeita.Api.Dtos.Request;
-using PiscinaPerfeita.Api.Dtos.Response;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PiscinaPerfeita.Api.Models;
 
+[Table("Produtos", Schema = "piscina-perfeita")]
 public partial class Produto
 {
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    [Key]
     public Guid Id { get; set; }
-
     public string Nome { get; set; } = string.Empty;
-
     public string UnidadeMedida { get; set; } = string.Empty;
-
-    public virtual ICollection<EstoqueResponseDto> Estoques { get; set; } = new List<EstoqueResponseDto>();
-
-    public virtual ICollection<MovimentacoesEstoqueRequestDto> MovimentacoesEstoques { get; set; } = new List<MovimentacoesEstoqueRequestDto>();
+    public virtual ICollection<Estoque> Estoques { get; set; } = new List<Estoque>();
+    public virtual ICollection<MovimentacaoEstoque> MovimentacoesEstoques { get; set; } = new List<MovimentacaoEstoque>();
 }

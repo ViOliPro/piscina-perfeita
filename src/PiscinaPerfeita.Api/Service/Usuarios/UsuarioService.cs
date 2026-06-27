@@ -7,46 +7,39 @@ using PiscinaPerfeita.Api.Repository.Analises;
 
 namespace PiscinaPerfeita.Api.Service.Usuarios
 {
-    public class EstoqueService : IEstoquesService
+    public class UsuarioService : IUsuarioService
     {
         private readonly IUsuarioRepository _usuariosRepository;
 
-        public EstoqueService(IUsuarioRepository usuariosRepository)
+        public UsuarioService(IUsuarioRepository usuariosRepository)
         {
             _usuariosRepository = usuariosRepository ?? throw new ArgumentNullException(nameof(usuariosRepository));
         }
 
         public async Task<List<UsuarioResponseDto>> Show()
         {
-            var usuarios = await _usuariosRepository.Show();
-            return usuarios.Select(u => new UsuarioResponseDto
-            {
-                Id = u.Id,
-                Nome = u.Nome,
-                Email = u.Email
-            }).ToList();
+            return await _usuariosRepository.Show();
         }
 
         public async Task<UsuarioResponseDto> GetById(Guid id)
         {
-            var usuario = await _usuariosRepository.GetById(id);
-            return new UsuarioResponseDto
+            var usuarioDb = await _usuariosRepository.GetById(id);
+            if(usuarioDb == null)
             {
-                Id = usuario.Id,
-                Nome = usuario.Nome,
-                Email = usuario.Email
-            };
+                throw new KeyNotFoundException($"Usuario com id {id} não encontrado");
+            }
+
+            return usuarioDb;
         }
 
         public async Task<UsuarioResponseDto> Create(UsuarioRequestDto dto)
         {
-            var novoId = dto.Id == Guid.Empty ? Guid.NewGuid() : dto.Id;
             var usuario = new Usuario
             {
-                Id = novoId,
                 Nome = dto.Nome,
                 Email = dto.Email,
-                Senhahash = BCrypt.Net.BCrypt.HashPassword(dto.SenhaHash)
+                SenhaHash = BCrypt.Net.BCrypt.HashPassword(dto.SenhaHash),
+                Role = dto.Role
             };
 
             await _usuariosRepository.Create(usuario);
@@ -56,22 +49,32 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             {
                 Id = usuario.Id,
                 Nome = usuario.Nome,
-                Email = usuario.Email
+                Email = usuario.Email,
+                Role = usuario.Role
             };
         }
 
         public async Task<UsuarioResponseDto> Update(Guid id, UsuarioRequestDto dto)
         {
-            var usuarioDb = await _usuariosRepository.GetById(id);
-            if (usuarioDb == null)
+            if(id == Guid.Empty)
+            {
+                throw new ArgumentException($"O id informado não pode ser vazio {nameof(id)} .");
+            }
+
+            var usuario = await _usuariosRepository.GetById(id);
+            if (usuario == null)
             {
                 throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
             }
 
-            usuarioDb.Nome = dto.Nome;
-            usuarioDb.Email = dto.Email;
-            usuarioDb.Senhahash = dto.SenhaHash;
-
+            var usuarioDb = new Usuario
+            {
+                Id = usuario.Id,
+                Nome = dto.Nome,
+                Email = dto.Email,
+                SenhaHash = dto.SenhaHash,
+            };
+       
             await _usuariosRepository.Update(id, usuarioDb);
 
             return new UsuarioResponseDto

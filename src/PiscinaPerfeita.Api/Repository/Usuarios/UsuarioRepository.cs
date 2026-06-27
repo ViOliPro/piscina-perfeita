@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PiscinaPerfeita.Api.Models;
+using PiscinaPerfeita.Api.Dtos.Response;
 
 namespace PiscinaPerfeita.Api.Repository.Usuarios;
 
@@ -12,18 +13,42 @@ public class UsuarioRepository : IUsuarioRepository
         _context = context ?? throw new ArgumentNullException(nameof(context));
     }
 
-    public async Task<List<Usuario>> Show()
+    public async Task<List<UsuarioResponseDto>> Show()
     {
-        return await _context.Usuarios.ToListAsync();
+        return await _context.Usuarios.Select(u => new UsuarioResponseDto
+        {
+            Id = u.Id,
+            Nome = u.Nome,
+            Email = u.Email,
+            CreatedAt = u.CreatedAt,
+            Piscinas = u.Piscinas.Where(p => p.UsuarioId == u.Id)
+            .Select(p => new UsuarioPiscinaResponseDto
+            {
+                Id = p.Id,
+                Nome = p.Nome
+            }).ToList()
+        }).ToListAsync();
     }
 
-    public async Task<Usuario> GetById(Guid id)
+    public async Task<UsuarioResponseDto?> GetById(Guid id)
     {
-        var user = await _context.Usuarios.FirstOrDefaultAsync(u => u.Id == id);
-        if(user == null)
-            throw new KeyNotFoundException($"Usuário com ID {id} não encontrado.");
+        var usuarioDto = await _context.Usuarios
+            .Where(u => u.Id == id)
+            .Select(u => new UsuarioResponseDto
+            {
+                Id = u.Id,
+                Nome = u.Nome,
+                Email = u.Email,
+                CreatedAt = u.CreatedAt,
+                Piscinas = u.Piscinas.Where(p => p.UsuarioId == id)
+                            .Select(p => new UsuarioPiscinaResponseDto
+                            {
+                                Id = p.Id,
+                                Nome = p.Nome
+                            }).ToList()
+            }).FirstOrDefaultAsync();
 
-        return user;
+        return usuarioDto ?? null;
     }
 
     public async Task Create(Usuario usuario)
@@ -40,7 +65,7 @@ public class UsuarioRepository : IUsuarioRepository
 
         user.Nome = usuario.Nome;
         user.Email = usuario.Email;
-        user.Senhahash = usuario.Senhahash;
+        user.SenhaHash = usuario.SenhaHash;
 
         await _context.SaveChangesAsync();
 

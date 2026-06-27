@@ -1,0 +1,46 @@
+@host=localhost
+@port=5258
+@path=api/Usuarios
+@query=44629be7-5863-4054-8cb6-5ca242662dcb
+@PiscinaPerfeita.Api_HostAddress=http://{{host}}:{{port}}/{{path}}
+
+@nome = Novo Teste Jequitiba
+@email = novojequitiba@email.com
+@senha = 123456
+@role = 0
+
+
+GET {{PiscinaPerfeita.Api_HostAddress}}/
+Accept: application/json
+###
+
+GET {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
+Accept: application/json
+###
+
+POST {{PiscinaPerfeita.Api_HostAddress}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "Nome": "{{nome}}",
+  "Email": "{{email}}",
+  "SenhaHash": "{{senha}}",
+  "Role": {{role}}
+}
+###
+
+PUT {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
+Accept: application/json
+Content-Type: application/json
+{
+  "Nome": "{{nome}}",
+  "Email": "{{email}}",
+  "SenhaHash": "{{senha}}",
+  "Role": {{role}}
+}
+###
+
+DELETE {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
+Accept: application/json
+###
