@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Service.Analises;
@@ -22,8 +23,15 @@ namespace PiscinaPerfeita.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<AnaliseResponseDto>>> Get()
         {
-            var analises = await _analisesService.Show();
-            return Ok(analises);
+            try
+            {
+                var analises = await _analisesService.Show();
+                return Ok(analises);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         // 2. GET: api/clientes/id (Retorna o registro com id)
@@ -45,9 +53,16 @@ namespace PiscinaPerfeita.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<AnaliseResponseDto>> Create(AnaliseRequestDto dto)
         {
-            var user = await _analisesService.Create(dto);
+            try
+            {
+                var user = await _analisesService.Create(dto);
 
-            return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
+                return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
+            }
+            catch (KeyNotFoundException ex )
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPut("{id}")]

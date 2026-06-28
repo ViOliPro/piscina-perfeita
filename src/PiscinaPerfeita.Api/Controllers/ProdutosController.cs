@@ -22,8 +22,15 @@ namespace PiscinaPerfeita.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ProdutoResponseDto>>> Get()
         {
-            var produtos = await _produtosService.Show();
-            return Ok(produtos);
+            try
+            {
+                var produtos = await _produtosService.Show();
+                return Ok(produtos);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         // 2. GET: api/clientes/id (Retorna o registro com id)
@@ -51,7 +58,7 @@ namespace PiscinaPerfeita.Api.Controllers
 
                 return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
             }
-            catch(KeyNotFoundException ex)
+            catch (KeyNotFoundException ex)
             {
                 return NotFound(new { message = ex.Message });
             }

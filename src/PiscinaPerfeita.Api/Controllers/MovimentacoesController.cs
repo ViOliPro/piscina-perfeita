@@ -22,8 +22,15 @@ namespace PiscinaPerfeita.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<MovimentacaoEstoqueResponseDto>>> Get()
         {
-            var movimentacoes = await _movimentacoesService.Show();
-            return Ok(movimentacoes);
+            try
+            {
+                var movimentacoes = await _movimentacoesService.Show();
+                return Ok(movimentacoes);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         // 2. GET: api/clientes/id (Retorna o registro com id)
@@ -45,9 +52,16 @@ namespace PiscinaPerfeita.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<MovimentacaoEstoqueResponseDto>> Create(MovimentacaoEstoqueRequestDto dto)
         {
-            var user = await _movimentacoesService.Create(dto);
+            try
+            {
+                var user = await _movimentacoesService.Create(dto);
 
-            return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
+                return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
+            } 
+            catch (KeyNotFoundException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPut("{id}")]
