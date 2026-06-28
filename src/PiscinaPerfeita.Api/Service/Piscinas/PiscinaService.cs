@@ -1,8 +1,9 @@
 ﻿using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
+using PiscinaPerfeita.Api.Helpers.Authenticated;
+using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Repository.Piscinas;
 using PiscinaPerfeita.Api.Repository.Usuarios;
-using PiscinaPerfeita.Api.Models;
 
 namespace PiscinaPerfeita.Api.Service.Piscinas
 {
@@ -10,11 +11,14 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
     {
         private readonly IPiscinaRepository _piscinaRepository;
         private readonly IUsuarioRepository _usuarioRepository;
+        private readonly IAuthenticatedUser _user;
+        
 
-        public PiscinaService(IPiscinaRepository piscinaRepository, IUsuarioRepository usuarioRepository)
+        public PiscinaService(IPiscinaRepository piscinaRepository, IUsuarioRepository usuarioRepository, IAuthenticatedUser user)
         {
             _piscinaRepository = piscinaRepository ?? throw new ArgumentNullException(nameof(piscinaRepository));
             _usuarioRepository = usuarioRepository ?? throw new ArgumentNullException(nameof(usuarioRepository));
+            _user = user ?? throw new ArgumentNullException(nameof(user));
         }
 
 
@@ -43,6 +47,7 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
         // Metodo Create: Cria um novo piscina com base nos dados fornecidos.
         public async Task<PiscinaResponseDto> Create(PiscinaRequestDto dto)
         {
+
             var usuario = await _usuarioRepository.GetById(dto.UsuarioId);
 
             if(usuario == null)
@@ -55,7 +60,7 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
                 Nome = dto.Nome,
                 VolumeLitros = dto.VolumeLitros,
                 ProfundidadeMedia = dto.ProfundidadeMedia,
-                UsuarioId = usuario.Id
+                UsuarioId = _user.GetUserId()
             };
 
             await _piscinaRepository.Create(piscina);

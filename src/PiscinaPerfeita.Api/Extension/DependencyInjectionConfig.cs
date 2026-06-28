@@ -11,6 +11,7 @@ using PiscinaPerfeita.Api.Repository.Piscinas;
 using PiscinaPerfeita.Api.Service.Produtos;
 using PiscinaPerfeita.Api.Repository.Produtos;
 using PiscinaPerfeita.Api.Service.Account;
+using PiscinaPerfeita.Api.Helpers.Authenticated;
 
 
 
@@ -28,6 +29,8 @@ namespace PiscinaPerfeita.Api.Extension
             services.AddScoped<IAnaliseService, AnaliseService>();
             services.AddScoped<IMovimentacaoService, MovimentacaoService>();
             services.AddScoped<IAccountService, AccountService>();
+            //Autheticated
+            services.AddScoped<IAuthenticatedUser, AuthenticatedUser>();
 
 
             // 2. Registre aqui todos os seus Repositories

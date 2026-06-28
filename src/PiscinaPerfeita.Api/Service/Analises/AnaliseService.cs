@@ -2,16 +2,19 @@
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Repository.Analises;
 using PiscinaPerfeita.Api.Models;
+using PiscinaPerfeita.Api.Helpers.Authenticated;
 
 namespace PiscinaPerfeita.Api.Service.Analises
 {
     public class AnaliseService : IAnaliseService
     {
         private readonly IAnaliseRepository _analiseRepository;
+        private readonly IAuthenticatedUser _user;
 
-        public AnaliseService(IAnaliseRepository analisesRepository)
+        public AnaliseService(IAnaliseRepository analisesRepository, IAuthenticatedUser user)
         {
             _analiseRepository = analisesRepository ?? throw new ArgumentNullException(nameof(analisesRepository));
+            _user = user ?? throw new ArgumentNullException(nameof(user));
         }
 
 
@@ -40,9 +43,11 @@ namespace PiscinaPerfeita.Api.Service.Analises
         // Metodo Create: Cria um novo Analise com base nos dados fornecidos, incluindo as informações relacionadas de piscina e produto.
         public async Task<AnaliseResponseDto> Create(AnaliseRequestDto dto)
         {
+
             var analise = new Analise
             {
                 PiscinaId = dto.PiscinaId,
+                UsuarioId = _user.GetUserId(),
                 Ph = dto.Ph,
                 CloroLivre = dto.CloroLivre,
                 Alcalinidade = dto.Alcalinidade,

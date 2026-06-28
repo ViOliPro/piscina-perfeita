@@ -9,9 +9,13 @@ namespace PiscinaPerfeita.Api.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Key]
         public Guid Id { get; set; }
+
         public string Nome { get; set; } = null!;
+
         public string? Email { get; set; }
+
         public string? SenhaHash { get; set; }
+
         public Role Role { get; set; }
 
         [Column("CreatedAt")]

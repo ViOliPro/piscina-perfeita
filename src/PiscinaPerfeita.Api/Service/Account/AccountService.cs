@@ -46,6 +46,7 @@ namespace PiscinaPerfeita.Api.Service.Account
             {
                 Subject = new ClaimsIdentity(new[]
                 {
+                    new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
                     new Claim(ClaimTypes.Email, usuario.Email ?? string.Empty),
                     new Claim(ClaimTypes.Role, usuario.Role.ToString()),
                     new Claim(ClaimTypes.Name, usuario.Nome ?? string.Empty)
@@ -67,7 +68,6 @@ namespace PiscinaPerfeita.Api.Service.Account
                 expiresIn = 28800, // 8 horas em segundos
                 User = new UserResponseDto
                 {
-                    UserId = usuario.Id,
                     Nome = usuario.Nome ?? string.Empty,
                     Email = usuario.Email ?? string.Empty,
                     Role = usuario.Role // Garanta o mapeamento correto do tipo numérico da Role

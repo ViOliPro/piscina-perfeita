@@ -47,7 +47,6 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
 
             return new UsuarioResponseDto
             {
-                Id = usuario.Id,
                 Nome = usuario.Nome,
                 Email = usuario.Email,
                 Role = usuario.Role
@@ -69,7 +68,7 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
 
             var usuarioDb = new Usuario
             {
-                Id = usuario.Id,
+                Id = id,
                 Nome = dto.Nome,
                 Email = dto.Email,
                 SenhaHash = dto.SenhaHash,
@@ -79,7 +78,6 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
 
             return new UsuarioResponseDto
             {
-                Id = usuarioDb.Id,
                 Nome = usuarioDb.Nome,
                 Email = usuarioDb.Email
             };

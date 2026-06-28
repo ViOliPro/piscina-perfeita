@@ -68,8 +68,23 @@ builder.Services.AddDbContext<PiscinaPerfeitaContext>(options =>
 // Injecao de dependecias
 builder.Services.ResolveDependencies();
 
+// Injecao para utilizar o IHttpContextAccessor
+builder.Services.AddHttpContextAccessor();
+
+// CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AppCors", policy =>
+    {
+        policy.AllowAnyOrigin() // Em produção, mude para o domínio do seu front
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 try
 {
+    // Inicializacao
     var app = builder.Build();
 
     if (app.Environment.IsDevelopment() && Assembly.GetEntryAssembly()?.GetName().Name != "ef")
@@ -79,6 +94,7 @@ try
 
     app.UseRequestLocalization(localizationOptions);
     app.UseHttpsRedirection();
+    app.UseCors("AppCors");
     app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();

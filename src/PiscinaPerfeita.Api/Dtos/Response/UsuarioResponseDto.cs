@@ -6,7 +6,7 @@ namespace PiscinaPerfeita.Api.Dtos.Response
 {
     public class UsuarioResponseDto
     {
-        public Guid Id { get; set; }
+        public Guid? Id { get; set; }
 
         public string Nome { get; set; } = string.Empty;
 
@@ -23,8 +23,6 @@ namespace PiscinaPerfeita.Api.Dtos.Response
 
     public class LoginUsuarioResponseDto
     {
-
-        public Guid Id { get; set; }
         public string Nome { get; set; } = string.Empty;
 
         public string? Email { get; set; } = string.Empty;
