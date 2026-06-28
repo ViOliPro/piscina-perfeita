@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PiscinaPerfeita.Api.Data;
@@ -11,9 +12,11 @@ using PiscinaPerfeita.Api.Data;
 namespace PiscinaPerfeita.Api.Migrations
 {
     [DbContext(typeof(PiscinaPerfeitaContext))]
-    partial class PiscinaPerfeitaContextModelSnapshot : ModelSnapshot
+    [Migration("20260628212701_addUsuarioIdAtribu")]
+    partial class addUsuarioIdAtribu
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -102,18 +105,18 @@ namespace PiscinaPerfeita.Api.Migrations
                         .HasColumnName("usuarioid");
 
                     b.HasKey("Id")
-                        .HasName("pk_estoques");
+                        .HasName("pk_estoque");
 
                     b.HasIndex("PiscinaId")
-                        .HasDatabaseName("ix_estoques_piscinaid");
+                        .HasDatabaseName("ix_estoque_piscinaid");
 
                     b.HasIndex("ProdutoId")
-                        .HasDatabaseName("ix_estoques_produtoid");
+                        .HasDatabaseName("ix_estoque_produtoid");
 
                     b.HasIndex("UsuarioId")
-                        .HasDatabaseName("ix_estoques_usuarioid");
+                        .HasDatabaseName("ix_estoque_usuarioid");
 
-                    b.ToTable("Estoques", "piscina-perfeita");
+                    b.ToTable("Estoque", "piscina-perfeita");
                 });
 
             modelBuilder.Entity("PiscinaPerfeita.Api.Models.MovimentacaoEstoque", b =>
@@ -264,7 +267,7 @@ namespace PiscinaPerfeita.Api.Migrations
                     b.HasKey("Id")
                         .HasName("pk_usuarios");
 
-                    b.ToTable("Usuarios", "piscina-perfeita");
+                    b.ToTable("usuarios", "piscina-perfeita");
                 });
 
             modelBuilder.Entity("PiscinaPerfeita.Api.Models.Analise", b =>
@@ -295,21 +298,21 @@ namespace PiscinaPerfeita.Api.Migrations
                         .HasForeignKey("PiscinaId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_estoques_piscinas_piscinaid");
+                        .HasConstraintName("fk_estoque_piscinas_piscinaid");
 
                     b.HasOne("PiscinaPerfeita.Api.Models.Produto", "Produto")
                         .WithMany("Estoques")
                         .HasForeignKey("ProdutoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_estoques_produtos_produtoid");
+                        .HasConstraintName("fk_estoque_produtos_produtoid");
 
                     b.HasOne("PiscinaPerfeita.Api.Models.Usuario", "Usuario")
                         .WithMany()
                         .HasForeignKey("UsuarioId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_estoques_usuarios_usuarioid");
+                        .HasConstraintName("fk_estoque_usuarios_usuarioid");
 
                     b.Navigation("Piscina");
 

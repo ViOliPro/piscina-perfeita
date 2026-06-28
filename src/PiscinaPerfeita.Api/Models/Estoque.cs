@@ -14,6 +14,8 @@ public partial class Estoque
 
     public Guid ProdutoId { get; set; }
 
+    public Guid UsuarioId { get; set; }
+
     public decimal? QuantidadeAtual { get; set; }
 
     [ForeignKey("PiscinaId")]
@@ -21,4 +23,7 @@ public partial class Estoque
 
     [ForeignKey("ProdutoId")]
     public virtual Produto Produto { get; set; } = null!;
+
+    [ForeignKey("UsuarioId")]
+    public virtual Usuario Usuario { get; set; } = null!;
 }

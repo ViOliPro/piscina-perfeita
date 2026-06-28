@@ -35,7 +35,7 @@ public partial class PiscinaPerfeitaContext : DbContext
 
         modelBuilder.Entity<Estoque>(entity =>
         {
-            entity.ToTable("Estoque", "piscina-perfeita");
+            entity.ToTable("Estoques", "piscina-perfeita");
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()"); // Mudado para gerar automático
         });
 
@@ -69,7 +69,7 @@ public partial class PiscinaPerfeitaContext : DbContext
         {
             // Note que a sua tabela de usuário estava mapeada em minúsculo "usuarios" sem o schema! 
             // Mantive igual ao seu banco original para não perder dados.
-            entity.ToTable("usuarios", "piscina-perfeita");
+            entity.ToTable("Usuarios", "piscina-perfeita");
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
             entity.Property(e => e.Email).HasMaxLength(256).HasColumnName("email");
             entity.Property(e => e.Nome).HasMaxLength(150).HasColumnName("nome");

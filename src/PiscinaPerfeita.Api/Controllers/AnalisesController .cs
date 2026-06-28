@@ -70,7 +70,7 @@ namespace PiscinaPerfeita.Api.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<AnaliseResponseDto>> Update(Guid id, AnaliseRequestDto dto)
+        public async Task<ActionResult> Update(Guid id, AnaliseRequestDto dto)
         {
             try
             {
@@ -85,7 +85,7 @@ namespace PiscinaPerfeita.Api.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult<UsuarioResponseDto>> Delete(Guid id)
+        public async Task<ActionResult> Delete(Guid id)
         {
             try
             {

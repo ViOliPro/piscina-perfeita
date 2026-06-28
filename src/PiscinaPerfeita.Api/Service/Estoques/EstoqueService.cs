@@ -2,16 +2,19 @@
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Repository.Estoques;
+using PiscinaPerfeita.Api.Helpers.Authenticated;
 
 namespace PiscinaPerfeita.Api.Service.Estoques
 {
     public class EstoqueService : IEstoqueService
     {
         private readonly IEstoqueRepository _estoqueRepository;
+        private readonly IAuthenticatedUser _user;
 
-        public EstoqueService(IEstoqueRepository estoqueRepository)
+        public EstoqueService(IEstoqueRepository estoqueRepository, IAuthenticatedUser user)
         {
             _estoqueRepository = estoqueRepository ?? throw new ArgumentNullException(nameof(estoqueRepository));
+            _user = user ?? throw new ArgumentNullException(nameof(user));
         }
 
         // Implementação dos métodos do serviço
@@ -50,6 +53,7 @@ namespace PiscinaPerfeita.Api.Service.Estoques
             {
                 PiscinaId = dto.PiscinaId,
                 ProdutoId = dto.ProdutoId,
+                UsuarioId = _user.GetUserId(),
                 QuantidadeAtual = dto.QuantidadeAtual
             };
 

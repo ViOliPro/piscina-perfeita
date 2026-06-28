@@ -3,18 +3,19 @@ using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Repository.MovimentacoesEstoque;
 using PiscinaPerfeita.Api.Helpers;
-using System.Globalization;
-using System.Security.Cryptography;
+using PiscinaPerfeita.Api.Helpers.Authenticated;
 
 namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
 {
     public class MovimentacaoService : IMovimentacaoService
     {
         private readonly IMovimentacaoRepository _movimentacaoRepository;
+        private readonly IAuthenticatedUser _user;
 
-        public MovimentacaoService(IMovimentacaoRepository movimentacaoRepository)
+        public MovimentacaoService(IMovimentacaoRepository movimentacaoRepository, IAuthenticatedUser user)
         {
             _movimentacaoRepository = movimentacaoRepository ?? throw new ArgumentNullException(nameof(movimentacaoRepository));
+            _user = user ?? throw new ArgumentNullException(nameof(user));
         }
 
 
@@ -60,6 +61,7 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
             {
                 PiscinaId = dto.PiscinaId,
                 ProdutoId = dto.ProdutoId,
+                UsuarioId = _user.GetUserId(),
                 TipoMovimentacao = (Models.Tipo)dto.TipoMovimentacao,
                 Quantidade = dto.Quantidade,
                 Valor = dto.Valor
