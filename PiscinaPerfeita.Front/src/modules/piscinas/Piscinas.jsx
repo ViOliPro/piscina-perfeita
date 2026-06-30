@@ -201,7 +201,7 @@ export default function Piscinas() {
       render: (v) => (v ? v.toLocaleString("pt-BR") : "—"),
     },
     {
-      key: "profundidadeMedia",
+      key: "profundidadeMedia ",
       label: "Profundidade média",
       render: (v) => (v ? `${v} m` : "—"),
     },
