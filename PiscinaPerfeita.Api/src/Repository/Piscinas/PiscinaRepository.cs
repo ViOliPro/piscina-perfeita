@@ -98,6 +98,7 @@ public class PiscinaRepository : IPiscinaRepository
         piscinaToUpdate.Nome = piscina.Nome;
         piscinaToUpdate.VolumeLitros = piscina.VolumeLitros;
         piscinaToUpdate.ProfundidadeMedia = piscina.ProfundidadeMedia;
+        piscinaToUpdate.UsuarioId = piscina.UsuarioId;
 
         await _context.SaveChangesAsync();
 

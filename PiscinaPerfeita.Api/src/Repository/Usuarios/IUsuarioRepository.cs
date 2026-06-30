@@ -17,5 +17,7 @@ namespace PiscinaPerfeita.Api.Repository.Usuarios
         Task Delete(Guid id);
 
         Task<Usuario?> GetByEmail(string email);
+
+        Task<Usuario?> GetNameById(Guid id);
     }
 }

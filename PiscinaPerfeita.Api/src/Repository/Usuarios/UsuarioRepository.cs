@@ -92,4 +92,13 @@ public class UsuarioRepository : IUsuarioRepository
 
         return user;
     }
+
+    public async Task<Usuario?> GetNameById(Guid id)
+    {
+        var user = await _context.Usuarios
+            .Where(u => u.Id == id)
+            .FirstOrDefaultAsync();
+
+        return user;
+    }
 }
