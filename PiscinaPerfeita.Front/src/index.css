@@ -24,12 +24,12 @@
   --pp-warn:    #F39C12;
 
   /* Superfícies */
-  --surface-0:  #E8F4FD;   /* fundo da página */
-  --surface-1:  #F0F7FF;   /* fundo de KPI cards */
-  --surface-2:  #FFFFFF;   /* fundo de cards e modais */
+  --surface-0:  #E8F4FD;
+  --surface-1:  #F0F7FF;
+  --surface-2:  #FFFFFF;
 
   /* Bordas */
-  --border:       rgba(30, 58, 95, 0.10);
+  --border:        rgba(30, 58, 95, 0.10);
   --border-strong: rgba(30, 58, 95, 0.22);
 
   /* Texto */
@@ -38,24 +38,46 @@
 
   /* Tipografia */
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", "Fira Code", monospace;
 }
 
 /* Base */
-html, body, #root {
+html {
+  /* 100dvh respeita barra de endereço em mobile */
+  height: 100%;
+}
+
+body {
   height: 100%;
   font-family: var(--font-sans);
   color: var(--text-primary);
   background: var(--surface-0);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  /* Evita zoom em inputs iOS */
+  -webkit-text-size-adjust: 100%;
 }
 
-/* Scrollbar personalizada */
-::-webkit-scrollbar        { width: 6px; height: 6px; }
-::-webkit-scrollbar-track  { background: var(--pp-foam); }
-::-webkit-scrollbar-thumb  { background: var(--pp-muted); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--pp-water); }
+#root {
+  height: 100%;
+}
+
+/* Inputs — fonte ≥ 16px evita zoom automático no iOS */
+input, select, textarea {
+  font-size: max(16px, 1em);
+}
+
+/* Remove highlight azul no tap (mobile) */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Scrollbar personalizada (desktop) */
+@media (hover: hover) {
+  ::-webkit-scrollbar        { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track  { background: var(--pp-foam); }
+  ::-webkit-scrollbar-thumb  { background: var(--pp-muted); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--pp-water); }
+}
 
 /* Foco visível para acessibilidade */
 :focus-visible {
@@ -73,27 +95,26 @@ html, body, #root {
   to   { opacity: 1; transform: translateY(0);   }
 }
 
-/* Página aparece com fade suave */
 .page-enter {
   animation: pp-fade-in 0.18s ease-out;
 }
 
-/* Utilitários de texto */
-.text-muted   { color: var(--text-secondary); }
-.text-ok      { color: var(--pp-ok); }
-.text-warn    { color: var(--pp-warn); }
-.text-bad     { color: var(--pp-low); }
-.text-water   { color: var(--pp-water); }
+/* Utilitários */
+.text-muted  { color: var(--text-secondary); }
+.text-ok     { color: var(--pp-ok); }
+.text-warn   { color: var(--pp-warn); }
+.text-bad    { color: var(--pp-low); }
+.text-water  { color: var(--pp-water); }
 
-/* Print — oculta sidebar e botões ao imprimir */
+/* Print */
 @media print {
-  nav,
-  button:not(.print-include),
-  .toolbar {
-    display: none !important;
-  }
+  nav, button:not(.print-include), .toolbar { display: none !important; }
+  .main { overflow: visible !important; }
+}
 
-  .main {
-    overflow: visible !important;
+/* Safe area para bottom nav (iPhone com notch) */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pp-bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }

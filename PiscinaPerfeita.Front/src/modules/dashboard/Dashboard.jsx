@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { KpiCard, Card, Badge, LoadingSpinner, ErrorMessage } from "../../components/ui/index.jsx";
 import { analiseService, estoqueService, movimentacaoService, piscinaService } from "../../config/services.js";
 import { ANALISE_FAIXAS, TIPO_MOVIMENTACAO, TIPO_LABELS } from "../../config/index.js";
+import { useIsMobile } from "../../hooks/useIsMobile.js";
 
 // ----------------------------------------------------------
 // Gauge circular de parâmetro de análise
@@ -111,6 +112,8 @@ export default function Dashboard({ onNavigate }) {
     load();
   }, []);
 
+  const isMobile = useIsMobile();
+
   if (loading) return <LoadingSpinner />;
   if (error)   return <ErrorMessage message={error} />;
 
@@ -124,14 +127,14 @@ export default function Dashboard({ onNavigate }) {
   return (
     <div>
       {/* KPIs */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 12, marginBottom: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(auto-fit,minmax(140px,1fr))", gap: 10, marginBottom: 16 }}>
         <KpiCard label="Piscinas"        value={piscinas.length} subLabel="cadastradas" subVariant="muted" />
         <KpiCard label="Análises hoje"   value={hoje.length}     subLabel={`+${hoje.length} vs ontem`} subVariant="ok" />
         <KpiCard label="Estoque baixo"   value={estoqueBaixo.length} subLabel={estoqueBaixo.length > 0 ? "requer atenção" : "tudo ok"} subVariant={estoqueBaixo.length > 0 ? "warn" : "ok"} />
         <KpiCard label="Movimentações"   value={movimentos.length}   subLabel="esta semana" subVariant="muted" />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14 }}>
         {/* Gauges da última análise */}
         <Card title="Qualidade da água" titleExtra={
           <span style={{ fontSize: 11, color: "#6B8CAE", fontWeight: 400 }}>
