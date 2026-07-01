@@ -1,15 +1,24 @@
 // ============================================================
-//  Piscina Perfeita — Camada de serviço (fetch helpers)
-//  Todos os módulos importam daqui para chamar a API.
+//  Piscina Perfeita — Camada de serviço
+//  Todas as respostas da API passam pelo mapper antes de
+//  chegar aos módulos. Todos os envios passam pelo toApi*.
 // ============================================================
-import { API_ENDPOINTS } from "./index";
+import { API_ENDPOINTS } from "./index.js";
+import {
+  fromApiAuth,      toApiLogin,
+  fromApiUsuario,   fromApiUsuarioList,   toApiUsuario,
+  fromApiPiscina,   fromApiPiscinaList,   toApiPiscina,
+  fromApiProduto,   fromApiProdutoList,   toApiProduto,
+  fromApiAnalise,   fromApiAnaliseList,   toApiAnalise,
+  fromApiEstoque,   fromApiEstoqueList,   toApiEstoque,
+  fromApiMovimentacao, fromApiMovimentacaoList, toApiMovimentacao,
+} from "./mappers.js";
 
 // ----------------------------------------------------------
-// Helper base — envolve fetch com tratamento de erro padrão
+// Helper base
 // ----------------------------------------------------------
 async function request(url, options = {}) {
   const token = localStorage.getItem("pp_token");
-
   const res = await fetch(url, {
     headers: {
       "Content-Type": "application/json",
@@ -23,97 +32,96 @@ async function request(url, options = {}) {
     const erro = await res.json().catch(() => ({ message: res.statusText }));
     throw new Error(erro.message ?? `Erro ${res.status}`);
   }
-
-  // 204 No Content — não tem body
   if (res.status === 204) return null;
   return res.json();
 }
 
-// ----------------------------------------------------------
-// Shorthand verbs
-// ----------------------------------------------------------
-const get    = (url)         => request(url);
-const post   = (url, body)   => request(url, { method: "POST",   body: JSON.stringify(body) });
-const put    = (url, body)   => request(url, { method: "PUT",    body: JSON.stringify(body) });
-const del    = (url)         => request(url, { method: "DELETE" });
+const get  = (url)        => request(url);
+const post = (url, body)  => request(url, { method: "POST",   body: JSON.stringify(body) });
+const put  = (url, body)  => request(url, { method: "PUT",    body: JSON.stringify(body) });
+const del  = (url)        => request(url, { method: "DELETE" });
 
 // ----------------------------------------------------------
-// Serviços por módulo
+// Auth
 // ----------------------------------------------------------
-
-// — Autenticação
-// POST /api/account/login  → { email, password }
-// Resposta: { accessToken, tokenType, expiresIn, user: { nome, email, role } }
 export const authService = {
-  login: (dto) =>
-    // Chamada sem o header Authorization (rota AllowAnonymous)
-    fetch(API_ENDPOINTS.login, {
+  login: async (formDto) => {
+    const res = await fetch(API_ENDPOINTS.login, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(dto),
-    }).then(async (res) => {
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ message: res.statusText }));
-        throw new Error(err.message ?? `Erro ${res.status}`);
-      }
-      return res.json();
-    }),
+      body: JSON.stringify(toApiLogin(formDto)),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: res.statusText }));
+      throw new Error(err.message ?? `Erro ${res.status}`);
+    }
+    return fromApiAuth(await res.json());
+  },
 
-  // Stub — endpoint ainda não implementado no backend
   forgotPassword: (dto) => post(API_ENDPOINTS.forgotPassword, dto),
-
-  // Stub — endpoint ainda não implementado no backend
-  resetPassword: (dto) => post(API_ENDPOINTS.resetPassword, dto),
+  resetPassword:  (dto) => post(API_ENDPOINTS.resetPassword,  dto),
 };
 
-// — Usuários
+// ----------------------------------------------------------
+// Usuários
+// ----------------------------------------------------------
 export const usuarioService = {
-  listar:   ()       => get(API_ENDPOINTS.usuarios),
-  buscar:   (id)     => get(API_ENDPOINTS.usuarioById(id)),
-  criar:    (dto)    => post(API_ENDPOINTS.usuarios, dto),
-  atualizar:(id,dto) => put(API_ENDPOINTS.usuarioById(id), dto),
-  excluir:  (id)     => del(API_ENDPOINTS.usuarioById(id)),
+  listar:    ()          => get(API_ENDPOINTS.usuarios).then(fromApiUsuarioList),
+  buscar:    (id)        => get(API_ENDPOINTS.usuarioById(id)).then(fromApiUsuario),
+  criar:     (dto)       => post(API_ENDPOINTS.usuarios,          toApiUsuario(dto)).then(fromApiUsuario),
+  atualizar: (id, dto)   => put(API_ENDPOINTS.usuarioById(id),    toApiUsuario(dto)).then(fromApiUsuario),
+  excluir:   (id)        => del(API_ENDPOINTS.usuarioById(id)),
 };
 
-// — Piscinas
+// ----------------------------------------------------------
+// Piscinas
+// ----------------------------------------------------------
 export const piscinaService = {
-  listar:   ()       => get(API_ENDPOINTS.piscinas),
-  buscar:   (id)     => get(API_ENDPOINTS.piscinaById(id)),
-  criar:    (dto)    => post(API_ENDPOINTS.piscinas, dto),
-  atualizar:(id,dto) => put(API_ENDPOINTS.piscinaById(id), dto),
-  excluir:  (id)     => del(API_ENDPOINTS.piscinaById(id)),
+  listar:    ()          => get(API_ENDPOINTS.piscinas).then(fromApiPiscinaList),
+  buscar:    (id)        => get(API_ENDPOINTS.piscinaById(id)).then(fromApiPiscina),
+  criar:     (dto)       => post(API_ENDPOINTS.piscinas,          toApiPiscina(dto)).then(fromApiPiscina),
+  atualizar: (id, dto)   => put(API_ENDPOINTS.piscinaById(id),    toApiPiscina(dto)).then(fromApiPiscina),
+  excluir:   (id)        => del(API_ENDPOINTS.piscinaById(id)),
 };
 
-// — Produtos
+// ----------------------------------------------------------
+// Produtos
+// ----------------------------------------------------------
 export const produtoService = {
-  listar:   ()       => get(API_ENDPOINTS.produtos),
-  buscar:   (id)     => get(API_ENDPOINTS.produtoById(id)),
-  criar:    (dto)    => post(API_ENDPOINTS.produtos, dto),
-  atualizar:(id,dto) => put(API_ENDPOINTS.produtoById(id), dto),
-  excluir:  (id)     => del(API_ENDPOINTS.produtoById(id)),
+  listar:    ()          => get(API_ENDPOINTS.produtos).then(fromApiProdutoList),
+  buscar:    (id)        => get(API_ENDPOINTS.produtoById(id)).then(fromApiProduto),
+  criar:     (dto)       => post(API_ENDPOINTS.produtos,          toApiProduto(dto)).then(fromApiProduto),
+  atualizar: (id, dto)   => put(API_ENDPOINTS.produtoById(id),    toApiProduto(dto)).then(fromApiProduto),
+  excluir:   (id)        => del(API_ENDPOINTS.produtoById(id)),
 };
 
-// — Análises
+// ----------------------------------------------------------
+// Análises
+// ----------------------------------------------------------
 export const analiseService = {
-  listar:   ()       => get(API_ENDPOINTS.analises),
-  buscar:   (id)     => get(API_ENDPOINTS.analiseById(id)),
-  criar:    (dto)    => post(API_ENDPOINTS.analises, dto),
-  excluir:  (id)     => del(API_ENDPOINTS.analiseById(id)),
+  listar:  ()    => get(API_ENDPOINTS.analises).then(fromApiAnaliseList),
+  buscar:  (id)  => get(API_ENDPOINTS.analiseById(id)).then(fromApiAnalise),
+  criar:   (dto) => post(API_ENDPOINTS.analises, toApiAnalise(dto)).then(fromApiAnalise),
+  excluir: (id)  => del(API_ENDPOINTS.analiseById(id)),
 };
 
-// — Estoque
+// ----------------------------------------------------------
+// Estoque
+// ----------------------------------------------------------
 export const estoqueService = {
-  listar:           ()          => get(API_ENDPOINTS.estoques),
-  listarBaixo:      ()          => get(API_ENDPOINTS.estoqueBaixo),
-  listarPorPiscina: (piscinaId) => get(API_ENDPOINTS.estoquesByPiscina(piscinaId)),
-  buscar:           (id)        => get(API_ENDPOINTS.estoqueById(id)),
-  criar:            (dto)       => post(API_ENDPOINTS.estoques, dto),
-  atualizar:        (id, dto)   => put(API_ENDPOINTS.estoqueById(id), dto),
+  listar:           ()          => get(API_ENDPOINTS.estoques).then(fromApiEstoqueList),
+  listarBaixo:      ()          => get(API_ENDPOINTS.estoqueBaixo).then(fromApiEstoqueList),
+  listarPorPiscina: (piscinaId) => get(API_ENDPOINTS.estoquesByPiscina(piscinaId)).then(fromApiEstoqueList),
+  buscar:           (id)        => get(API_ENDPOINTS.estoqueById(id)).then(fromApiEstoque),
+  criar:            (dto)       => post(API_ENDPOINTS.estoques,        toApiEstoque(dto)).then(fromApiEstoque),
+  atualizar:        (id, dto)   => put(API_ENDPOINTS.estoqueById(id),  toApiEstoque(dto)).then(fromApiEstoque),
 };
 
-// — Movimentações
+// ----------------------------------------------------------
+// Movimentações
+// ----------------------------------------------------------
 export const movimentacaoService = {
-  listar:   ()       => get(API_ENDPOINTS.movimentacoes),
-  buscar:   (id)     => get(API_ENDPOINTS.movimentacaoById(id)),
-  criar:    (dto)    => post(API_ENDPOINTS.movimentacoes, dto),
+  listar:  ()    => get(API_ENDPOINTS.movimentacoes).then(fromApiMovimentacaoList),
+  buscar:  (id)  => get(API_ENDPOINTS.movimentacaoById(id)).then(fromApiMovimentacao),
+  criar:   (dto) => post(API_ENDPOINTS.movimentacoes, toApiMovimentacao(dto)).then(fromApiMovimentacao),
 };

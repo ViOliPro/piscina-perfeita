@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 import { useAuth }       from "../../context/AuthContext.jsx";
 import { useIsMobile }   from "../../hooks/useIsMobile.js";
 import { ROLES, ROLE_LABELS } from "../../config/index.js";
+import { LogoIcon }      from "../ui/Logo.jsx";
 
 // ----------------------------------------------------------
 // Definição da navegação
@@ -25,23 +26,6 @@ export const NAV = [
 
 // 5 ítens fixados na bottom nav mobile
 const BOTTOM_NAV = ["dashboard", "analises", "estoque", "movimentacoes", "piscinas"];
-
-// ----------------------------------------------------------
-// WaveAnimation
-// ----------------------------------------------------------
-function WaveAnimation() {
-  return (
-    <div style={{ display: "inline-flex", alignItems: "flex-end", gap: 2, height: 20 }}>
-      {[0, 0.1, 0.2, 0.3, 0.4].map((delay, i) => (
-        <span key={i} style={{
-          width: 3, borderRadius: 1, background: "#5BC0EB",
-          animation: `pp-wave 1.2s ease-in-out ${delay}s infinite`,
-        }} />
-      ))}
-      <style>{`@keyframes pp-wave{0%,100%{height:4px}50%{height:16px}}`}</style>
-    </div>
-  );
-}
 
 // ----------------------------------------------------------
 // Item de navegação (sidebar)
@@ -86,12 +70,16 @@ function SidebarContent({ activePage, onNavigate, onClose }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflowY: "auto" }}>
       {/* Logo */}
-      <div style={{ padding: "20px 16px 16px", borderBottom: "1px solid rgba(255,255,255,.08)", flexShrink: 0 }}>
-        <WaveAnimation />
-        <h1 style={{ fontSize: 15, fontWeight: 600, color: "#fff", marginTop: 6, letterSpacing: ".5px" }}>
-          Piscina Perfeita
-        </h1>
-        <span style={{ fontSize: 11, color: "#5BC0EB", opacity: .8 }}>gestão integrada</span>
+      <div style={{ padding: "16px 16px 14px", borderBottom: "1px solid rgba(255,255,255,.08)", flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <LogoIcon height={36} />
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", letterSpacing: ".3px", lineHeight: 1.2 }}>
+              Piscina Perfeita
+            </div>
+            <div style={{ fontSize: 10, color: "#5BC0EB", opacity: .8 }}>gestão integrada</div>
+          </div>
+        </div>
       </div>
 
       {/* Itens de nav */}

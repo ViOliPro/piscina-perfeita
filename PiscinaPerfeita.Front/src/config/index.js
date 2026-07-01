@@ -7,58 +7,59 @@
 // API
 // ----------------------------------------------------------
 export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000/api";
+  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5258/api";
 
 export const API_ENDPOINTS = {
   // Autenticação  (AccountController → api/account/...)
-  login:         `${API_BASE_URL}/account/login`,
-  forgotPassword:`${API_BASE_URL}/account/forgot-password`,   // a implementar no backend
-  resetPassword: `${API_BASE_URL}/account/reset-password`,    // a implementar no backend
+  login: `${API_BASE_URL}/account/login`,
+  forgotPassword: `${API_BASE_URL}/account/forgot-password`, // a implementar no backend
+  resetPassword: `${API_BASE_URL}/account/reset-password`, // a implementar no backend
 
   // Usuários
-  usuarios:           `${API_BASE_URL}/usuarios`,
-  usuarioById: (id)  => `${API_BASE_URL}/usuarios/${id}`,
+  usuarios: `${API_BASE_URL}/usuarios`,
+  usuarioById: (id) => `${API_BASE_URL}/usuarios/${id}`,
 
   // Piscinas
-  piscinas:           `${API_BASE_URL}/piscinas`,
-  piscinaById: (id)  => `${API_BASE_URL}/piscinas/${id}`,
+  piscinas: `${API_BASE_URL}/piscinas`,
+  piscinaById: (id) => `${API_BASE_URL}/piscinas/${id}`,
 
   // Produtos
-  produtos:           `${API_BASE_URL}/produtos`,
-  produtoById: (id)  => `${API_BASE_URL}/produtos/${id}`,
+  produtos: `${API_BASE_URL}/produtos`,
+  produtoById: (id) => `${API_BASE_URL}/produtos/${id}`,
 
   // Análises
-  analises:           `${API_BASE_URL}/analises`,
-  analiseById: (id)  => `${API_BASE_URL}/analises/${id}`,
+  analises: `${API_BASE_URL}/analises`,
+  analiseById: (id) => `${API_BASE_URL}/analises/${id}`,
 
   // Estoque
-  estoques:                       `${API_BASE_URL}/estoques`,
-  estoqueById:       (id)        => `${API_BASE_URL}/estoques/${id}`,
-  estoquesByPiscina: (piscinaId) => `${API_BASE_URL}/estoques?piscinaId=${piscinaId}`,
-  estoqueBaixo:                   `${API_BASE_URL}/estoques?status=baixo`,
+  estoques: `${API_BASE_URL}/estoques`,
+  estoqueById: (id) => `${API_BASE_URL}/estoques/${id}`,
+  estoquesByPiscina: (piscinaId) =>
+    `${API_BASE_URL}/estoques?piscinaId=${piscinaId}`,
+  estoqueBaixo: `${API_BASE_URL}/estoques?status=baixo`,
 
   // Movimentações
-  movimentacoes:           `${API_BASE_URL}/movimentacoes`,
-  movimentacaoById: (id)  => `${API_BASE_URL}/movimentacoes/${id}`,
+  movimentacoes: `${API_BASE_URL}/movimentacoes`,
+  movimentacaoById: (id) => `${API_BASE_URL}/movimentacoes/${id}`,
 };
 
 // ----------------------------------------------------------
 // Estoque — limites para classificação de status
 // ----------------------------------------------------------
 export const ESTOQUE_LIMITES = {
-  BAIXO:   5,   // qtd ≤ este valor  → badge "Baixo"   (vermelho)
-  ATENCAO: 15,  // qtd ≤ este valor  → badge "Atenção"  (amarelo)
-                // qtd > ATENCAO     → badge "Normal"   (verde)
+  BAIXO: 5, // qtd ≤ este valor  → badge "Baixo"   (vermelho)
+  ATENCAO: 15, // qtd ≤ este valor  → badge "Atenção"  (amarelo)
+  // qtd > ATENCAO     → badge "Normal"   (verde)
 };
 
 // ----------------------------------------------------------
 // Análises — faixas ideais (referência visual nos gauges)
 // ----------------------------------------------------------
 export const ANALISE_FAIXAS = {
-  ph:           { min: 7.2, max: 7.8 },
-  cloroLivre:   { min: 1.0, max: 3.0 },
-  alcalinidade: { min: 80,  max: 120  },
-  temperatura:  { min: 26,  max: 30   },
+  ph: { min: 7.2, max: 7.8 },
+  cloroLivre: { min: 1.0, max: 3.0 },
+  alcalinidade: { min: 80, max: 120 },
+  temperatura: { min: 26, max: 30 },
 };
 
 // ----------------------------------------------------------
@@ -66,12 +67,12 @@ export const ANALISE_FAIXAS = {
 // ----------------------------------------------------------
 export const ROLES = {
   ADMIN: 0,
-  USER:  1,
+  USER: 1,
 };
 
 export const ROLE_LABELS = {
   [ROLES.ADMIN]: "Admin",
-  [ROLES.USER]:  "User",
+  [ROLES.USER]: "User",
 };
 
 // ----------------------------------------------------------
@@ -79,12 +80,12 @@ export const ROLE_LABELS = {
 // ----------------------------------------------------------
 export const TIPO_MOVIMENTACAO = {
   ENTRADA: 0,
-  SAIDA:   1,
+  SAIDA: 1,
 };
 
 export const TIPO_LABELS = {
   [TIPO_MOVIMENTACAO.ENTRADA]: "Entrada",
-  [TIPO_MOVIMENTACAO.SAIDA]:   "Saída",
+  [TIPO_MOVIMENTACAO.SAIDA]: "Saída",
 };
 
 // ----------------------------------------------------------
@@ -107,16 +108,16 @@ export const PAGINATION = {
 // ----------------------------------------------------------
 export const THEME = {
   colors: {
-    deep:    "#0A1628",  // sidebar, headings principais
-    mid:     "#1E3A5F",  // labels, hover sidebar
-    water:   "#2E86AB",  // accent primário (botões, bordas de foco)
-    sky:     "#5BC0EB",  // links, badges info, nav ativo
-    foam:    "#E8F4FD",  // fundo de página, fundo de thead
-    ice:     "#F0F7FF",  // fundo de hover de linha
-    muted:   "#6B8CAE",  // texto secundário, placeholders
-    low:     "#E74C3C",  // estoque baixo / erro
-    ok:      "#27AE60",  // status normal / sucesso
-    warn:    "#F39C12",  // atenção / aviso
+    deep: "#0A1628", // sidebar, headings principais
+    mid: "#1E3A5F", // labels, hover sidebar
+    water: "#2E86AB", // accent primário (botões, bordas de foco)
+    sky: "#5BC0EB", // links, badges info, nav ativo
+    foam: "#E8F4FD", // fundo de página, fundo de thead
+    ice: "#F0F7FF", // fundo de hover de linha
+    muted: "#6B8CAE", // texto secundário, placeholders
+    low: "#E74C3C", // estoque baixo / erro
+    ok: "#27AE60", // status normal / sucesso
+    warn: "#F39C12", // atenção / aviso
   },
 };
 
@@ -124,7 +125,7 @@ export const THEME = {
 // Metadados da aplicação
 // ----------------------------------------------------------
 export const APP_META = {
-  name:    "Piscina Perfeita",
+  name: "Piscina Perfeita",
   version: "1.0.0",
   contact: "compras@piscinaperfeita.com.br",
 };
