@@ -1,13 +1,14 @@
 ﻿using PiscinaPerfeita.Api.Models;
+using PiscinaPerfeita.Api.Dtos.Response;
 
 namespace PiscinaPerfeita.Api.Repository.Estoques
 {
     public interface IEstoqueRepository
     {
 
-        Task<List<Estoque>> Show();
+        Task<List<EstoqueResponseDto>> Show();
 
-        Task<Estoque> GetById(Guid id);
+        Task<EstoqueResponseDto?> GetById(Guid id);
 
         Task Create(Estoque estoque);
 

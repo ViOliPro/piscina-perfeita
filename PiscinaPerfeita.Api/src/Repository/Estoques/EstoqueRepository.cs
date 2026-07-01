@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PiscinaPerfeita.Api.Models;
+using PiscinaPerfeita.Api.Dtos.Response;
 
 namespace PiscinaPerfeita.Api.Repository.Estoques;
 
@@ -15,21 +16,32 @@ public class EstoqueRepository : IEstoqueRepository
 
     // Implementação dos métodos do repositório
     // Metodo Show: Retorna uma lista de todos os estoques, incluindo as informações relacionadas de piscina e produto.
-    public async Task<List<Estoque>> Show()
+    public async Task<List<EstoqueResponseDto>> Show()
     {
-        var query = _context.Estoques.Include(p => p.Piscina).Include(p => p.Produto);
-        return await query.ToListAsync();
+        return await _context.Estoques.Select(a => new EstoqueResponseDto
+        {
+            Id = a.Id,
+            QuantidadeAtual = a.QuantidadeAtual,
+            Piscina = a.Piscina != null ? new PiscinaEstoque { Id = a.PiscinaId, Nome = a.Piscina.Nome } : null,
+            Produto = a.Produto != null ? new ProdutoEstoque { Id = a.ProdutoId, Nome = a.Produto.Nome, UnidadeMedida = a.Produto.UnidadeMedida } : null
+
+        }).ToListAsync();
     }
 
 
     // Metodo GetById: Retorna um estoque específico com base no ID fornecido, incluindo as informações relacionadas de piscina e produto.
-    public async Task<Estoque> GetById(Guid id)
+    public async Task<EstoqueResponseDto?> GetById(Guid id)
     {
-        var estoque = await _context.Estoques.FirstOrDefaultAsync(e => e.Id == id);
-        if(estoque == null)
-            throw new KeyNotFoundException($"Estoque com ID {id} não encontrado.");
+        var estoque = await _context.Estoques.Where(e => e.Id == id)
+            .Select(a => new EstoqueResponseDto
+            {
+                Id = a.Id,
+                QuantidadeAtual = a.QuantidadeAtual,
+                Piscina = a.Piscina != null ? new PiscinaEstoque { Id = a.PiscinaId, Nome = a.Piscina.Nome } : null,
+                Produto = a.Produto != null ? new ProdutoEstoque { Id = a.ProdutoId, Nome = a.Produto.Nome, UnidadeMedida = a.Pgit stroduto.UnidadeMedida } : null
+            }).FirstOrDefaultAsync();
 
-        return estoque;
+        return estoque ?? null;
     }
 
 
@@ -51,7 +63,7 @@ public class EstoqueRepository : IEstoqueRepository
         estoqueToUpdate.QuantidadeAtual = estoque.QuantidadeAtual;
         estoqueToUpdate.PiscinaId = estoque.PiscinaId;
         estoqueToUpdate.ProdutoId = estoque.ProdutoId;
-        
+
         await _context.SaveChangesAsync();
 
     }
