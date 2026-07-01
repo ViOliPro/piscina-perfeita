@@ -65,7 +65,7 @@ namespace PiscinaPerfeita.Api.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult> Update(Guid id, ProdutoRequestDto dto)
+        public async Task<ActionResult<ProdutoResponseDto>> Update(Guid id, ProdutoRequestDto dto)
         {
             try
             {
