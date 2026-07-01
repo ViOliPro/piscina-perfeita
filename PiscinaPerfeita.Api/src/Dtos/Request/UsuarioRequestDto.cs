@@ -12,12 +12,25 @@ namespace PiscinaPerfeita.Api.Dtos.Request
         [EmailAddress(ErrorMessage = "O campo Email deve ser um endereço de e-mail válido.")]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "O campo Senha é obrigatório.")]
-        [MinLength(6, ErrorMessage = "O campo Senha deve ter pelo menos 6 caracteres.")]
+        [MinLength(8, ErrorMessage = "O campo Senha deve ter pelo menos 8 caracteres.")]
         [DataType(DataType.Password)]
         [DisplayName("Password")]
-        public string SenhaHash { get; set; } = string.Empty;
+        public string? SenhaHash { get; set; } = string.Empty;
         public Role Role { get; set; }
+    }
+
+    public class UsuarioRequestUpdateDto
+    {
+        public string? Nome { get; set; } = string.Empty;
+
+        [EmailAddress(ErrorMessage = "O campo Email deve ser um endereço de e-mail válido.")]
+        public string? Email { get; set; } = string.Empty;
+
+        [MaxLength(30, ErrorMessage = "O campo Senha nao pode ultrapassar 30 caracteres.")]
+        [DataType(DataType.Password)]
+        [DisplayName("Password")]
+        public string? SenhaHash { get; set; } = string.Empty;
+        public Role? Role { get; set; }
     }
 
 }

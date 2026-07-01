@@ -49,11 +49,12 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             {
                 Nome = usuario.Nome,
                 Email = usuario.Email,
-                Role = usuario.Role
+                Role = usuario.Role,
+                CreatedAt = usuario.CreatedAt
             };
         }
 
-        public async Task<UsuarioResponseDto> Update(Guid id, UsuarioRequestDto dto)
+        public async Task<UsuarioResponseDto> Update(Guid id, UsuarioRequestUpdateDto dto)
         {
             if(id == Guid.Empty)
             {
@@ -66,20 +67,25 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
             }
 
+
             var usuarioDb = new Usuario
             {
                 Id = id,
-                Nome = dto.Nome,
-                Email = dto.Email,
-                SenhaHash = dto.SenhaHash,
+                Nome = !string.IsNullOrEmpty(dto.Nome) ? dto.Nome : usuario.Nome,
+                Email = !string.IsNullOrEmpty(dto.Email) ? dto.Email : usuario.Email,
+                SenhaHash = !string.IsNullOrEmpty(dto.SenhaHash) ? BCrypt.Net.BCrypt.HashPassword(dto.SenhaHash) : dto.SenhaHash,
+                Role = dto.Role ?? usuario.Role 
             };
        
             await _usuariosRepository.Update(id, usuarioDb);
 
             return new UsuarioResponseDto
             {
+                Id = usuarioDb.Id,
                 Nome = usuarioDb.Nome,
-                Email = usuarioDb.Email
+                Email = usuarioDb.Email,
+                CreatedAt = usuarioDb.CreatedAt,
+                Role = usuarioDb.Role
             };
         }
 

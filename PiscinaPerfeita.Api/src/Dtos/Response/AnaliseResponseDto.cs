@@ -14,6 +14,8 @@ namespace PiscinaPerfeita.Api.Dtos.Response
 
         public decimal? Ph { get; set; }
 
+        public UsuarioIdAnalise UsuarioAnalise { get; set; } = new UsuarioIdAnalise();
+
         public decimal? CloroLivre { get; set; }
 
         public decimal? Alcalinidade { get; set; }
@@ -24,6 +26,11 @@ namespace PiscinaPerfeita.Api.Dtos.Response
     }
 
     public class PiscinaOrigem
+    {
+        public Guid Id { get; set; }
+        public string Nome { get; set; } = null!;
+    }
+    public class UsuarioIdAnalise
     {
         public Guid Id { get; set; }
         public string Nome { get; set; } = null!;

@@ -8,7 +8,7 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
         Task<List<UsuarioResponseDto>> Show();
         Task<UsuarioResponseDto> GetById(Guid id);
         Task<UsuarioResponseDto> Create(UsuarioRequestDto dto);
-        Task<UsuarioResponseDto> Update(Guid id, UsuarioRequestDto dto);
+        Task<UsuarioResponseDto> Update(Guid id, UsuarioRequestUpdateDto dto);
         Task Delete(Guid id);
 
     }

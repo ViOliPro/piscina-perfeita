@@ -1,6 +1,7 @@
 ﻿using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Repository.Analises;
+using PiscinaPerfeita.Api.Repository.Usuarios;
 using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Helpers.Authenticated;
 
@@ -10,11 +11,13 @@ namespace PiscinaPerfeita.Api.Service.Analises
     {
         private readonly IAnaliseRepository _analiseRepository;
         private readonly IAuthenticatedUser _user;
+        private readonly IUsuarioRepository _userRepository;
 
-        public AnaliseService(IAnaliseRepository analisesRepository, IAuthenticatedUser user)
+        public AnaliseService(IAnaliseRepository analisesRepository, IAuthenticatedUser user, IUsuarioRepository userRepository)
         {
             _analiseRepository = analisesRepository ?? throw new ArgumentNullException(nameof(analisesRepository));
             _user = user ?? throw new ArgumentNullException(nameof(user));
+            _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         }
 
 
@@ -78,8 +81,10 @@ namespace PiscinaPerfeita.Api.Service.Analises
             var analisesDb = await _analiseRepository.GetById(id);
             if (analisesDb == null)
             {
-                throw new KeyNotFoundException($"Estoque com id {id} não encontrado.");
+                throw new KeyNotFoundException($"Analise com id {id} não encontrado.");
             }
+
+            var usuario = await _userRepository.GetById(analisesDb.UsuarioAnalise.Id);
 
             var analisesUpdated = new Analise
             {
@@ -104,7 +109,12 @@ namespace PiscinaPerfeita.Api.Service.Analises
                 CloroLivre = analisesUpdated.CloroLivre,
                 Alcalinidade = analisesUpdated.Alcalinidade,
                 Temperatura = analisesUpdated.Temperatura,
-                Observacoes = analisesUpdated.Observacoes
+                Observacoes = analisesUpdated.Observacoes,
+                UsuarioAnalise = new UsuarioIdAnalise
+                {
+                    Id = analisesUpdated.UsuarioId,
+                    Nome = usuario.Nome
+                }
             };
         }
 

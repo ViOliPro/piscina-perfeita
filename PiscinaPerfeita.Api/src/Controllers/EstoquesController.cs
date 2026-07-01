@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
+using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Service.Estoques;
 
 namespace PiscinaPerfeita.Api.Controllers
@@ -62,8 +63,8 @@ namespace PiscinaPerfeita.Api.Controllers
         {
             try
             {
-                await _estoquesService.Update(id, dto);
-                return NoContent();
+                var estoque = await _estoquesService.Update(id, dto);
+                return CreatedAtAction(nameof(GetById), new { id = estoque.Id }, estoque);
             }
             catch (KeyNotFoundException ex)
             {

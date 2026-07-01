@@ -66,6 +66,7 @@ public class UsuarioRepository : IUsuarioRepository
         user.Nome = usuario.Nome;
         user.Email = usuario.Email;
         user.SenhaHash = usuario.SenhaHash;
+        user.Role = usuario.Role;
 
         await _context.SaveChangesAsync();
 

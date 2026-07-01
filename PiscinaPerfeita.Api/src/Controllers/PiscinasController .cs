@@ -56,7 +56,7 @@ namespace PiscinaPerfeita.Api.Controllers
             {
                 var data = await _piscinasService.Create(dto);
 
-                return CreatedAtAction(nameof(GetById), new { id = data.Id }, data);
+                return Ok(data);
             }
             catch (KeyNotFoundException ex)
             {

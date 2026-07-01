@@ -31,6 +31,7 @@ namespace PiscinaPerfeita.Api.Controllers
             {
                 return BadRequest(ex.Message);
             }
+
         }
 
         // 2. GET: api/clientes/id (Retorna o registro com id)
@@ -45,6 +46,10 @@ namespace PiscinaPerfeita.Api.Controllers
             catch (KeyNotFoundException ex)
             {
                 return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
             }
         }
 
@@ -62,19 +67,28 @@ namespace PiscinaPerfeita.Api.Controllers
             {
                 return BadRequest(ex.Message);
             }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult> Update(Guid id, UsuarioRequestDto dto)
+        public async Task<ActionResult> Update(Guid id, UsuarioRequestUpdateDto dto)
         {
             try
             {
-                await _usuariosService.Update(id, dto);
-                return NoContent();
+                var userUpdated = await _usuariosService.Update(id, dto);
+
+                return CreatedAtAction(nameof(GetById), new { id = userUpdated.Id }, userUpdated);
             }
             catch (KeyNotFoundException ex)
             {
                 return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
             }
 
         }
@@ -90,6 +104,10 @@ namespace PiscinaPerfeita.Api.Controllers
             catch (KeyNotFoundException ex)
             {
                 return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
             }
 
         }
