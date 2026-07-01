@@ -28,7 +28,12 @@ public class AnaliseRepository : IAnaliseRepository
             {
                 Id = a.Piscina.Id,
                 Nome = a.Piscina.Nome
-            } : null
+            } : null,
+            UsuarioAnalise = new UsuarioAnalise
+            {
+                Id = a.UsuarioId,
+                Nome = a.Usuario.Nome
+            }
         }).ToListAsync();
     }
 
@@ -47,7 +52,12 @@ public class AnaliseRepository : IAnaliseRepository
             {
                 Id = a.Piscina.Id,
                 Nome = a.Piscina.Nome
-            } : null
+            } : null,
+            UsuarioAnalise = new UsuarioAnalise
+            {
+                Id = a.UsuarioId,
+                Nome = a.Usuario.Nome
+            }
         }).FirstOrDefaultAsync();
 
         return analise ?? null;
@@ -70,6 +80,8 @@ public class AnaliseRepository : IAnaliseRepository
         analiseToUpdate.Alcalinidade = analise.Alcalinidade;
         analiseToUpdate.Temperatura = analise.Temperatura;
         analiseToUpdate.Observacoes = analise.Observacoes;
+        analiseToUpdate.PiscinaId = analise.PiscinaId;
+        analiseToUpdate.UsuarioId = analise.UsuarioId;
 
         await _context.SaveChangesAsync();
 

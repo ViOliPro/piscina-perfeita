@@ -2,6 +2,7 @@
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Repository.Analises;
 using PiscinaPerfeita.Api.Repository.Usuarios;
+using PiscinaPerfeita.Api.Repository.Piscinas;
 using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Helpers.Authenticated;
 
@@ -12,12 +13,14 @@ namespace PiscinaPerfeita.Api.Service.Analises
         private readonly IAnaliseRepository _analiseRepository;
         private readonly IAuthenticatedUser _user;
         private readonly IUsuarioRepository _userRepository;
+        private readonly IPiscinaRepository _piscinaRepository;
 
-        public AnaliseService(IAnaliseRepository analisesRepository, IAuthenticatedUser user, IUsuarioRepository userRepository)
+        public AnaliseService(IAnaliseRepository analisesRepository, IAuthenticatedUser user, IUsuarioRepository userRepository, IPiscinaRepository piscinaRepository)
         {
             _analiseRepository = analisesRepository ?? throw new ArgumentNullException(nameof(analisesRepository));
             _user = user ?? throw new ArgumentNullException(nameof(user));
             _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+            _piscinaRepository = piscinaRepository ?? throw new ArgumentNullException(nameof(piscinaRepository));
         }
 
 
@@ -47,6 +50,17 @@ namespace PiscinaPerfeita.Api.Service.Analises
         public async Task<AnaliseResponseDto> Create(AnaliseRequestDto dto)
         {
 
+            var piscinaDb = await _piscinaRepository.GetById(dto.PiscinaId);
+            if (piscinaDb == null)
+                throw new KeyNotFoundException("Problemas ao registrar, piscina não localizado");
+
+            var userDb = await _userRepository.GetById(_user.GetUserId());
+            if (userDb == null)
+                throw new KeyNotFoundException("Problemas ao registrar, usuario ID analise não localizado");
+
+
+
+
             var analise = new Analise
             {
                 PiscinaId = dto.PiscinaId,
@@ -64,13 +78,14 @@ namespace PiscinaPerfeita.Api.Service.Analises
             return new AnaliseResponseDto
             {
                 Id = analise.Id,
-                Piscina = new PiscinaOrigem {Id = analise.PiscinaId},
                 DataAnalise = analise.DataAnalise,
                 Ph = analise.Ph,
                 CloroLivre = analise.CloroLivre,
                 Alcalinidade = analise.Alcalinidade,
                 Temperatura = analise.Temperatura,
-                Observacoes = analise.Observacoes
+                Observacoes = analise.Observacoes,
+                Piscina = new PiscinaOrigem { Id = analise.PiscinaId, Nome = piscinaDb.Nome },
+                UsuarioAnalise = new UsuarioAnalise { Id = analise.UsuarioId, Nome = userDb.Nome }
             };
         }
 
@@ -83,8 +98,6 @@ namespace PiscinaPerfeita.Api.Service.Analises
             {
                 throw new KeyNotFoundException($"Analise com id {id} não encontrado.");
             }
-
-            var usuario = await _userRepository.GetById(analisesDb.UsuarioAnalise.Id);
 
             var analisesUpdated = new Analise
             {
@@ -103,18 +116,14 @@ namespace PiscinaPerfeita.Api.Service.Analises
             return new AnaliseResponseDto
             {
                 Id = analisesUpdated.Id,
-                Piscina = new PiscinaOrigem { Id = analisesUpdated.PiscinaId },
                 DataAnalise = analisesUpdated.DataAnalise,
                 Ph = analisesUpdated.Ph,
                 CloroLivre = analisesUpdated.CloroLivre,
                 Alcalinidade = analisesUpdated.Alcalinidade,
                 Temperatura = analisesUpdated.Temperatura,
                 Observacoes = analisesUpdated.Observacoes,
-                UsuarioAnalise = new UsuarioIdAnalise
-                {
-                    Id = analisesUpdated.UsuarioId,
-                    Nome = usuario.Nome
-                }
+                Piscina = new PiscinaOrigem { Id = analisesUpdated.PiscinaId },
+                UsuarioAnalise = new UsuarioAnalise { Id = analisesUpdated.UsuarioId, Nome = analisesUpdated.Usuario.Nome }
             };
         }
 
