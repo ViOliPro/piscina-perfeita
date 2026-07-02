@@ -54,9 +54,9 @@ namespace PiscinaPerfeita.Api.Controllers
         {
             try
             {
-                var user = await _piscinasService.Create(dto);
+                var data = await _piscinasService.Create(dto);
 
-                return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
+                return Ok(data);
             }
             catch (KeyNotFoundException ex)
             {
@@ -69,16 +69,27 @@ namespace PiscinaPerfeita.Api.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult> Update(Guid id, PiscinaRequestDto dto)
+        public async Task<ActionResult<PiscinaResponseDto>> Update(Guid id, PiscinaRequestDto dto)
         {
+
+            if (dto.UsuarioId == Guid.Empty)
+            {
+                return BadRequest(new { message = "O ID do usuário é obrigatório e não pode ser vazio." });
+            }
+
             try
             {
-                await _piscinasService.Update(id, dto);
-                return NoContent();
+                var data = await _piscinasService.Update(id, dto);
+                
+                return CreatedAtAction(nameof(GetById), new { id = data.Id }, data);
             }
             catch (KeyNotFoundException ex)
             {
                 return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
             }
 
         }

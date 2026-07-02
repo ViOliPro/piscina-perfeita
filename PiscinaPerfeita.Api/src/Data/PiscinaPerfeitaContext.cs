@@ -41,7 +41,7 @@ public partial class PiscinaPerfeitaContext : DbContext
 
         modelBuilder.Entity<MovimentacaoEstoque>(entity =>
         {
-            entity.ToTable("MovimentacoesEstoque", "piscina-perfeita");
+            entity.ToTable("Movimentacoes", "piscina-perfeita");
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()"); // Mudado para gerar automático
             entity.Property(e => e.DataMovimentacao).HasColumnType("timestamp with time zone"); // Corrigido para DateTimeOffset compatível
         });

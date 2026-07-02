@@ -74,8 +74,8 @@ namespace PiscinaPerfeita.Api.Controllers
         {
             try
             {
-                await _analisesService.Update(id, dto);
-                return NoContent();
+                var analises = await _analisesService.Update(id, dto);
+                return CreatedAtAction(nameof(GetById), new { id = analises.Id }, analises); ;
             }
             catch (KeyNotFoundException ex)
             {

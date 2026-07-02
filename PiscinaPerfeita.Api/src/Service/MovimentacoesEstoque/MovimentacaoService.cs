@@ -1,21 +1,30 @@
 ﻿using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
-using PiscinaPerfeita.Api.Models;
-using PiscinaPerfeita.Api.Repository.MovimentacoesEstoque;
 using PiscinaPerfeita.Api.Helpers;
 using PiscinaPerfeita.Api.Helpers.Authenticated;
+using PiscinaPerfeita.Api.Models;
+using PiscinaPerfeita.Api.Repository.MovimentacoesEstoque;
+using PiscinaPerfeita.Api.Repository.Usuarios;
+using PiscinaPerfeita.Api.Repository.Piscinas;
+using PiscinaPerfeita.Api.Repository.Produtos;
 
 namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
 {
     public class MovimentacaoService : IMovimentacaoService
     {
         private readonly IMovimentacaoRepository _movimentacaoRepository;
+        private readonly IUsuarioRepository _usuarioRepository;
+        private readonly IPiscinaRepository _piscinaRepository;
+        private readonly IProdutoRepository _produtoRepository;
         private readonly IAuthenticatedUser _user;
 
-        public MovimentacaoService(IMovimentacaoRepository movimentacaoRepository, IAuthenticatedUser user)
+        public MovimentacaoService(IMovimentacaoRepository movimentacaoRepository, IAuthenticatedUser user, IUsuarioRepository usuarioRepository, IPiscinaRepository piscinaRepository, IProdutoRepository produtoRepository)
         {
             _movimentacaoRepository = movimentacaoRepository ?? throw new ArgumentNullException(nameof(movimentacaoRepository));
             _user = user ?? throw new ArgumentNullException(nameof(user));
+            _usuarioRepository = usuarioRepository ?? throw new ArgumentNullException(nameof(usuarioRepository));
+            _piscinaRepository = piscinaRepository ?? throw new ArgumentNullException(nameof(piscinaRepository));
+            _produtoRepository = produtoRepository ?? throw new ArgumentNullException(nameof(produtoRepository));
         }
 
 
@@ -23,40 +32,42 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
         // Metodo Show: Retorna uma lista de todos os estoques, incluindo as informações relacionadas de piscina e produto.
         public async Task<List<MovimentacaoEstoqueResponseDto>> Show()
         {
-            var mov = await _movimentacaoRepository.Show();
-            return mov.Select(u => new MovimentacaoEstoqueResponseDto
-            {
-                Id = u.Id,
-                PiscinaId = u.PiscinaId,
-                ProdutoId = u.ProdutoId,
-                TipoMovimentacao = (Dtos.Response.Tipo)u.TipoMovimentacao,
-                Quantidade = u.Quantidade,
-                Valor = u.Valor.ToPtBrCurrency(),
-                DataMovimentacao = u.DataMovimentacao
-            }).ToList();
+            return await _movimentacaoRepository.Show();
+
         }
 
 
         // Metodo GetById: Retorna um estoque específico com base no ID, incluindo as informações relacionadas de piscina e produto.
-        public async Task<MovimentacaoEstoqueResponseDto> GetById(Guid id)
+        public async Task<MovimentacaoEstoqueResponseDto?> GetById(Guid id)
         {
-            var u = await _movimentacaoRepository.GetById(id);
-            return new MovimentacaoEstoqueResponseDto
+            var mov = await _movimentacaoRepository.GetById(id);
+
+            if(mov == null)
             {
-                Id = u.Id,
-                PiscinaId = u.PiscinaId,
-                ProdutoId = u.ProdutoId,
-                TipoMovimentacao = (Dtos.Response.Tipo)u.TipoMovimentacao,
-                Quantidade = u.Quantidade,
-                Valor = u.Valor.ToPtBrCurrency(),
-                DataMovimentacao = u.DataMovimentacao
-            };
+                throw new KeyNotFoundException($"Movimentação com id {id} não encontrada.");
+            }
+
+            return mov;
+            
         }
 
 
         // Metodo Create: Cria um novo estoque com base nos dados fornecidos, incluindo as informações relacionadas de piscina e produto.
         public async Task<MovimentacaoEstoqueResponseDto> Create(MovimentacaoEstoqueRequestDto dto)
         {
+            var user = await _usuarioRepository.GetById(_user.GetUserId());
+            if(user == null)
+                throw new KeyNotFoundException($"Usuário com id {_user.GetUserId()} não encontrado.");
+            
+
+            var piscina = await _piscinaRepository.GetById(dto.PiscinaId);
+            if(piscina == null)
+                throw new KeyNotFoundException($"Piscina com id {dto.PiscinaId} não encontrada.");
+
+            var produto = await _produtoRepository.GetById(dto.ProdutoId);
+            if(produto == null)
+                throw new KeyNotFoundException($"Produto com id {dto.ProdutoId} não encontrado.");
+
             var movimentacao = new MovimentacaoEstoque
             {
                 PiscinaId = dto.PiscinaId,
@@ -64,7 +75,7 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
                 UsuarioId = _user.GetUserId(),
                 TipoMovimentacao = (Models.Tipo)dto.TipoMovimentacao,
                 Quantidade = dto.Quantidade,
-                Valor = dto.Valor
+                Valor = dto.Valor.ToString()
             };
 
             await _movimentacaoRepository.Create(movimentacao);
@@ -73,10 +84,11 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
             return new MovimentacaoEstoqueResponseDto
             {
                 Id = movimentacao.Id,
-                PiscinaId = movimentacao.PiscinaId,
-                ProdutoId = movimentacao.ProdutoId,
+                Piscina = new NomeIdDto(movimentacao.PiscinaId, piscina.Nome),
+                Produto = new NomeIdDto(movimentacao.ProdutoId, produto.Nome),
+                Usuario = new NomeIdDto(movimentacao.UsuarioId, user.Nome),
                 Quantidade = movimentacao.Quantidade,
-                Valor = movimentacao.Valor.ToPtBrCurrency(),
+                Valor = movimentacao.Valor,
                 DataMovimentacao = movimentacao.DataMovimentacao
             };
         }
@@ -98,7 +110,7 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
                 ProdutoId = dto.ProdutoId,
                 TipoMovimentacao = (Models.Tipo)dto.TipoMovimentacao,
                 Quantidade = dto.Quantidade,
-                Valor = dto.Valor,
+                Valor = dto.Valor.ToString(),
             };
 
             await _movimentacaoRepository.Update(id, movimentacaoUpdated);
@@ -106,11 +118,11 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
             return new MovimentacaoEstoqueResponseDto
             {
                 Id = id,
-                PiscinaId = movimentacaoUpdated.PiscinaId,
-                ProdutoId = movimentacaoUpdated.ProdutoId,
+                Piscina = new NomeIdDto(movimentacaoUpdated.PiscinaId, null),
+                Produto = new NomeIdDto(movimentacaoUpdated.ProdutoId, null),
                 TipoMovimentacao = (Dtos.Response.Tipo)movimentacaoUpdated.TipoMovimentacao,
                 Quantidade = movimentacaoUpdated.Quantidade,
-                Valor = movimentacaoUpdated.Valor.ToPtBrCurrency(),
+                Valor = movimentacaoUpdated.Valor,
             };
         }
 

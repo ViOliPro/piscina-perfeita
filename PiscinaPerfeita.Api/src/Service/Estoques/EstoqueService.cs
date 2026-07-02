@@ -2,6 +2,8 @@
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Repository.Estoques;
+using PiscinaPerfeita.Api.Repository.Piscinas;
+using PiscinaPerfeita.Api.Repository.Produtos;
 using PiscinaPerfeita.Api.Helpers.Authenticated;
 
 namespace PiscinaPerfeita.Api.Service.Estoques
@@ -9,11 +11,15 @@ namespace PiscinaPerfeita.Api.Service.Estoques
     public class EstoqueService : IEstoqueService
     {
         private readonly IEstoqueRepository _estoqueRepository;
+        private readonly IPiscinaRepository _piscinaRepository;
+        private readonly IProdutoRepository _produtoRepository;
         private readonly IAuthenticatedUser _user;
 
-        public EstoqueService(IEstoqueRepository estoqueRepository, IAuthenticatedUser user)
+        public EstoqueService(IEstoqueRepository estoqueRepository, IPiscinaRepository piscinaRepository, IProdutoRepository produtoRepository, IAuthenticatedUser user)
         {
             _estoqueRepository = estoqueRepository ?? throw new ArgumentNullException(nameof(estoqueRepository));
+            _piscinaRepository = piscinaRepository ?? throw new ArgumentNullException(nameof(piscinaRepository));
+            _produtoRepository = produtoRepository ?? throw new ArgumentNullException(nameof(produtoRepository));
             _user = user ?? throw new ArgumentNullException(nameof(user));
         }
 
@@ -21,14 +27,8 @@ namespace PiscinaPerfeita.Api.Service.Estoques
         // Cada método chama o repositório correspondente e transforma os dados em DTOs de resposta
         public async Task<List<EstoqueResponseDto>> Show()
         {
-            var estoques = await _estoqueRepository.Show();
-            return estoques.Select(u => new EstoqueResponseDto
-            {
-                Id = u.Id,
-                PiscinaId = u.PiscinaId,
-                ProdutoId = u.ProdutoId,
-                QuantidadeAtual = u.QuantidadeAtual,
-            }).ToList();
+            return await _estoqueRepository.Show();
+
         }
 
 
@@ -36,19 +36,26 @@ namespace PiscinaPerfeita.Api.Service.Estoques
         public async Task<EstoqueResponseDto> GetById(Guid id)
         {
             var estoque = await _estoqueRepository.GetById(id);
-            return new EstoqueResponseDto
-            {
-                Id = estoque.Id,
-                PiscinaId = estoque.PiscinaId,
-                ProdutoId = estoque.ProdutoId,
-                QuantidadeAtual = estoque.QuantidadeAtual,
-            };
+
+            if (estoque == null)
+                throw new KeyNotFoundException($"Não foi encontrado um estoque com o id {id}");
+
+            return estoque;
         }
 
 
         // O método Create recebe um DTO de requisição, cria um novo estoque e retorna um DTO de resposta
         public async Task<EstoqueResponseDto> Create(EstoqueRequestDto dto)
         {
+            var piscinaDb = await _piscinaRepository.GetById(dto.PiscinaId);
+            if (piscinaDb == null)
+                throw new KeyNotFoundException($"Não foi encontrada uma piscina com o id {dto.PiscinaId}");
+
+            var produtoDb = await _produtoRepository.GetById(dto.ProdutoId);
+            if (produtoDb == null)
+                throw new KeyNotFoundException($"Não foi encontrado um produto com o id {dto.ProdutoId}");
+
+
             var estoque = new Estoque
             {
                 PiscinaId = dto.PiscinaId,
@@ -63,9 +70,9 @@ namespace PiscinaPerfeita.Api.Service.Estoques
             return new EstoqueResponseDto
             {
                 Id = estoque.Id,
-                PiscinaId = estoque.PiscinaId,
-                ProdutoId = estoque.ProdutoId,
-                QuantidadeAtual = estoque.QuantidadeAtual
+                QuantidadeAtual = estoque.QuantidadeAtual,
+                Piscina = new NomeIdDto(estoque.PiscinaId, piscinaDb.Nome),
+                Produto = new ProdutoEstoque { Id = estoque.ProdutoId, Nome = produtoDb.Nome, UnidadeMedida = produtoDb.UnidadeMedida }
             };
         }
 
@@ -78,19 +85,32 @@ namespace PiscinaPerfeita.Api.Service.Estoques
             {
                 throw new KeyNotFoundException($"Estoque com id {id} não encontrado.");
             }
+            var piscinaDb = await _piscinaRepository.GetById(dto.PiscinaId);
+            if (piscinaDb == null)
+                throw new KeyNotFoundException($"Não foi encontrada uma piscina com o id {dto.PiscinaId}");
 
-            estoqueDb.PiscinaId = dto.PiscinaId;
-            estoqueDb.ProdutoId = dto.ProdutoId;
-            estoqueDb.QuantidadeAtual = dto.QuantidadeAtual;
+            var produtoDb = await _produtoRepository.GetById(dto.ProdutoId);
+            if (produtoDb == null)
+                throw new KeyNotFoundException($"Não foi encontrado um produto com o id {dto.ProdutoId}");
 
-            await _estoqueRepository.Update(id, estoqueDb);
+
+
+            var estoqueUpdated = new Estoque
+            {
+                Id = id,
+                PiscinaId = dto.PiscinaId,
+                ProdutoId = dto.ProdutoId,
+                QuantidadeAtual = dto.QuantidadeAtual
+            };
+
+            await _estoqueRepository.Update(id, estoqueUpdated);
 
             return new EstoqueResponseDto
             {
                 Id = estoqueDb.Id,
-                PiscinaId = estoqueDb.PiscinaId,
-                ProdutoId = estoqueDb.ProdutoId,
-                QuantidadeAtual = estoqueDb.QuantidadeAtual
+                QuantidadeAtual = estoqueDb.QuantidadeAtual,
+                Piscina = new NomeIdDto(estoqueUpdated.PiscinaId, null),
+                Produto = new ProdutoEstoque { Id = estoqueUpdated.ProdutoId, Nome = produtoDb.Nome, UnidadeMedida = produtoDb.UnidadeMedida }
             };
         }
 

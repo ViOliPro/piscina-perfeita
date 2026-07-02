@@ -24,11 +24,10 @@ public class AnaliseRepository : IAnaliseRepository
             Alcalinidade = a.Alcalinidade,
             Temperatura = a.Temperatura,
             Observacoes = a.Observacoes,
-            Piscina = a.Piscina != null ? new PiscinaOrigem
-            {
-                Id = a.Piscina.Id,
-                Nome = a.Piscina.Nome
-            } : null
+
+            Piscina = a.Piscina != null ? new NomeIdDto(a.PiscinaId, a.Piscina.Nome) : null,
+            Usuario = a.Usuario != null ? new NomeIdDto(a.UsuarioId, a.Usuario.Nome) : null
+
         }).ToListAsync();
     }
 
@@ -43,11 +42,10 @@ public class AnaliseRepository : IAnaliseRepository
             Alcalinidade = a.Alcalinidade,
             Temperatura = a.Temperatura,
             Observacoes = a.Observacoes,
-            Piscina = a.Piscina != null ? new PiscinaOrigem
-            {
-                Id = a.Piscina.Id,
-                Nome = a.Piscina.Nome
-            } : null
+
+            Piscina = a.Piscina != null ? new NomeIdDto(a.PiscinaId, a.Piscina.Nome) : null,
+            Usuario = a.Usuario != null ? new NomeIdDto(a.UsuarioId, a.Usuario.Nome) : null
+
         }).FirstOrDefaultAsync();
 
         return analise ?? null;
@@ -70,6 +68,8 @@ public class AnaliseRepository : IAnaliseRepository
         analiseToUpdate.Alcalinidade = analise.Alcalinidade;
         analiseToUpdate.Temperatura = analise.Temperatura;
         analiseToUpdate.Observacoes = analise.Observacoes;
+        analiseToUpdate.PiscinaId = analise.PiscinaId;
+        analiseToUpdate.UsuarioId = analise.UsuarioId;
 
         await _context.SaveChangesAsync();
 

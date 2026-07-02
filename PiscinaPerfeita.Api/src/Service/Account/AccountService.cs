@@ -70,7 +70,7 @@ namespace PiscinaPerfeita.Api.Service.Account
                 {
                     Nome = usuario.Nome ?? string.Empty,
                     Email = usuario.Email ?? string.Empty,
-                    Role = usuario.Role // Garanta o mapeamento correto do tipo numérico da Role
+                    Role = usuario.Role  // Garanta o mapeamento correto do tipo numérico da Role
                 }
             };
         }

@@ -30,7 +30,7 @@ namespace PiscinaPerfeita.Api.Models
         public virtual Piscina Piscina { get; set; } = null!;
 
         [ForeignKey(nameof(UsuarioId))]
-        public virtual Usuario Usuario { get; set; }
+        public virtual Usuario? Usuario { get; set; }
     }
 }
 

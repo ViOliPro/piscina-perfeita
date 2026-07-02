@@ -85,6 +85,7 @@ namespace PiscinaPerfeita.Api.Service.Produtos
 
             return new ProdutoResponseDto
             {
+                Id = id,
                 Nome = u.Nome,
                 UnidadeMedida = u.UnidadeMedida
             };

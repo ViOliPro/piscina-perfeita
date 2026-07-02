@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
+using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Service.Estoques;
 
 namespace PiscinaPerfeita.Api.Controllers
@@ -58,12 +59,12 @@ namespace PiscinaPerfeita.Api.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult> Update(Guid id, EstoqueRequestDto dto)
+        public async Task<ActionResult<EstoqueResponseDto>> Update(Guid id, EstoqueRequestDto dto)
         {
             try
             {
-                await _estoquesService.Update(id, dto);
-                return NoContent();
+                var estoque = await _estoquesService.Update(id, dto);
+                return CreatedAtAction(nameof(GetById), new { id = estoque.Id }, estoque);
             }
             catch (KeyNotFoundException ex)
             {

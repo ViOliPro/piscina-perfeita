@@ -54,9 +54,9 @@ namespace PiscinaPerfeita.Api.Controllers
         {
             try
             {
-                var user = await _produtosService.Create(dto);
+                var produto = await _produtosService.Create(dto);
 
-                return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
+                return CreatedAtAction(nameof(GetById), new { id = produto.Id }, produto);
             }
             catch (KeyNotFoundException ex)
             {
@@ -65,12 +65,12 @@ namespace PiscinaPerfeita.Api.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult> Update(Guid id, ProdutoRequestDto dto)
+        public async Task<ActionResult<ProdutoResponseDto>> Update(Guid id, ProdutoRequestDto dto)
         {
             try
             {
-                await _produtosService.Update(id, dto);
-                return NoContent();
+                var produto = await _produtosService.Update(id, dto);
+                return CreatedAtAction(nameof(GetById), new { id = produto.Id }, produto);
             }
             catch (KeyNotFoundException ex)
             {

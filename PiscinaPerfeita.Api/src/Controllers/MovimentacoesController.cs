@@ -69,8 +69,8 @@ namespace PiscinaPerfeita.Api.Controllers
         {
             try
             {
-                await _movimentacoesService.Update(id, dto);
-                return NoContent();
+                var mov = await _movimentacoesService.Update(id, dto);
+                return CreatedAtAction(nameof(GetById), new { id = mov.Id }, mov);
             }
             catch (KeyNotFoundException ex)
             {

@@ -12,7 +12,7 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
         private readonly IPiscinaRepository _piscinaRepository;
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IAuthenticatedUser _user;
-        
+
 
         public PiscinaService(IPiscinaRepository piscinaRepository, IUsuarioRepository usuarioRepository, IAuthenticatedUser user)
         {
@@ -35,7 +35,7 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
         {
             var piscina = await _piscinaRepository.GetById(id);
 
-            if(piscina == null)
+            if (piscina == null)
             {
                 throw new KeyNotFoundException($"Piscina com ID {id} não encontrada.");
             }
@@ -50,7 +50,7 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
 
             var usuario = await _usuarioRepository.GetById(dto.UsuarioId);
 
-            if(usuario == null)
+            if (usuario == null)
             {
                 throw new KeyNotFoundException($"Não foi possível criar a piscina usuario{dto.UsuarioId} não existe.");
             }
@@ -60,7 +60,7 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
                 Nome = dto.Nome,
                 VolumeLitros = dto.VolumeLitros,
                 ProfundidadeMedia = dto.ProfundidadeMedia,
-                UsuarioId = _user.GetUserId()
+                UsuarioId = dto.UsuarioId
             };
 
             await _piscinaRepository.Create(piscina);
@@ -71,7 +71,9 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
                 Id = piscina.Id,
                 Nome = piscina.Nome,
                 VolumeLitros = piscina.VolumeLitros,
-                ProfundidadeMedia = piscina.ProfundidadeMedia
+                ProfundidadeMedia = piscina.ProfundidadeMedia,
+                CreatedAt = piscina.CreatedAt,
+                UsuarioPiscina = new NomeIdDto(piscina.UsuarioId, usuario.Nome)
             };
 
         }
@@ -83,7 +85,14 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
             var piscinaDb = await _piscinaRepository.GetById(id);
             if (piscinaDb == null)
             {
-                throw new KeyNotFoundException($"Estoque com id {id} não encontrado.");
+                throw new KeyNotFoundException($"Piscina com id {id} não encontrado.");
+            }
+
+            var usuario = await _usuarioRepository.GetById(dto.UsuarioId);
+
+            if (usuario == null)
+            {
+                throw new KeyNotFoundException($"Não foi possível criar a piscina usuario{dto.UsuarioId} não existe.");
             }
 
             var piscinaUpdated = new Piscina
@@ -91,19 +100,22 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
                 Id = id,
                 Nome = dto.Nome,
                 VolumeLitros = dto.VolumeLitros,
-                ProfundidadeMedia = dto.ProfundidadeMedia
+                ProfundidadeMedia = dto.ProfundidadeMedia,
+                UsuarioId = dto.UsuarioId
             };
 
             await _piscinaRepository.Update(id, piscinaUpdated);
 
-
             return new PiscinaResponseDto
             {
-                Id = piscinaUpdated.Id,
-                Nome = piscinaUpdated.Nome,
-                VolumeLitros = piscinaUpdated.VolumeLitros,
-                ProfundidadeMedia = piscinaUpdated.ProfundidadeMedia
+                Id = id,
+                Nome = dto.Nome,
+                VolumeLitros = dto.VolumeLitros,
+                ProfundidadeMedia = dto.ProfundidadeMedia,
+                CreatedAt = piscinaDb.CreatedAt,
+                UsuarioPiscina = new NomeIdDto(dto.UsuarioId, usuario.Nome)
             };
+
         }
 
 

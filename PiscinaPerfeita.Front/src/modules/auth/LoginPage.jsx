@@ -10,6 +10,7 @@ import { useState } from "react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { authService } from "../../config/services.js";
 import { APP_META } from "../../config/index.js";
+import { LogoIcon } from "../../components/ui/Logo.jsx";
 
 // ----------------------------------------------------------
 // Onda decorativa SVG
@@ -471,26 +472,9 @@ export default function LoginPage() {
       }}
         className="login-brand-panel"
       >
-        {/* Logo / onda animada */}
-        <div style={{ display: "flex", alignItems: "flex-end", gap: 3, marginBottom: 20 }}>
-          {[0, .12, .24, .36, .48, .6].map((delay, i) => (
-            <span key={i} style={{
-              display: "inline-block",
-              width: 5, borderRadius: 2,
-              background: "rgba(94,192,235,0.8)",
-              animation: `pp-spin 0s linear ${delay}s infinite`, // override abaixo
-              animationName: "pp-bubble-brand",
-            }} />
-          ))}
-          <style>{`
-            @keyframes pp-bubble-brand {
-              0%,100% { height: 8px; }
-              50%      { height: 28px; }
-            }
-            ${[0,.12,.24,.36,.48,.6].map((d,i) =>
-              `.brand-bar-${i} { animation: pp-bubble-brand 1.4s ease-in-out ${d}s infinite; }`
-            ).join("")}
-          `}</style>
+        {/* Logo / ícone */}
+        <div style={{ marginBottom: 20 }}>
+          <LogoIcon height={64} />
         </div>
 
         <h1 style={{
@@ -534,12 +518,7 @@ export default function LoginPage() {
         }}>
           {/* Cabeçalho do card */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 28 }}>
-            <div style={{
-              width: 38, height: 38, borderRadius: 10,
-              background: "linear-gradient(135deg, #2E86AB, #5BC0EB)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 18,
-            }}>🏊</div>
+            <LogoIcon height={38} />
             <div>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#0A1628" }}>{APP_META.name}</div>
               <div style={{ fontSize: 11, color: "#6B8CAE" }}>

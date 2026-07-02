@@ -22,27 +22,25 @@ public class PiscinaRepository : IPiscinaRepository
             VolumeLitros = u.VolumeLitros,
             ProfundidadeMedia = u.ProfundidadeMedia,
             CreatedAt = u.CreatedAt,
-            UsuarioPiscina = u.Usuario != null ? new UsuarioPiscinaResponseDto
-            {
-                Id = u.Usuario.Id,
-                Nome = u.Usuario.Nome,
-            } : null,
+            UsuarioPiscina = u.Usuario != null ? new NomeIdDto(u.Usuario.Id, u.Usuario.Nome) : null,
+
+
             AnalisePiscina = u.Analises != null ? u.Analises.Select(a => new AnalisePiscinaResponseDto
             {
                 Id = a.Id,
                 DataAnalise = a.DataAnalise
             }).ToList() : new List<AnalisePiscinaResponseDto>(),
-            Estoques = u.Estoques != null ? u.Estoques.Select(e => new EstoquePiscinaResponseDto
-            {
-                Id = e.Id,
-                Nome = e.Produto.Nome
-            }).ToList() : new List<EstoquePiscinaResponseDto>(),
-            MovimentacoesEstoques = u.MovimentacoesEstoques != null ? u.MovimentacoesEstoques.Select(m => new MovimentacaoEstoquePiscinaResponsetDto
+
+            Estoques = u.Estoques.Select(e => new NomeIdDto(e.Produto.Id, e.Produto.Nome)).ToList(),
+
+
+            MovimentacoesEstoques = u.MovimentacoesEstoques.Select(m => new MovimentacaoEstoquePiscinaResponsetDto
             {
                 Id = m.Id,
                 Nome = m.TipoMovimentacao.ToString(),
                 DataMovimentacao = m.DataMovimentacao,
-            }).ToList() : new List<MovimentacaoEstoquePiscinaResponsetDto>(),
+            }).ToList()
+
         }).ToListAsync();
     }
 
@@ -57,30 +55,26 @@ public class PiscinaRepository : IPiscinaRepository
                 VolumeLitros = u.VolumeLitros,
                 ProfundidadeMedia = u.ProfundidadeMedia,
                 CreatedAt = u.CreatedAt,
-                UsuarioPiscina = u.Usuario != null ? new UsuarioPiscinaResponseDto
-                {
-                    Id = u.Usuario.Id,
-                    Nome = u.Usuario.Nome
-                } : null,
-                AnalisePiscina = u.Analises != null ? u.Analises.Select(a => new AnalisePiscinaResponseDto
+                UsuarioPiscina = u.Usuario != null ? new NomeIdDto(u.Usuario.Id, u.Usuario.Nome) : null,
+
+                AnalisePiscina = u.Analises.Select(a => new AnalisePiscinaResponseDto
                 {
                     Id = a.Id,
                     DataAnalise = a.DataAnalise
-                }).ToList() : new List<AnalisePiscinaResponseDto>(),
-                Estoques = u.Estoques != null ? u.Estoques.Select(e => new EstoquePiscinaResponseDto
-                {
-                    Id = e.Id,
-                    Nome = e.Produto.Nome
-                }).ToList() : new List<EstoquePiscinaResponseDto>(),
-                MovimentacoesEstoques = u.MovimentacoesEstoques != null ? u.MovimentacoesEstoques.Select(m => new MovimentacaoEstoquePiscinaResponsetDto
+                }).ToList(),
+
+                Estoques =u.Estoques.Select(e => new NomeIdDto(e.Produto.Id, e.Produto.Nome)).ToList(),
+
+                MovimentacoesEstoques = u.MovimentacoesEstoques.Select(m => new MovimentacaoEstoquePiscinaResponsetDto
                 {
                     Id = m.Id,
                     Nome = m.TipoMovimentacao.ToString(),
                     DataMovimentacao = m.DataMovimentacao,
-                }).ToList() : new List<MovimentacaoEstoquePiscinaResponsetDto>(),
+                }).ToList(),
+
             }).FirstOrDefaultAsync();
 
-        return piscinaDto == null ? null : piscinaDto;
+        return piscinaDto ?? null;
     }
 
     public async Task Create(Piscina piscina)
@@ -98,6 +92,7 @@ public class PiscinaRepository : IPiscinaRepository
         piscinaToUpdate.Nome = piscina.Nome;
         piscinaToUpdate.VolumeLitros = piscina.VolumeLitros;
         piscinaToUpdate.ProfundidadeMedia = piscina.ProfundidadeMedia;
+        piscinaToUpdate.UsuarioId = piscina.UsuarioId;
 
         await _context.SaveChangesAsync();
 

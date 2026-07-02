@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using PiscinaPerfeita.Api.Dtos.Response;
 
 namespace PiscinaPerfeita.Api.Models
 {
@@ -22,9 +23,5 @@ namespace PiscinaPerfeita.Api.Models
         public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
         public virtual ICollection<Piscina> Piscinas { get; set; } = new List<Piscina>();
     }
-    public enum Role
-    {
-        Admin = 0,
-        User = 1
-    }
+
 }

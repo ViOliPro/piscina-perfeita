@@ -1,0 +1,20 @@
+{
+  "name": "Piscina Perfeita",
+  "short_name": "PiscinaPerfeita",
+  "description": "Gestão integrada de piscinas, análises de qualidade e controle de estoque.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0A1628",
+  "theme_color": "#0A1628",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "lang": "pt-BR"
+}
