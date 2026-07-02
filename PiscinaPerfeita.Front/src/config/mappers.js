@@ -197,8 +197,8 @@ export function fromApiAnalise(raw) {
       : raw?.Piscina
         ? fromApiPiscina(raw.Piscina)
         : null,
-    usuario: raw?.usuarioAnalise
-      ? fromApiUsuario(raw.usuarioAnalise)
+    usuario: raw?.usuario
+      ? fromApiUsuario(raw.usuario)
       : raw?.Usuario
         ? fromApiUsuario(raw.Usuario)
         : null,

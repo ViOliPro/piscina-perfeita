@@ -25,7 +25,8 @@ public class MovimentacaoRepository : IMovimentacaoRepository
             Valor = m.Valor,
             DataMovimentacao = m.DataMovimentacao,
             Piscina = new NomeIdDto(m.PiscinaId, m.Piscina.Nome),
-            Produto = new NomeIdDto(m.ProdutoId, m.Produto.Nome)
+            Produto = new NomeIdDto(m.ProdutoId, m.Produto.Nome),
+            Usuario = new NomeIdDto(m.UsuarioId, m.Usuarios.Nome)
         }).ToListAsync();
     }
 
@@ -41,7 +42,8 @@ public class MovimentacaoRepository : IMovimentacaoRepository
             Valor = m.Valor,
             DataMovimentacao = m.DataMovimentacao,
             Piscina = new NomeIdDto(m.PiscinaId, m.Piscina.Nome),
-            Produto = new NomeIdDto(m.ProdutoId, m.Produto.Nome)
+            Produto = new NomeIdDto(m.ProdutoId, m.Produto.Nome),
+            Usuario = new NomeIdDto(m.UsuarioId, m.Usuarios.Nome)
         }).FirstOrDefaultAsync();
 
         return movimentacao ?? null;
@@ -65,13 +67,11 @@ public class MovimentacaoRepository : IMovimentacaoRepository
 
         mov.Id = movimentacao.Id;
         mov.PiscinaId = movimentacao.PiscinaId;
-        mov.ProdutoId = movimentacao.ProdutoId;
+        mov.UsuarioId = movimentacao.UsuarioId;
         mov.TipoMovimentacao = movimentacao.TipoMovimentacao;
         mov.Quantidade = movimentacao.Quantidade;
         mov.Valor = movimentacao.Valor;
         mov.DataMovimentacao = movimentacao.DataMovimentacao;
-        mov.Piscina = movimentacao.Piscina;
-        mov.Produto = movimentacao.Produto;
 
         await _context.SaveChangesAsync();
 

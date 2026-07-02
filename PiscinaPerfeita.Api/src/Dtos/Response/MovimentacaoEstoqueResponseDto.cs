@@ -19,8 +19,11 @@ namespace PiscinaPerfeita.Api.Dtos.Response
         public NomeIdDto? Piscina { get; set; }
 
 
-        // Usuario que realizou a movimentação
+        // Produto que realizou a movimentação
         public NomeIdDto? Produto { get; set; }
+
+        // Usuario que realizou a movimentação
+        public NomeIdDto? Usuario { get; set; }
     }
 
 
