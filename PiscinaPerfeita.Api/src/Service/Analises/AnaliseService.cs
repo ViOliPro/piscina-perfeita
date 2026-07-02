@@ -84,8 +84,8 @@ namespace PiscinaPerfeita.Api.Service.Analises
                 Alcalinidade = analise.Alcalinidade,
                 Temperatura = analise.Temperatura,
                 Observacoes = analise.Observacoes,
-                Piscina = new PiscinaOrigem { Id = analise.PiscinaId, Nome = piscinaDb.Nome },
-                UsuarioAnalise = new UsuarioAnalise { Id = analise.UsuarioId, Nome = userDb.Nome }
+                Piscina = new NomeIdDto(analise.PiscinaId, piscinaDb.Nome),
+                Usuario = new NomeIdDto ( analise.UsuarioId, userDb.Nome )
             };
         }
 
@@ -122,8 +122,8 @@ namespace PiscinaPerfeita.Api.Service.Analises
                 Alcalinidade = analisesUpdated.Alcalinidade,
                 Temperatura = analisesUpdated.Temperatura,
                 Observacoes = analisesUpdated.Observacoes,
-                Piscina = new PiscinaOrigem { Id = analisesUpdated.PiscinaId },
-                UsuarioAnalise = new UsuarioAnalise { Id = analisesUpdated.UsuarioId, Nome = analisesUpdated.Usuario.Nome }
+                Piscina = new NomeIdDto(analisesUpdated.PiscinaId, null),
+                Usuario = new NomeIdDto(analisesUpdated.UsuarioId, null)
             };
         }
 

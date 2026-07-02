@@ -1,13 +1,14 @@
 ﻿using PiscinaPerfeita.Api.Models;
+using PiscinaPerfeita.Api.Dtos.Response;
 
 namespace PiscinaPerfeita.Api.Repository.MovimentacoesEstoque
 {
     public interface IMovimentacaoRepository
     {
 
-        Task<List<MovimentacaoEstoque>> Show();
+        Task<List<MovimentacaoEstoqueResponseDto>> Show();
 
-        Task<MovimentacaoEstoque> GetById(Guid id);
+        Task<MovimentacaoEstoqueResponseDto?> GetById(Guid id);
 
         Task Create(MovimentacaoEstoque movimentacao);
 

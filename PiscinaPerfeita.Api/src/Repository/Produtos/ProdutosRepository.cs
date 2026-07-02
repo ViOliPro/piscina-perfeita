@@ -21,17 +21,15 @@ public class ProdutoRepository : IProdutoRepository
             Id = p.Id,
             Nome = p.Nome,
             UnidadeMedida = p.UnidadeMedida,
-            Estoques = p.Estoques.Select(e => new EstoqueProdutoResponseDto
-            {
-                Id = e.Id,
-                Nome = e.Produto.Nome,
-            }).ToList(),
+            Estoques = p.Estoques.Select(e => new NomeIdDto(e.Id, e.Produto.Nome)).ToList(),
+
             MovimentacoesEstoques = p.MovimentacoesEstoques.Select(m => new MovimentacaoEstoqueProdutoResponseDto
             {
                 Id = m.Id,
                 Nome = m.Produto.Nome,
                 DataMovimentacao = m.DataMovimentacao
             }).ToList() 
+
         }).ToListAsync();
     }
 
@@ -45,11 +43,8 @@ public class ProdutoRepository : IProdutoRepository
                 Id = p.Id,
                 Nome = p.Nome,
                 UnidadeMedida = p.UnidadeMedida,
-                Estoques = p.Estoques.Select(e => new EstoqueProdutoResponseDto
-                {
-                    Id = e.Id,
-                    Nome = e.Produto.Nome,
-                }).ToList(),
+                Estoques = p.Estoques.Select(e => new NomeIdDto(e.Id, e.Produto.Nome)).ToList(),
+
                 MovimentacoesEstoques = p.MovimentacoesEstoques.Select(m => new MovimentacaoEstoqueProdutoResponseDto
                 {
                     Id = m.Id,

@@ -13,18 +13,11 @@ public class ProdutoResponseDto
 
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public virtual ICollection<EstoqueProdutoResponseDto> Estoques { get; set; } = new List<EstoqueProdutoResponseDto>();
+    public virtual ICollection<NomeIdDto> Estoques { get; set; } = new List<NomeIdDto>();
 
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public virtual ICollection<MovimentacaoEstoqueProdutoResponseDto> MovimentacoesEstoques { get; set; } = new List<MovimentacaoEstoqueProdutoResponseDto>();
-}
-
-public class EstoqueProdutoResponseDto
-{
-    public Guid Id { get; set; }
-    public string Nome { get; set; } = string.Empty;
-
 }
 
 public class MovimentacaoEstoqueProdutoResponseDto
@@ -34,3 +27,4 @@ public class MovimentacaoEstoqueProdutoResponseDto
     public DateTimeOffset DataMovimentacao { get; set; }
 
 }
+

@@ -7,14 +7,9 @@ namespace PiscinaPerfeita.Api.Dtos.Response
     {
         public Guid Id { get; set; }
 
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public PiscinaOrigem? Piscina { get; set; } = new PiscinaOrigem();
-
         public DateTimeOffset DataAnalise { get; set; }
 
         public decimal? Ph { get; set; }
-
-        public UsuarioAnalise UsuarioAnalise { get; set; } = new UsuarioAnalise();
 
         public decimal? CloroLivre { get; set; }
 
@@ -23,17 +18,13 @@ namespace PiscinaPerfeita.Api.Dtos.Response
         public decimal? Temperatura { get; set; }
 
         public string? Observacoes { get; set; }
+
+        // Usuario que realizou a análise
+        public NomeIdDto? Usuario { get; set; }
+
+        // Piscina analisada
+        public NomeIdDto? Piscina { get; set; }
     }
 
-    public class PiscinaOrigem
-    {
-        public Guid Id { get; set; }
-        public string Nome { get; set; } = null!;
-    }
-    public class UsuarioAnalise
-    {
-        public Guid Id { get; set; }
-        public string Nome { get; set; } = null!;
-    }
 }
 

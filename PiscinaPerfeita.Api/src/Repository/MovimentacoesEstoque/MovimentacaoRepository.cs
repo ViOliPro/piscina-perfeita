@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Models;
 
 namespace PiscinaPerfeita.Api.Repository.MovimentacoesEstoque;
@@ -14,20 +15,36 @@ public class MovimentacaoRepository : IMovimentacaoRepository
 
     // Implementação dos métodos do repositório
     // Exemplo de método para obter todas as movimentações de estoque
-    public async Task<List<MovimentacaoEstoque>> Show()
+    public async Task<List<MovimentacaoEstoqueResponseDto>> Show()
     {
-        return await _context.MovimentacoesEstoques.ToListAsync();
+        return await _context.MovimentacoesEstoques.Select(m => new MovimentacaoEstoqueResponseDto
+        {
+            Id = m.Id,
+            TipoMovimentacao = (Dtos.Response.Tipo)m.TipoMovimentacao,
+            Quantidade = m.Quantidade,
+            Valor = m.Valor,
+            DataMovimentacao = m.DataMovimentacao,
+            Piscina = new NomeIdDto(m.PiscinaId, m.Piscina.Nome),
+            Produto = new NomeIdDto(m.ProdutoId, m.Produto.Nome)
+        }).ToListAsync();
     }
 
 
     // Exemplo de método para obter uma movimentação de estoque por ID
-    public async Task<MovimentacaoEstoque> GetById(Guid id)
+    public async Task<MovimentacaoEstoqueResponseDto?> GetById(Guid id)
     {
-        var movimentacao = await _context.MovimentacoesEstoques.FirstOrDefaultAsync(m => m.Id == id);
-        if(movimentacao == null)
-            throw new KeyNotFoundException($"Movimentação com ID {id} não encontrada.");
+        var movimentacao = await _context.MovimentacoesEstoques.Where(m => m.Id == id).Select(m => new MovimentacaoEstoqueResponseDto
+        {
+            Id = m.Id,
+            TipoMovimentacao = (Dtos.Response.Tipo)m.TipoMovimentacao,
+            Quantidade = m.Quantidade,
+            Valor = m.Valor,
+            DataMovimentacao = m.DataMovimentacao,
+            Piscina = new NomeIdDto(m.PiscinaId, m.Piscina.Nome),
+            Produto = new NomeIdDto(m.ProdutoId, m.Produto.Nome)
+        }).FirstOrDefaultAsync();
 
-        return movimentacao;
+        return movimentacao ?? null;
     }
 
 

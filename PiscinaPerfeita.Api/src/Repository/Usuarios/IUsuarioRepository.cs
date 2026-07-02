@@ -19,5 +19,7 @@ namespace PiscinaPerfeita.Api.Repository.Usuarios
         Task<Usuario?> GetByEmail(string email);
 
         Task<Usuario?> GetNameById(Guid id);
+
+        Task<Usuario?> GetPasswordById(Guid id);
     }
 }

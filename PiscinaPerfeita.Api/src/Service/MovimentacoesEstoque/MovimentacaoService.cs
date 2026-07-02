@@ -23,34 +23,23 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
         // Metodo Show: Retorna uma lista de todos os estoques, incluindo as informações relacionadas de piscina e produto.
         public async Task<List<MovimentacaoEstoqueResponseDto>> Show()
         {
-            var mov = await _movimentacaoRepository.Show();
-            return mov.Select(u => new MovimentacaoEstoqueResponseDto
-            {
-                Id = u.Id,
-                PiscinaId = u.PiscinaId,
-                ProdutoId = u.ProdutoId,
-                TipoMovimentacao = (Dtos.Response.Tipo)u.TipoMovimentacao,
-                Quantidade = u.Quantidade,
-                Valor = u.Valor.ToPtBrCurrency(),
-                DataMovimentacao = u.DataMovimentacao
-            }).ToList();
+            return await _movimentacaoRepository.Show();
+
         }
 
 
         // Metodo GetById: Retorna um estoque específico com base no ID, incluindo as informações relacionadas de piscina e produto.
-        public async Task<MovimentacaoEstoqueResponseDto> GetById(Guid id)
+        public async Task<MovimentacaoEstoqueResponseDto?> GetById(Guid id)
         {
-            var u = await _movimentacaoRepository.GetById(id);
-            return new MovimentacaoEstoqueResponseDto
+            var mov = await _movimentacaoRepository.GetById(id);
+
+            if(mov == null)
             {
-                Id = u.Id,
-                PiscinaId = u.PiscinaId,
-                ProdutoId = u.ProdutoId,
-                TipoMovimentacao = (Dtos.Response.Tipo)u.TipoMovimentacao,
-                Quantidade = u.Quantidade,
-                Valor = u.Valor.ToPtBrCurrency(),
-                DataMovimentacao = u.DataMovimentacao
-            };
+                throw new KeyNotFoundException($"Movimentação com id {id} não encontrada.");
+            }
+
+            return mov;
+            
         }
 
 
@@ -64,7 +53,7 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
                 UsuarioId = _user.GetUserId(),
                 TipoMovimentacao = (Models.Tipo)dto.TipoMovimentacao,
                 Quantidade = dto.Quantidade,
-                Valor = dto.Valor
+                Valor = dto.Valor.ToString()
             };
 
             await _movimentacaoRepository.Create(movimentacao);
@@ -73,10 +62,10 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
             return new MovimentacaoEstoqueResponseDto
             {
                 Id = movimentacao.Id,
-                PiscinaId = movimentacao.PiscinaId,
-                ProdutoId = movimentacao.ProdutoId,
+                Piscina = new NomeIdDto(movimentacao.PiscinaId, null),
+                Produto = new NomeIdDto(movimentacao.ProdutoId, null),
                 Quantidade = movimentacao.Quantidade,
-                Valor = movimentacao.Valor.ToPtBrCurrency(),
+                Valor = movimentacao.Valor,
                 DataMovimentacao = movimentacao.DataMovimentacao
             };
         }
@@ -98,7 +87,7 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
                 ProdutoId = dto.ProdutoId,
                 TipoMovimentacao = (Models.Tipo)dto.TipoMovimentacao,
                 Quantidade = dto.Quantidade,
-                Valor = dto.Valor,
+                Valor = dto.Valor.ToString(),
             };
 
             await _movimentacaoRepository.Update(id, movimentacaoUpdated);
@@ -106,11 +95,11 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
             return new MovimentacaoEstoqueResponseDto
             {
                 Id = id,
-                PiscinaId = movimentacaoUpdated.PiscinaId,
-                ProdutoId = movimentacaoUpdated.ProdutoId,
+                Piscina = new NomeIdDto(movimentacaoUpdated.PiscinaId, null),
+                Produto = new NomeIdDto(movimentacaoUpdated.ProdutoId, null),
                 TipoMovimentacao = (Dtos.Response.Tipo)movimentacaoUpdated.TipoMovimentacao,
                 Quantidade = movimentacaoUpdated.Quantidade,
-                Valor = movimentacaoUpdated.Valor.ToPtBrCurrency(),
+                Valor = movimentacaoUpdated.Valor,
             };
         }
 

@@ -1,11 +1,11 @@
 @host=localhost
 @port=5258
 @path=api/Usuarios
-@query=44629be7-5863-4054-8cb6-5ca242662dcb
+@query=5b053622-05fe-4648-ba8f-a4de12aaa663
 @PiscinaPerfeita.Api_HostAddress=http://{{host}}:{{port}}/{{path}}
 
 @nome = Vinicius Oliveira
-@email = vinicius@email.com
+@email = admin@teste.com.br
 @senha = 123456789
 @role = 0
 
@@ -15,13 +15,13 @@
 ###
 GET {{PiscinaPerfeita.Api_HostAddress}}/
 Accept: application/json
-Authorization: Bearer {{token}}
+
 
 ###
 
 GET {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
 Accept: application/json
-Authorization: Bearer {{token}}
+
 ###
 
 POST {{PiscinaPerfeita.Api_HostAddress}}
@@ -41,7 +41,7 @@ Authorization: Bearer {{token}}
 PUT {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer {{token}}
+
 
 {
   "Nome": "{{nome}}",

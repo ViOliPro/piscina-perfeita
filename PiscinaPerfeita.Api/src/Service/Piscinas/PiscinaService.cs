@@ -73,11 +73,7 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
                 VolumeLitros = piscina.VolumeLitros,
                 ProfundidadeMedia = piscina.ProfundidadeMedia,
                 CreatedAt = piscina.CreatedAt,
-                UsuarioPiscina = new UsuarioPiscinaResponseDto
-                {
-                    Id = piscina.UsuarioId,
-                    Nome = usuario.Nome
-                }
+                UsuarioPiscina = new NomeIdDto(piscina.UsuarioId, usuario.Nome)
             };
 
         }
@@ -117,11 +113,7 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
                 VolumeLitros = dto.VolumeLitros,
                 ProfundidadeMedia = dto.ProfundidadeMedia,
                 CreatedAt = piscinaDb.CreatedAt,
-                UsuarioPiscina = new UsuarioPiscinaResponseDto
-                {
-                    Id = dto.UsuarioId,
-                    Nome = usuario.Nome
-                }
+                UsuarioPiscina = new NomeIdDto(dto.UsuarioId, usuario.Nome)
             };
 
         }

@@ -8,7 +8,7 @@ namespace PiscinaPerfeita.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    
     public class UsuariosController : ControllerBase
     {
         private readonly IUsuarioService _usuariosService;

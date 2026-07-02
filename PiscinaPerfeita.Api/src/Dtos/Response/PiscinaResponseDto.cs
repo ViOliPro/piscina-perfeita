@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using PiscinaPerfeita.Api.Models;
 
 namespace PiscinaPerfeita.Api.Dtos.Response;
 
@@ -14,42 +15,26 @@ public class PiscinaResponseDto
 
     public DateTimeOffset? CreatedAt { get; set; }
 
-
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public UsuarioPiscinaResponseDto? UsuarioPiscina { get; set; } = new UsuarioPiscinaResponseDto();
-
+    // Retorna o Id e Nome do usuário associado à piscina
+    public NomeIdDto? UsuarioPiscina { get; set; }
 
 
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+
     public virtual ICollection<AnalisePiscinaResponseDto> AnalisePiscina { get; set; } = new List<AnalisePiscinaResponseDto>();
 
-
-
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public virtual ICollection<EstoquePiscinaResponseDto> Estoques { get; set; } = new List<EstoquePiscinaResponseDto>();
-
-
-
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public virtual ICollection<MovimentacaoEstoquePiscinaResponsetDto> MovimentacoesEstoques { get; set; } = new List<MovimentacaoEstoquePiscinaResponsetDto>();
-}
 
-public class UsuarioPiscinaResponseDto
-{
-    public Guid Id { get; set; }
-    public string Nome { get; set; } = null!;
+    public virtual ICollection<NomeIdDto> Estoques { get; set; } = new List<NomeIdDto>();
+
+
+
+
 }
 
 public class AnalisePiscinaResponseDto
 {
     public Guid Id { get; set; }
     public DateTimeOffset DataAnalise { get; set; }
-}
-
-public class EstoquePiscinaResponseDto
-{
-    public Guid Id { get; set; }
-    public string Nome { get; set; } = null!;
 }
 
 public class MovimentacaoEstoquePiscinaResponsetDto

@@ -24,16 +24,10 @@ public class AnaliseRepository : IAnaliseRepository
             Alcalinidade = a.Alcalinidade,
             Temperatura = a.Temperatura,
             Observacoes = a.Observacoes,
-            Piscina = a.Piscina != null ? new PiscinaOrigem
-            {
-                Id = a.Piscina.Id,
-                Nome = a.Piscina.Nome
-            } : null,
-            UsuarioAnalise = new UsuarioAnalise
-            {
-                Id = a.UsuarioId,
-                Nome = a.Usuario.Nome
-            }
+
+            Piscina = a.Piscina != null ? new NomeIdDto(a.PiscinaId, a.Piscina.Nome) : null,
+            Usuario = a.Usuario != null ? new NomeIdDto(a.UsuarioId, a.Usuario.Nome) : null
+
         }).ToListAsync();
     }
 
@@ -48,16 +42,10 @@ public class AnaliseRepository : IAnaliseRepository
             Alcalinidade = a.Alcalinidade,
             Temperatura = a.Temperatura,
             Observacoes = a.Observacoes,
-            Piscina = a.Piscina != null ? new PiscinaOrigem
-            {
-                Id = a.Piscina.Id,
-                Nome = a.Piscina.Nome
-            } : null,
-            UsuarioAnalise = new UsuarioAnalise
-            {
-                Id = a.UsuarioId,
-                Nome = a.Usuario.Nome
-            }
+
+            Piscina = a.Piscina != null ? new NomeIdDto(a.PiscinaId, a.Piscina.Nome) : null,
+            Usuario = a.Usuario != null ? new NomeIdDto(a.UsuarioId, a.Usuario.Nome) : null
+
         }).FirstOrDefaultAsync();
 
         return analise ?? null;

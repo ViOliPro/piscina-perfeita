@@ -1,7 +1,4 @@
-﻿
-using System;
-using System.Collections.Generic;
-using PiscinaPerfeita.Api.Models;
+﻿using PiscinaPerfeita.Api.Models;
 
 namespace PiscinaPerfeita.Api.Dtos.Response
 {
@@ -9,10 +6,6 @@ namespace PiscinaPerfeita.Api.Dtos.Response
     public partial class MovimentacaoEstoqueResponseDto
     {
         public Guid Id { get; set; }
-
-        public Guid PiscinaId { get; set; }
-
-        public Guid ProdutoId { get; set; }
 
         public Tipo TipoMovimentacao { get; set; }
 
@@ -22,10 +15,13 @@ namespace PiscinaPerfeita.Api.Dtos.Response
 
         public DateTimeOffset? DataMovimentacao { get; set; }
 
+        // Produto movimentado
+        public NomeIdDto? Piscina { get; set; }
+
+
+        // Usuario que realizou a movimentação
+        public NomeIdDto? Produto { get; set; }
     }
-    public enum Tipo
-    {
-        Entrada,
-        Saida
-    }
+
+
 }

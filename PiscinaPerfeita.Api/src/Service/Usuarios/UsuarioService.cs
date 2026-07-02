@@ -67,13 +67,15 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
             }
 
+            var getPassword = await _usuariosRepository.GetPasswordById(id);
 
-            var usuarioDb = new Usuario
+
+            var usuarioDb = new Usuario 
             {
                 Id = id,
                 Nome = !string.IsNullOrEmpty(dto.Nome) ? dto.Nome : usuario.Nome,
                 Email = !string.IsNullOrEmpty(dto.Email) ? dto.Email : usuario.Email,
-                SenhaHash = !string.IsNullOrEmpty(dto.SenhaHash) ? BCrypt.Net.BCrypt.HashPassword(dto.SenhaHash) : dto.SenhaHash,
+                SenhaHash = !string.IsNullOrEmpty(dto.SenhaHash) ? BCrypt.Net.BCrypt.HashPassword(dto.SenhaHash) : getPassword?.SenhaHash,
                 Role = dto.Role ?? usuario.Role 
             };
        

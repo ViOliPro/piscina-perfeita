@@ -22,7 +22,7 @@ public class EstoqueRepository : IEstoqueRepository
         {
             Id = a.Id,
             QuantidadeAtual = a.QuantidadeAtual,
-            Piscina = a.Piscina != null ? new PiscinaEstoque { Id = a.PiscinaId, Nome = a.Piscina.Nome } : null,
+            Piscina = a.Piscina != null ? new NomeIdDto(a.PiscinaId, a.Piscina.Nome) : null,
             Produto = a.Produto != null ? new ProdutoEstoque { Id = a.ProdutoId, Nome = a.Produto.Nome, UnidadeMedida = a.Produto.UnidadeMedida } : null
 
         }).ToListAsync();
@@ -37,8 +37,8 @@ public class EstoqueRepository : IEstoqueRepository
             {
                 Id = a.Id,
                 QuantidadeAtual = a.QuantidadeAtual,
-                Piscina = a.Piscina != null ? new PiscinaEstoque { Id = a.PiscinaId, Nome = a.Piscina.Nome } : null,
-                Produto = a.Produto != null ? new ProdutoEstoque { Id = a.ProdutoId, Nome = a.Produto.Nome, UnidadeMedida = a.Pgit stroduto.UnidadeMedida } : null
+                Piscina = a.Piscina != null ? new NomeIdDto(a.PiscinaId, a.Piscina.Nome) : null,
+                Produto = a.Produto != null ? new ProdutoEstoque { Id = a.ProdutoId, Nome = a.Produto.Nome, UnidadeMedida = a.Produto.UnidadeMedida } : null
             }).FirstOrDefaultAsync();
 
         return estoque ?? null;

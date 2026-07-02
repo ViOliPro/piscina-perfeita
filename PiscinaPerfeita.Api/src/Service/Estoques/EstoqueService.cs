@@ -71,8 +71,8 @@ namespace PiscinaPerfeita.Api.Service.Estoques
             {
                 Id = estoque.Id,
                 QuantidadeAtual = estoque.QuantidadeAtual,
-                Piscina = new PiscinaEstoque { Id = estoque.PiscinaId, Nome = piscinaDb.Nome},
-                Produto = new ProdutoEstoque { Id = estoque.ProdutoId, Nome = produtoDb.Nome, UnidadeMedida = produtoDb.UnidadeMedida}
+                Piscina = new NomeIdDto(estoque.PiscinaId, piscinaDb.Nome),
+                Produto = new ProdutoEstoque { Id = estoque.ProdutoId, Nome = produtoDb.Nome, UnidadeMedida = produtoDb.UnidadeMedida }
             };
         }
 
@@ -109,7 +109,7 @@ namespace PiscinaPerfeita.Api.Service.Estoques
             {
                 Id = estoqueDb.Id,
                 QuantidadeAtual = estoqueDb.QuantidadeAtual,
-                Piscina = new PiscinaEstoque { Id = estoqueUpdated.PiscinaId, Nome = piscinaDb.Nome },
+                Piscina = new NomeIdDto(estoqueUpdated.PiscinaId, null),
                 Produto = new ProdutoEstoque { Id = estoqueUpdated.ProdutoId, Nome = produtoDb.Nome, UnidadeMedida = produtoDb.UnidadeMedida }
             };
         }

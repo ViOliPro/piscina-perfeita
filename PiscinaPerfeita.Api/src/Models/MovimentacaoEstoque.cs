@@ -21,7 +21,7 @@ namespace PiscinaPerfeita.Api.Models
 
         public decimal? Quantidade { get; set; }
 
-        public decimal? Valor { get; set; }
+        public string Valor { get; set; } = string.Empty;
 
         public DateTimeOffset DataMovimentacao { get; set; } = DateTimeOffset.UtcNow;
 

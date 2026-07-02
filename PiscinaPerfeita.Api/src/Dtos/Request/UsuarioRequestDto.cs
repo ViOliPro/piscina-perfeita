@@ -1,4 +1,4 @@
-﻿using PiscinaPerfeita.Api.Models;
+﻿using PiscinaPerfeita.Api.Dtos.Response;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 

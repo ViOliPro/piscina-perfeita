@@ -95,7 +95,7 @@ export function fromApiUsuarioList(rawList) {
  */
 export function toApiUsuario({ nome, email, senhaHash, role }) {
   const dto = { Nome: nome, Email: email, Role: role ?? 1 };
-  if (senhaHash) dto.Password = senhaHash; // nome do campo no request dto
+  if (senhaHash) dto.senhaHash = senhaHash; // nome do campo no request dto
   return dto;
 }
 
@@ -197,8 +197,8 @@ export function fromApiAnalise(raw) {
       : raw?.Piscina
         ? fromApiPiscina(raw.Piscina)
         : null,
-    usuario: raw?.usuario
-      ? fromApiUsuario(raw.usuario)
+    usuario: raw?.usuarioAnalise
+      ? fromApiUsuario(raw.usuarioAnalise)
       : raw?.Usuario
         ? fromApiUsuario(raw.Usuario)
         : null,

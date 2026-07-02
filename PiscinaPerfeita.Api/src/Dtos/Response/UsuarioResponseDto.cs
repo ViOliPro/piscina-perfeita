@@ -10,14 +10,14 @@ namespace PiscinaPerfeita.Api.Dtos.Response
 
         public string Nome { get; set; } = string.Empty;
 
-        public string? Email { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
         public Role Role { get; set; }
 
         public DateTimeOffset? CreatedAt { get; set; }
 
 
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public ICollection<UsuarioPiscinaResponseDto> Piscinas { get; set; } = new List<UsuarioPiscinaResponseDto>();
+        public ICollection<NomeIdDto> Piscinas { get; set; } = new List<NomeIdDto>();
     }
 
 
@@ -28,6 +28,5 @@ namespace PiscinaPerfeita.Api.Dtos.Response
         public string? Email { get; set; } = string.Empty;
 
         public Role Role { get; set; }
-
     }
 }
