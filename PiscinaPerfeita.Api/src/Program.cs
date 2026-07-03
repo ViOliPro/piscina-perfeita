@@ -1,91 +1,125 @@
+using System.Globalization;
+using System.Reflection;
+using System.Text;
+using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PiscinaPerfeita.Api.Data;
 using PiscinaPerfeita.Api.Extension;
-using System.Globalization;
-using System.Reflection;
-using System.Text;
 
+// 1. Inicializa o builder e carrega as variáveis de ambiente IMEDIATAMENTE
 var builder = WebApplication.CreateBuilder(args);
 
-var defaultCulture = new CultureInfo("pt-BR");
+// Carrega as variáveis de ambiente do arquivo .env
+Env.Load("../.env");
+builder.Configuration.AddEnvironmentVariables();
 
+// 2. Configuração de Localização
+var defaultCulture = new CultureInfo("pt-BR");
 var localizationOptions = new RequestLocalizationOptions
 {
     DefaultRequestCulture = new RequestCulture(defaultCulture),
     SupportedCultures = new List<CultureInfo> { defaultCulture },
-    SupportedUICultures = new List<CultureInfo> { defaultCulture }
+    SupportedUICultures = new List<CultureInfo> { defaultCulture },
 };
 
-// JWT Authentication
-var jwtKey = builder.Configuration["Jwt:Key"];
+// 3. JWT Authentication (Agora sim, depois do Env.Load())
+var jwtKey = Environment.GetEnvironmentVariable("jwt__key");
 if (string.IsNullOrEmpty(jwtKey))
-    throw new InvalidOperationException("A chave JWT não está configurada (Jwt:Key).");
+{
+    throw new InvalidOperationException(
+        "A chave JWT não está configurada (jwt__key no arquivo .env)."
+    );
+}
 
 var key = Encoding.ASCII.GetBytes(jwtKey);
-
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.RequireHttpsMetadata = false;
-    options.SaveToken = true;
-    options.TokenValidationParameters = new TokenValidationParameters
+builder
+    .Services.AddAuthentication(options =>
     {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(key),
-        ValidateIssuer = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidateAudience = true,
-        ValidAudience = builder.Configuration["Jwt:Audience"]
-    };
-});
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.RequireHttpsMetadata = false;
+        options.SaveToken = true;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(key),
+            ValidateIssuer = true,
+            ValidIssuer = Environment.GetEnvironmentVariable("jwt__issuer"),
+            ValidateAudience = true,
+            ValidAudience = Environment.GetEnvironmentVariable("jwt__audience"),
+        };
+    });
 
-//Authorization
+// Authorization
 builder.Services.AddAuthorization();
 
 // Add services to the container.
 builder.Services.AddControllers();
 
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 if (Assembly.GetEntryAssembly()?.GetName().Name != "ef")
 {
     builder.Services.AddOpenApi();
 }
 
-// Configure DbContext
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+// 1. Recupera a string de conexão já formatada do .env
+var connectionString =
+    builder.Configuration.GetConnectionString("DefaultConnection");
 
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new InvalidOperationException(
+        "A string de conexão 'ConnectionStrings__DefaultConnection' não foi configurada no ambiente."
+    );
+}
+
+// 2. Configura o DbContext com a string limpa
 builder.Services.AddDbContext<PiscinaPerfeitaContext>(options =>
-    options.UseNpgsql(connectionString)
-            .UseLowerCaseNamingConvention());
+    options.UseNpgsql(connectionString).UseLowerCaseNamingConvention()
+);
 
-// Injecao de dependecias
+// Injeção de dependências
 builder.Services.ResolveDependencies();
-
-// Injecao para utilizar o IHttpContextAccessor
 builder.Services.AddHttpContextAccessor();
 
 // CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AppCors", policy =>
-    {
-        policy.AllowAnyOrigin() // Em produção, mude para o domínio do seu front
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
+    options.AddPolicy(
+        "AppCors",
+        policy =>
+        {
+            policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+        }
+    );
 });
 
 try
 {
-    // Inicializacao
     var app = builder.Build();
+    // --- BLOCO DA SEEDER ---
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+
+        try
+        {
+            var context = services.GetRequiredService<PiscinaPerfeitaContext>();
+
+            await DbInitializer.SeedAsync(context);
+        }
+        catch (Exception ex)
+        {
+            var logger = services.GetRequiredService<ILogger<Program>>();
+            logger.LogError(ex, "Erro ao executar o Seed do banco.");
+        }
+    }
+    // --- FIM DO BLOCO ---
 
     if (app.Environment.IsDevelopment() && Assembly.GetEntryAssembly()?.GetName().Name != "ef")
     {
@@ -103,13 +137,10 @@ try
 }
 catch (HostAbortedException)
 {
-    // Ignora silenciosamente. Esta exceção é gerada intencionalmente pelas ferramentas 
-    // do Entity Framework (dotnet ef) para parar a API após mapear os metadados.
     throw;
 }
 catch (Exception ex)
 {
-    // Captura erros reais de verdade (banco fora do ar, DI quebrada, falta de configuração)
     Console.Error.WriteLine("\n\n==================================================");
     Console.Error.WriteLine($"ERRO REAL NA INICIALIZAÇÃO DA API: {ex.Message}");
     if (ex.InnerException != null)
@@ -119,6 +150,3 @@ catch (Exception ex)
     Console.Error.WriteLine("==================================================\n\n");
     throw;
 }
-
-
-

@@ -29,7 +29,7 @@ namespace PiscinaPerfeita.Api.Service.Account
             // Busca um usuario com base no email e senha fornecidos
             var usuario = await _usuarioRepository.GetByEmail(request.Email);
 
-            if (usuario == null)
+            if (usuario == null || string.IsNullOrWhiteSpace(usuario.SenhaHash))
                 throw new ArgumentException("E-mail ou Senha incorretos.");
 
             // Verifica se a senha fornecida corresponde à senha armazenada no banco de dados

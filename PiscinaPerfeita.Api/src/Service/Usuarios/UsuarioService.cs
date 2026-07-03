@@ -34,6 +34,10 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
 
         public async Task<UsuarioResponseDto> Create(UsuarioRequestDto dto)
         {
+            var existente = await _usuariosRepository.GetByEmail(dto.Email);
+            if (existente == null)
+                throw new InvalidOperationException("Já existe um usuario com o email cadastrado");
+
             var usuario = new Usuario
             {
                 Nome = dto.Nome,
