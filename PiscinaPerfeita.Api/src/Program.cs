@@ -29,11 +29,11 @@ var localizationOptions = new RequestLocalizationOptions
 };
 
 // 3. JWT Authentication (Agora sim, depois do Env.Load())
-var jwtKey = builder.Configuration["jwt__Key"];
+var jwtKey = builder.Configuration["Jwt__Key"];
 if (string.IsNullOrEmpty(jwtKey))
 {
     throw new InvalidOperationException(
-        "A chave JWT não está configurada (jwt__Key no arquivo .env)."
+        "A chave JWT não está configurada (Jwt__Key no arquivo .env)."
     );
 }
 
@@ -53,9 +53,9 @@ builder
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(key),
             ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["jwt__Issuer"],
+            ValidIssuer = builder.Configuration["Jwt__Issuer"],
             ValidateAudience = true,
-            ValidAudience = builder.Configuration["jwt__Audience"],
+            ValidAudience = builder.Configuration["Jwt__Audience"],
         };
     });
 
