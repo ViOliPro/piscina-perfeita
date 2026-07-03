@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Reflection;
 using System.Text;
-using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
@@ -12,11 +11,6 @@ using PiscinaPerfeita.Api.Extension;
 // 1. Inicializa o builder e carrega as variáveis de ambiente IMEDIATAMENTE
 var builder = WebApplication.CreateBuilder(args);
 
-// Carrega as variáveis de ambiente do arquivo .env
-if (builder.Environment.IsDevelopment())
-{
-    Env.Load("../.env");
-}
 builder.Configuration.AddEnvironmentVariables();
 
 // 2. Configuração de Localização
@@ -30,14 +24,11 @@ var localizationOptions = new RequestLocalizationOptions
 
 // 3. JWT Authentication (Agora sim, depois do Env.Load())
 var jwtKey = builder.Configuration["Jwt__Key"];
-if (string.IsNullOrEmpty(jwtKey))
-{
-    throw new InvalidOperationException(
-        "A chave JWT não está configurada (Jwt__Key no arquivo .env)."
-    );
-}
+if (string.IsNullOrWhiteSpace(jwtKey))
+    throw new Exception("Jwt__Key não configurado no ambiente");
 
 var key = Encoding.ASCII.GetBytes(jwtKey);
+
 builder
     .Services.AddAuthentication(options =>
     {
@@ -71,7 +62,7 @@ if (Assembly.GetEntryAssembly()?.GetName().Name != "ef")
 }
 
 // 1. Recupera a string de conexão já formatada do .env
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration["ConnectionStrings__DefaultConnection"];
 
 if (string.IsNullOrEmpty(connectionString))
 {
