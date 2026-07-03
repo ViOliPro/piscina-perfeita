@@ -29,11 +29,11 @@ var localizationOptions = new RequestLocalizationOptions
 };
 
 // 3. JWT Authentication (Agora sim, depois do Env.Load())
-var jwtKey = Environment.GetEnvironmentVariable("jwt__key");
+var jwtKey = builder.Configuration["jwt__Key"];
 if (string.IsNullOrEmpty(jwtKey))
 {
     throw new InvalidOperationException(
-        "A chave JWT não está configurada (jwt__key no arquivo .env)."
+        "A chave JWT não está configurada (jwt__Key no arquivo .env)."
     );
 }
 
@@ -53,9 +53,9 @@ builder
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(key),
             ValidateIssuer = true,
-            ValidIssuer = Environment.GetEnvironmentVariable("jwt__issuer"),
+            ValidIssuer = builder.Configuration["jwt__Issuer"],
             ValidateAudience = true,
-            ValidAudience = Environment.GetEnvironmentVariable("jwt__audience"),
+            ValidAudience = builder.Configuration["jwt__Audience"],
         };
     });
 
@@ -71,8 +71,7 @@ if (Assembly.GetEntryAssembly()?.GetName().Name != "ef")
 }
 
 // 1. Recupera a string de conexão já formatada do .env
-var connectionString =
-    builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 if (string.IsNullOrEmpty(connectionString))
 {
