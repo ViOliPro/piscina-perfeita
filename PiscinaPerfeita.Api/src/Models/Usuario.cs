@@ -13,6 +13,7 @@ namespace PiscinaPerfeita.Api.Models
 
         public string Nome { get; set; } = null!;
 
+        [Column("Email")]
         public string? Email { get; set; }
 
         public string? SenhaHash { get; set; }
@@ -23,5 +24,4 @@ namespace PiscinaPerfeita.Api.Models
         public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
         public virtual ICollection<Piscina> Piscinas { get; set; } = new List<Piscina>();
     }
-
 }

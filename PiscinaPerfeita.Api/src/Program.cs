@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Reflection;
 using System.Text;
-using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
@@ -106,7 +105,10 @@ try
         {
             var context = services.GetRequiredService<PiscinaPerfeitaContext>();
 
-            await DbInitializer.SeedAsync(context);
+            // Buscando o serviço de configuração do container de Injeção de Dependência
+            var configuration = services.GetRequiredService<IConfiguration>();
+
+            await DbInitializer.SeedAsync(context, configuration);
         }
         catch (Exception ex)
         {

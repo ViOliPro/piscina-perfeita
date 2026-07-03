@@ -1,5 +1,5 @@
-﻿using DotNetEnv;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Models;
 
@@ -7,7 +7,10 @@ namespace PiscinaPerfeita.Api.Data
 {
     public static class DbInitializer
     {
-        public static async Task SeedAsync(PiscinaPerfeitaContext context)
+        public static async Task SeedAsync(
+            PiscinaPerfeitaContext context,
+            IConfiguration configuration
+        )
         {
             await context.Database.MigrateAsync();
 
@@ -17,11 +20,9 @@ namespace PiscinaPerfeita.Api.Data
             context.Usuarios.Add(
                 new Usuario
                 {
-                    Nome = Environment.GetEnvironmentVariable("ADMIN_NAME") ?? "Admin",
-                    Email = Environment.GetEnvironmentVariable("ADMIN_EMAIL"),
-                    SenhaHash = BCrypt.Net.BCrypt.HashPassword(
-                        Environment.GetEnvironmentVariable("ADMIN_PASSWORD")
-                    ),
+                    Nome = configuration["ADMIN_NAME"] ?? "Admin",
+                    Email = configuration["ADMIN_EMAIL"],
+                    SenhaHash = BCrypt.Net.BCrypt.HashPassword(configuration["ADMIN_PASSWORD"]),
                     Role = Role.Admin,
                 }
             );
