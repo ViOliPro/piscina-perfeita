@@ -13,7 +13,10 @@ using PiscinaPerfeita.Api.Extension;
 var builder = WebApplication.CreateBuilder(args);
 
 // Carrega as variáveis de ambiente do arquivo .env
-Env.Load("../.env");
+if (builder.Environment.IsDevelopment())
+{
+    Env.Load("../.env");
+}
 builder.Configuration.AddEnvironmentVariables();
 
 // 2. Configuração de Localização
