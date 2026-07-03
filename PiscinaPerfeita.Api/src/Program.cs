@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Reflection;
 using System.Text;
+using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
@@ -24,10 +25,7 @@ var localizationOptions = new RequestLocalizationOptions
 
 // 3. JWT Authentication (Agora sim, depois do Env.Load())
 var jwtKey = builder.Configuration["Jwt:Key"];
-Console.WriteLine("JWT KEY: " + builder.Configuration["Jwt__Key"]);
-Console.WriteLine("JWT KEY: " + builder.Configuration["Jwt:Key"]);
-Console.WriteLine(Environment.GetEnvironmentVariable("Jwt__Key"));
-Console.WriteLine(Environment.GetEnvironmentVariable("Jwt:Key"));
+
 if (string.IsNullOrWhiteSpace(jwtKey))
     throw new Exception("Jwt:Key não configurado no ambiente");
 

@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using DotNetEnv;
+using Microsoft.EntityFrameworkCore;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Models;
 
@@ -13,13 +14,17 @@ namespace PiscinaPerfeita.Api.Data
             if (await context.Usuarios.AnyAsync())
                 return;
 
-            context.Usuarios.Add(new Usuario
-            {
-                Nome = Environment.GetEnvironmentVariable("ADMIN_NAME"),
-                Email = Environment.GetEnvironmentVariable("ADMIN_EMAIL"),
-                SenhaHash = BCrypt.Net.BCrypt.HashPassword(Environment.GetEnvironmentVariable("ADMIN_PASSWORD")),
-                Role = Role.Admin
-            });
+            context.Usuarios.Add(
+                new Usuario
+                {
+                    Nome = Environment.GetEnvironmentVariable("ADMIN_NAME") ?? "Admin",
+                    Email = Environment.GetEnvironmentVariable("ADMIN_EMAIL"),
+                    SenhaHash = BCrypt.Net.BCrypt.HashPassword(
+                        Environment.GetEnvironmentVariable("ADMIN_PASSWORD")
+                    ),
+                    Role = Role.Admin,
+                }
+            );
 
             await context.SaveChangesAsync();
         }
