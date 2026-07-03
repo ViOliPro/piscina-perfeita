@@ -24,6 +24,10 @@ var localizationOptions = new RequestLocalizationOptions
 
 // 3. JWT Authentication (Agora sim, depois do Env.Load())
 var jwtKey = builder.Configuration["Jwt:Key"];
+Console.WriteLine("JWT KEY: " + builder.Configuration["Jwt__Key"]);
+Console.WriteLine("JWT KEY: " + builder.Configuration["Jwt:Key"]);
+Console.WriteLine(Environment.GetEnvironmentVariable("Jwt__Key"));
+Console.WriteLine(Environment.GetEnvironmentVariable("Jwt:Key"));
 if (string.IsNullOrWhiteSpace(jwtKey))
     throw new Exception("Jwt:Key não configurado no ambiente");
 
@@ -62,12 +66,12 @@ if (Assembly.GetEntryAssembly()?.GetName().Name != "ef")
 }
 
 // 1. Recupera a string de conexão já formatada do .env
-var connectionString = builder.Configuration["ConnectionStrings__DefaultConnection"];
+var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"];
 
 if (string.IsNullOrEmpty(connectionString))
 {
     throw new InvalidOperationException(
-        "A string de conexão 'ConnectionStrings__DefaultConnection' não foi configurada no ambiente."
+        "A string de conexão 'ConnectionStrings:DefaultConnection' não foi configurada no ambiente."
     );
 }
 
