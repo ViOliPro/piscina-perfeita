@@ -22,6 +22,7 @@ public class EstoqueRepository : IEstoqueRepository
             {
                 Id = a.Id,
                 QuantidadeAtual = a.QuantidadeAtual,
+                QuantidadeMinima = a.QuantidadeMinima,
                 Produto =
                     a.Produto != null
                         ? new ProdutoEstoque
@@ -44,6 +45,7 @@ public class EstoqueRepository : IEstoqueRepository
             {
                 Id = a.Id,
                 QuantidadeAtual = a.QuantidadeAtual,
+                QuantidadeMinima = a.QuantidadeMinima,
                 Produto =
                     a.Produto != null
                         ? new ProdutoEstoque
@@ -74,6 +76,7 @@ public class EstoqueRepository : IEstoqueRepository
             throw new KeyNotFoundException($"Estoque com ID {id} não encontrado.");
 
         estoqueToUpdate.QuantidadeAtual = estoque.QuantidadeAtual;
+        estoqueToUpdate.QuantidadeMinima = estoque.QuantidadeMinima;
         estoqueToUpdate.ProdutoId = estoque.ProdutoId;
 
         await _context.SaveChangesAsync();

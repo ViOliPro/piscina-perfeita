@@ -16,7 +16,8 @@ namespace PiscinaPerfeita.Api.Controllers
 
         public EstoquesController(IEstoqueService estoquesService)
         {
-            _estoquesService = estoquesService ?? throw new ArgumentNullException(nameof(estoquesService));
+            _estoquesService =
+                estoquesService ?? throw new ArgumentNullException(nameof(estoquesService));
         }
 
         // 1. GET: api/clientes (Retorna todos os registros do banco)
@@ -51,7 +52,7 @@ namespace PiscinaPerfeita.Api.Controllers
                 var user = await _estoquesService.Create(dto);
 
                 return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
-            } 
+            }
             catch (KeyNotFoundException ex)
             {
                 return BadRequest(ex.Message);
@@ -70,7 +71,6 @@ namespace PiscinaPerfeita.Api.Controllers
             {
                 return NotFound(new { message = ex.Message });
             }
-
         }
 
         [HttpDelete("{id}")]
@@ -85,7 +85,6 @@ namespace PiscinaPerfeita.Api.Controllers
             {
                 return NotFound(new { message = ex.Message });
             }
-
         }
     }
 }

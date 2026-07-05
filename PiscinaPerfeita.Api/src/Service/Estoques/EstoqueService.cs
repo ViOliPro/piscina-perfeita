@@ -63,6 +63,7 @@ namespace PiscinaPerfeita.Api.Service.Estoques
                 ProdutoId = dto.ProdutoId,
                 UsuarioId = _user.GetUserId(),
                 QuantidadeAtual = dto.QuantidadeAtual,
+                QuantidadeMinima = dto.QuantidadeMinima,
             };
 
             await _estoqueRepository.Create(estoque);
@@ -71,6 +72,7 @@ namespace PiscinaPerfeita.Api.Service.Estoques
             {
                 Id = estoque.Id,
                 QuantidadeAtual = estoque.QuantidadeAtual,
+                QuantidadeMinima = estoque.QuantidadeMinima,
                 Produto = new ProdutoEstoque
                 {
                     Id = estoque.ProdutoId,
@@ -100,6 +102,7 @@ namespace PiscinaPerfeita.Api.Service.Estoques
                 Id = id,
                 ProdutoId = dto.ProdutoId,
                 QuantidadeAtual = dto.QuantidadeAtual,
+                QuantidadeMinima = dto.QuantidadeMinima,
             };
 
             await _estoqueRepository.Update(id, estoqueUpdated);
@@ -108,6 +111,8 @@ namespace PiscinaPerfeita.Api.Service.Estoques
             {
                 Id = estoqueDb.Id,
                 QuantidadeAtual = estoqueDb.QuantidadeAtual,
+                QuantidadeMinima = estoqueDb.QuantidadeMinima,
+
                 Produto = new ProdutoEstoque
                 {
                     Id = estoqueUpdated.ProdutoId,

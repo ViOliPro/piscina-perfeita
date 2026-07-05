@@ -16,6 +16,8 @@ public partial class Estoque
 
     public decimal? QuantidadeAtual { get; set; }
 
+    public decimal? QuantidadeMinima { get; set; }
+
     [ForeignKey("ProdutoId")]
     public virtual Produto Produto { get; set; } = null!;
 

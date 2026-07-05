@@ -7,6 +7,7 @@ public partial class EstoqueResponseDto
     public Guid Id { get; set; }
     public ProdutoEstoque? Produto { get; set; }
     public decimal? QuantidadeAtual { get; set; }
+    public decimal? QuantidadeMinima { get; set; }
 }
 
 public class ProdutoEstoque
