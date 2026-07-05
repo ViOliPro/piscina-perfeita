@@ -1,5 +1,4 @@
-﻿
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PiscinaPerfeita.Api.Models
@@ -21,8 +20,6 @@ namespace PiscinaPerfeita.Api.Models
 
         public decimal? Quantidade { get; set; }
 
-        public string Valor { get; set; } = string.Empty;
-
         public DateTimeOffset DataMovimentacao { get; set; } = DateTimeOffset.UtcNow;
 
         [ForeignKey("PiscinaId")]
@@ -38,6 +35,6 @@ namespace PiscinaPerfeita.Api.Models
     public enum Tipo
     {
         Entrada = 0,
-        Saida = 1
+        Saida = 1,
     }
 }

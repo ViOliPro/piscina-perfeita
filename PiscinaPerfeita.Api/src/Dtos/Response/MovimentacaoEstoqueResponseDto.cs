@@ -2,7 +2,6 @@
 
 namespace PiscinaPerfeita.Api.Dtos.Response
 {
-
     public partial class MovimentacaoEstoqueResponseDto
     {
         public Guid Id { get; set; }
@@ -11,13 +10,10 @@ namespace PiscinaPerfeita.Api.Dtos.Response
 
         public decimal? Quantidade { get; set; }
 
-        public string Valor { get; set; } = string.Empty;
-
         public DateTimeOffset? DataMovimentacao { get; set; }
 
         // Produto movimentado
         public NomeIdDto? Piscina { get; set; }
-
 
         // Produto que realizou a movimentação
         public NomeIdDto? Produto { get; set; }
@@ -25,6 +21,4 @@ namespace PiscinaPerfeita.Api.Dtos.Response
         // Usuario que realizou a movimentação
         public NomeIdDto? Usuario { get; set; }
     }
-
-
 }
