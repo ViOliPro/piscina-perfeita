@@ -6,9 +6,6 @@ namespace PiscinaPerfeita.Api.Dtos.Request
 {
     public class UsuarioRequestDto
     {
-        [Required(ErrorMessage = "O ID do local é obrigatório.")]
-        public Guid LocalId { get; set; }
-
         [Required(ErrorMessage = "O campo Nome é obrigatório.")]
         public string Nome { get; set; } = string.Empty;
 

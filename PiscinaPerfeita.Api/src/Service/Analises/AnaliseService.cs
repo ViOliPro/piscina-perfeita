@@ -69,7 +69,6 @@ namespace PiscinaPerfeita.Api.Service.Analises
             var analise = new Analise
             {
                 PiscinaId = dto.PiscinaId,
-                LocalId = _user.GetLocalId(),
                 UsuarioId = _user.GetUserId(),
                 Ph = dto.Ph,
                 CloroLivre = dto.CloroLivre,

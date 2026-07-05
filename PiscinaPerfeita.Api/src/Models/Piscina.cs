@@ -1,10 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using PiscinaPerfeita.Api.Models.Interfaces;
 
 namespace PiscinaPerfeita.Api.Models;
 
 [Table("Piscinas", Schema = "piscina-perfeita")]
-public partial class Piscina
+public partial class Piscina : IBelongsToLocal
 {
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     [Key]

@@ -8,9 +8,6 @@ public partial class PiscinaRequestDto
     [Required(ErrorMessage = "O campo UsuarioId é obrigatório.")]
     public Guid UsuarioId { get; set; }
 
-    [Required(ErrorMessage = "O campo LocalId é obrigatório.")]
-    public Guid LocalId { get; set; }
-
     [Required(ErrorMessage = "O campo Nome é obrigatório.")]
     [MaxLength(100)]
     public string Nome { get; set; } = null!;

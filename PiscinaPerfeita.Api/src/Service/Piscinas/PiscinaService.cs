@@ -64,7 +64,6 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
                 VolumeLitros = dto.VolumeLitros,
                 ProfundidadeMedia = dto.ProfundidadeMedia,
                 UsuarioId = dto.UsuarioId,
-                LocalId = _user.GetLocalId(),
             };
 
             await _piscinaRepository.Create(piscina);

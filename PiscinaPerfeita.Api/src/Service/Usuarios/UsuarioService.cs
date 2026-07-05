@@ -47,7 +47,6 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 Email = dto.Email,
                 SenhaHash = BCrypt.Net.BCrypt.HashPassword(dto.SenhaHash),
                 Role = dto.Role,
-                LocalId = _user.GetLocalId(),
             };
 
             await _usuariosRepository.Create(usuario);
