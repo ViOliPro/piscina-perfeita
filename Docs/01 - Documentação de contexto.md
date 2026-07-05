@@ -1,575 +1,163 @@
-# ESPECIFICAÇÃO DE SOFTWARE
+# ESPECIFICAÇÃO DE REQUISITOS E ARQUITETURA DE SOFTWARE (ERAS)
 
-## Projeto
+## Projeto: Pool Manager — Sistema SaaS de Gestão, Consumo e Monitoramento de Piscinas Coletivas
 
-Pool Manager - Sistema de Gestão e Monitoramento de Piscinas
-
-Versão: 1.0
-
-Autor: Vinicius Oliveira
+**Versão:** 1.1.0 (Ciclo de Evolução Pós-MVP)  
+**Autor:** Vinicius Oliveira
 
 ---
 
-# 1. VISÃO GERAL
+## 1. VISÃO GERAL E ESCOPO
 
-## Objetivo
+### 1.1. Objetivo do Sistema
 
-Desenvolver uma plataforma web e mobile para monitoramento e controle de piscinas, permitindo registrar análises químicas, controlar estoque de produtos, acompanhar custos operacionais e gerar recomendações de tratamento.
-
-O sistema deverá atender inicialmente proprietários de piscinas residenciais, podendo futuramente ser expandido para síndicos, empresas de manutenção e administradoras de condomínios.
+O **Pool Manager** é uma plataforma distribuída (Web e Mobile) projetada para a automação, controle químico, rastreabilidade de insumos e auditoria de consumo hídrico em parques aquáticos residenciais e corporativos. O ecossistema evoluirá de um gerenciador isolado para uma solução escalável de **Software as a Service (SaaS)** dedicada a síndicos profissionais, administradoras de condomínios, hotéis e empresas de manutenção especializada.
 
 ---
 
-# 2. OBJETIVOS DO NEGÓCIO
+## 2. ARQUITETURA E MATRIZ DE DEPLOY
 
-O sistema deverá permitir:
+O sistema adota o padrão de arquitetura desacoplada baseada em APIs RESTful, garantindo isolamento de camadas e persistência relacional robusta.
 
-- Registrar análises da água.
-- Registrar aplicações de produtos químicos.
-- Controlar estoque.
-- Monitorar custos.
-- Emitir alertas.
-- Gerar histórico de manutenção.
-- Auxiliar na tomada de decisões.
+- **Camada de Apresentação (Frontend):** React.js + Vite (SPA), TailwindCSS (Interface Responsiva).
+- **Camada de Negócio e Serviços (Backend):** ASP.NET Core Web API (.NET 8).
+- **Persistência de Dados (Database):** PostgreSQL.
+- **Mapeamento Objeto-Relacional (ORM):** Entity Framework Core via _Code-First Migrations_.
+- **Segurança e Sessão:** Autenticação baseada em Claims com Tokens JWT (JSON Web Tokens) e criptografia de credenciais via BCrypt.
 
----
+### 2.1. Hospedagem e Infraestrutura
 
-# 3. PERFIS DE USUÁRIO
-
-## Proprietário
-
-Pode:
-
-- Cadastrar piscinas.
-- Registrar medições.
-- Consultar relatórios.
-- Controlar estoque.
-
-## Técnico
-
-Pode:
-
-- Registrar medições.
-- Registrar aplicações.
-- Consultar histórico.
-
-## Administrador
-
-Pode:
-
-- Gerenciar usuários.
-- Gerenciar permissões.
-- Consultar todas as informações.
+- **Frontend:** Vercel
+- **Backend:** Railway / Render
+- **Banco de Dados:** PostgreSQL (Railway)
 
 ---
 
-# 4. REQUISITOS FUNCIONAIS
+## 3. MODELAGEM DO BANCO DE DADOS (DDL REVISADA)
 
-## RF001 - Cadastro de Usuário
+### 3.1. Entidades do Sistema
 
-O sistema deve permitir:
+#### Tabela: `Usuarios`
 
-- Nome
-- E-mail
-- Senha
+- `Id` (Guid, PK)
+- `Nome` (Varchar(150))
+- `Email` (Varchar(100), Unique)
+- `SenhaHash` (Varchar(255))
+- `DataCadastro` (DateTime)
 
-Validações:
+#### Tabela: `Locais`
 
-- E-mail único.
-- Senha mínima de 8 caracteres.
+- `Id` (Guid, PK)
+- `Nome` (Varchar(150))
+- `Endereco` (Varchar(255))
+- `Telefone` (Varchar(20))
+- `Observacoes` (Text, Nullable)
 
----
+#### Tabela: `UsuarioLocais` _(Matriz de Permissão/RBAC)_
 
-## RF002 - Autenticação
+- `Id` (Guid, PK)
+- `UsuarioId` (Guid, FK -> Usuarios)
+- `LocalId` (Guid, FK -> Locais)
+- `Perfil` (Enum: Administrator, Operator, Viewer)
 
-O sistema deve permitir:
+#### Tabela: `Piscinas`
 
-- Login
-- Logout
-- Recuperação de senha
+- `Id` (Guid, PK)
+- `LocalId` (Guid, FK -> Locais)
+- `Nome` (Varchar(100))
+- `VolumeLitros` (Integer)
+- `ProfundidadeMedia` (Decimal(5,2))
+- `TipoRevestimento` (Varchar(50))
+- `TipoTratamento` (Varchar(50))
 
-Tecnologia:
+#### Tabela: `Analises`
 
-JWT Authentication
+- `Id` (Guid, PK)
+- `PiscinaId` (Guid, FK -> Piscinas)
+- `DataAnalise` (DateTime)
+- `Ph` (Decimal(4,2), Nullable)
+- `CloroLivre` (Decimal(4,2), Nullable)
+- `Alcalinidade` (Decimal(5,2), Nullable)
+- `Temperatura` (Decimal(4,1), Nullable)
+- `Observacoes` (Text, Nullable)
 
----
+#### Tabela: `Depositos`
 
-## RF003 - Cadastro de Piscina
+- `Id` (Guid, PK)
+- `LocalId` (Guid, FK -> Locais)
+- `Nome` (Varchar(100))
 
-Campos:
+#### Tabela: `Produtos`
 
-- Nome
-- Volume em litros
-- Profundidade média
-- Tipo de revestimento
-- Tipo de tratamento
+- `Id` (Guid, PK)
+- `CategoriaId` (Guid, FK -> Categorias)
+- `Nome` (Varchar(100))
+- `UnidadeMedida` (Varchar(20))
 
----
+#### Tabela: `Estoque`
 
-## RF004 - Registro de Análises
+- `Id` (Guid, PK)
+- `DepositoId` (Guid, FK -> Depositos)
+- `ProdutoId` (Guid, FK -> Produtos)
+- `QuantidadeAtual` (Decimal(10,2))
+- `QuantidadeMinima` (Decimal(10,2))
 
-Campos:
+#### Tabela: `MovimentacoesEstoque`
 
-- Data
-- pH
-- Cloro Livre
-- Alcalinidade
-- Temperatura
-- Observações
+- `Id` (Guid, PK)
+- `DepositoId` (Guid, FK -> Depositos)
+- `ProdutoId` (Guid, FK -> Produtos)
+- `TipoMovimentacao` (Enum: Entrada_Compra, Saida_Aplicacao, Ajuste_Inventario)
+- `Quantidade` (Decimal(10,2))
+- `DataMovimentacao` (DateTime)
 
----
+#### Tabela: `Hidrometros`
 
-## RF005 - Registro de Produtos Aplicados
+- `Id` (Guid, PK)
+- `LocalId` (Guid, FK -> Locais)
+- `Identificador` (Varchar(50))
 
-Campos:
+#### Tabela: `LeiturasHidrometro`
 
-- Produto
-- Quantidade
-- Unidade
-- Custo
-- Data
-
----
-
-## RF006 - Controle de Estoque
-
-Entradas:
-
-- Compra de produtos
-
-Saídas:
-
-- Aplicações registradas
-
-O estoque deve ser atualizado automaticamente.
-
----
-
-## RF007 - Dashboard
-
-Exibir:
-
-- Último pH
-- Último Cloro
-- Última Alcalinidade
-- Estoque atual
-- Custos do mês
-
----
-
-## RF008 - Histórico
-
-Permitir consulta por:
-
-- Data
-- Piscina
-- Produto
+- `Id` (Guid, PK)
+- `HidrometroId` (Guid, FK -> Hidrometros)
+- `DataLeitura` (DateTime)
+- `ValorLeitura` (Decimal(12,3))
 
 ---
 
-## RF009 - Relatórios
+## 4. MAPEAMENTO DE ENDPOINTS DA API (RESTFUL)
 
-Gerar:
+### 4.1. Módulo de Autenticação (`/api/auth`)
 
-- Consumo de produtos
-- Evolução do pH
-- Evolução do Cloro
-- Evolução da Alcalinidade
-- Gastos mensais
+- `POST /api/auth/login` -> Autentica usuário e retorna token JWT.
+- `POST /api/auth/register` -> Cria uma nova credencial no sistema.
+- `POST /api/auth/refresh-token` -> Atualiza a expiração da sessão do cliente.
 
----
+### 4.2. Módulo de Gestão Territorial (`/api/locais`)
 
-## RF010 - Alertas
+- `GET /api/locais` -> Retorna locais vinculados às claims do usuário.
+- `POST /api/locais` -> Registra um novo condomínio/sede.
+- `GET /api/locais/{id}/subestrutura` -> Retorna árvore hierárquica completa (Piscinas, Depósitos, Hidrômetros).
 
-Exibir alertas quando:
+### 4.3. Módulo de Insumos e Logística (`/api/estoque`)
 
-- pH < 7.0
-- pH > 7.8
-- Cloro < 1 ppm
-- Cloro > 5 ppm
-- Alcalinidade fora da faixa configurada
+- `GET /api/estoque/status-critico` -> Lista produtos com estoque baixo.
+- `POST /api/estoque/inventario/ajuste` -> Realiza fechamento de inventário físico.
 
 ---
 
-# 5. REQUISITOS NÃO FUNCIONAIS
+## 5. CATALOGAÇÃO DE REQUISITOS ESSENCIAIS
 
-## RNF001
+### 5.1. Requisitos Funcionais (RF)
 
-Sistema responsivo.
+- **RF001 - Controle de Escopo por Claims:** O sistema deve filtrar toda consulta HTTP baseando-se no `LocalId` do token JWT, impedindo vazamento de dados entre condomínios diferentes.
+- **RF002 - Flexibilidade nas Análises:** O preenchimento dos parâmetros químicos em `Analises` deve ser opcional (Nullable), permitindo salvar medições parciais.
+- **RF003 - Gatilho de Alerta Crítico:** O sistema disparará avisos se os parâmetros saírem da faixa operacional aceitável (pH < 7.0 ou > 7.8; Cloro < 1.0 ppm ou > 5.0 ppm).
+- **RF004 - Rastreabilidade Automática:** Ao computar a aplicação de produto químico, o sistema deverá realizar o decremento automático proporcional no estoque correspondente.
 
-## RNF002
+### 5.2. Requisitos Não Funcionais (RNF)
 
-Compatível com dispositivos móveis.
-
-## RNF003
-
-Tempo máximo de resposta inferior a 2 segundos.
-
-## RNF004
-
-Utilizar HTTPS.
-
-## RNF005
-
-Armazenamento seguro de senhas.
-
-Hash:
-
-BCrypt
-
----
-
-# 6. ARQUITETURA
-
-Frontend:
-
-React + Vite
-
-Backend:
-
-ASP.NET Core Web API
-
-Banco:
-
-PostgreSQL
-
-Autenticação:
-
-JWT
-
-Hospedagem:
-
-Frontend: Vercel
-
-Backend: Railway ou Render
-
-Banco: PostgreSQL Railway
-
----
-
-# 7. MODELAGEM DO BANCO
-
-## Tabela Usuarios
-
-Id
-Nome
-Email
-SenhaHash
-DataCadastro
-
----
-
-## Tabela Piscinas
-
-Id
-UsuarioId
-Nome
-VolumeLitros
-ProfundidadeMedia
-TipoRevestimento
-TipoTratamento
-
----
-
-## Tabela Analises
-
-Id
-PiscinaId
-DataAnalise
-Ph
-CloroLivre
-Alcalinidade
-Temperatura
-Observacoes
-
----
-
-## Tabela Produtos
-
-Id
-Nome
-UnidadeMedida
-
----
-
-## Tabela Estoque
-
-Id
-PiscinaId
-ProdutoId
-QuantidadeAtual
-
----
-
-## Tabela MovimentacoesEstoque
-
-Id
-PiscinaId
-ProdutoId
-TipoMovimentacao
-Quantidade
-Valor
-DataMovimentacao
-
----
-
-# 8. ENDPOINTS DA API
-
-## Autenticação
-
-POST /api/auth/login
-
-POST /api/auth/register
-
-POST /api/auth/refresh-token
-
----
-
-## Piscinas
-
-GET /api/piscinas
-
-GET /api/piscinas/{id}
-
-POST /api/piscinas
-
-PUT /api/piscinas/{id}
-
-DELETE /api/piscinas/{id}
-
----
-
-## Análises
-
-GET /api/analises
-
-GET /api/analises/{id}
-
-POST /api/analises
-
-PUT /api/analises/{id}
-
-DELETE /api/analises/{id}
-
----
-
-## Produtos
-
-GET /api/produtos
-
-POST /api/produtos
-
-PUT /api/produtos/{id}
-
-DELETE /api/produtos/{id}
-
----
-
-## Estoque
-
-GET /api/estoque
-
-POST /api/estoque/entrada
-
-POST /api/estoque/saida
-
----
-
-## Dashboard
-
-GET /api/dashboard
-
----
-
-# 9. TELAS
-
-## Tela de Login
-
-Campos:
-
-- E-mail
-- Senha
-
-Botões:
-
-- Entrar
-- Criar Conta
-
----
-
-## Dashboard
-
-Cards:
-
-- pH Atual
-- Cloro Atual
-- Alcalinidade Atual
-- Estoque
-
-Gráficos:
-
-- pH
-- Cloro
-- Alcalinidade
-
----
-
-## Cadastro de Piscina
-
-Formulário de cadastro.
-
----
-
-## Registro de Análise
-
-Campos:
-
-- pH
-- Cloro
-- Alcalinidade
-- Temperatura
-
----
-
-## Estoque
-
-Lista de produtos.
-
-Entradas e saídas.
-
----
-
-## Relatórios
-
-Filtros:
-
-- Período
-- Piscina
-
-Exportação:
-
-PDF
-Excel
-
----
-
-# 10. ROADMAP FUTURO
-
-Versão 2.0
-
-- Aplicativo React Native
-- Notificações Push
-- Fotos da piscina
-- QR Code da piscina
-- Compartilhamento com técnicos
-
-Versão 3.0
-
-- Inteligência Artificial
-- Sugestões automáticas
-- Reconhecimento visual da água
-- Previsão de consumo
-
----
-
-# 11. CRONOGRAMA
-
-FASE 1
-
-Infraestrutura
-
-Duração:
-1 semana
-
-Entregas:
-
-- [*] Banco PostgreSQL - 06/06/26 Todas as tabelas criadas no Postgress
-- Projeto Backend
-- Projeto Frontend
-
----
-
-FASE 2
-
-Autenticação
-
-Duração:
-1 semana
-
-Entregas:
-
-- Cadastro
-- Login
-- JWT
-
----
-
-FASE 3
-
-Piscinas
-
-Duração:
-1 semana
-
-Entregas:
-
-- CRUD completo
-
----
-
-FASE 4
-
-Análises
-
-Duração:
-2 semanas
-
-Entregas:
-
-- Cadastro
-- Histórico
-
----
-
-FASE 5
-
-Produtos e Estoque
-
-Duração:
-2 semanas
-
-Entregas:
-
-- Controle de estoque
-- Movimentações
-
----
-
-FASE 6
-
-Dashboard
-
-Duração:
-2 semanas
-
-Entregas:
-
-- Indicadores
-- Gráficos
-
----
-
-FASE 7
-
-Deploy
-
-Duração:
-1 semana
-
-Entregas:
-
-- Sistema publicado
-
-Tempo estimado total:
-
-10 semanas
+- **RNF001 - Latência Operacional:** Consultas de endpoints críticos (como gráficos do dashboard) não devem exceder 500ms.
+- **RNF002 - Estratégia de Migração:** Toda e qualquer alteração estrutural no banco PostgreSQL deve utilizar exclusivamente Entity Framework Core Migrations.
+- **RNF003 - Segurança de Senhas:** Senhas devem obrigatoriamente ser hasheadas com o algoritmo adaptativo BCrypt.
