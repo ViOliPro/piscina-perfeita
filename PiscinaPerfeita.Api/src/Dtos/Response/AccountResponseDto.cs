@@ -13,9 +13,9 @@ namespace PiscinaPerfeita.Api.Dtos.Response
     public class UserResponseDto
     {
         public Guid UserId { get; set; }
+        public Guid LocalId { get; set; }
         public string Nome { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public Role? Role { get; set; }
     }
-
 }

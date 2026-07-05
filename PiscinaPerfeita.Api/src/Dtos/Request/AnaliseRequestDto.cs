@@ -7,6 +7,9 @@ namespace PiscinaPerfeita.Api.Dtos.Request
         [Required(ErrorMessage = "O ID da piscina é obrigatório.")]
         public Guid PiscinaId { get; set; }
 
+        [Required(ErrorMessage = "O ID do local é obrigatório.")]
+        public Guid LocalId { get; set; }
+
         [Range(0, 14, ErrorMessage = "O PH deve estar entre 0 e 14.")]
         public decimal? Ph { get; set; }
 

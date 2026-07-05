@@ -14,6 +14,8 @@ namespace PiscinaPerfeita.Api.Models
 
         public Guid UsuarioId { get; set; }
 
+        public Guid LocalId { get; set; }
+
         public DateTimeOffset DataAnalise { get; set; } = DateTimeOffset.UtcNow;
 
         public decimal? Ph { get; set; }
@@ -31,6 +33,8 @@ namespace PiscinaPerfeita.Api.Models
 
         [ForeignKey(nameof(UsuarioId))]
         public virtual Usuario? Usuario { get; set; }
+
+        [ForeignKey(nameof(LocalId))]
+        public virtual Local? Local { get; set; }
     }
 }
-

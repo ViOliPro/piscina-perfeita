@@ -12,4 +12,6 @@ public partial class ProdutoRequestDto
     [DisplayName("Unidade de Medida")]
     public string UnidadeMedida { get; set; } = string.Empty;
 
+    [Required(ErrorMessage = "O ID do local é obrigatório.")]
+    public Guid LocalId { get; set; }
 }

@@ -16,6 +16,8 @@ namespace PiscinaPerfeita.Api.Models
 
         public Guid UsuarioId { get; set; }
 
+        public Guid LocalId { get; set; }
+
         public Tipo TipoMovimentacao { get; set; }
 
         public decimal? Quantidade { get; set; }
@@ -30,6 +32,9 @@ namespace PiscinaPerfeita.Api.Models
 
         [ForeignKey("UsuarioId")]
         public virtual Usuario Usuarios { get; set; } = null!;
+
+        [ForeignKey(nameof(LocalId))]
+        public virtual Local? Local { get; set; }
     }
 
     public enum Tipo

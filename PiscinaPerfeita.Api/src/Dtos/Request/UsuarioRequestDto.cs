@@ -1,11 +1,14 @@
-﻿using PiscinaPerfeita.Api.Dtos.Response;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using PiscinaPerfeita.Api.Dtos.Response;
 
 namespace PiscinaPerfeita.Api.Dtos.Request
 {
     public class UsuarioRequestDto
     {
+        [Required(ErrorMessage = "O ID do local é obrigatório.")]
+        public Guid LocalId { get; set; }
+
         [Required(ErrorMessage = "O campo Nome é obrigatório.")]
         public string Nome { get; set; } = string.Empty;
 
@@ -32,5 +35,4 @@ namespace PiscinaPerfeita.Api.Dtos.Request
         public string? SenhaHash { get; set; } = string.Empty;
         public Role? Role { get; set; }
     }
-
 }

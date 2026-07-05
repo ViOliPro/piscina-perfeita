@@ -14,6 +14,8 @@ public partial class Estoque
 
     public Guid UsuarioId { get; set; }
 
+    public Guid LocalId { get; set; }
+
     public decimal? QuantidadeAtual { get; set; }
 
     public decimal? QuantidadeMinima { get; set; }
@@ -23,4 +25,7 @@ public partial class Estoque
 
     [ForeignKey("UsuarioId")]
     public virtual Usuario Usuario { get; set; } = null!;
+
+    [ForeignKey(nameof(LocalId))]
+    public virtual Local? Local { get; set; }
 }

@@ -80,6 +80,7 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
                 PiscinaId = dto.PiscinaId,
                 ProdutoId = dto.ProdutoId,
                 UsuarioId = _user.GetUserId(),
+                LocalId = _user.GetLocalId(),
                 TipoMovimentacao = (Models.Tipo)dto.TipoMovimentacao,
                 Quantidade = dto.Quantidade,
             };

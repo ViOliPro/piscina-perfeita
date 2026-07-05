@@ -3,4 +3,5 @@
 public interface IAuthenticatedUser
 {
     Guid GetUserId();
+    Guid GetLocalId();
 }

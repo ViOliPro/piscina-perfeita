@@ -10,6 +10,9 @@ namespace PiscinaPerfeita.Api.Dtos.Request
         [Required(ErrorMessage = "O ID do produto é obrigatório.")]
         public Guid ProdutoId { get; set; }
 
+        [Required(ErrorMessage = "O ID do local é obrigatório.")]
+        public Guid LocalId { get; set; }
+
         [Required(ErrorMessage = "O tipo de movimentação é obrigatório.")]
         [EnumDataType(
             typeof(Tipo),

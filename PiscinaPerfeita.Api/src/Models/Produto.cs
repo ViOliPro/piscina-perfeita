@@ -9,8 +9,13 @@ public partial class Produto
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     [Key]
     public Guid Id { get; set; }
+    public Guid LocalId { get; set; }
     public string Nome { get; set; } = string.Empty;
     public string UnidadeMedida { get; set; } = string.Empty;
-    public virtual ICollection<Estoque> Estoques { get; set; } = new List<Estoque>();
-    public virtual ICollection<MovimentacaoEstoque> MovimentacoesEstoques { get; set; } = new List<MovimentacaoEstoque>();
+
+    public virtual ICollection<Estoque> Estoques { get; set; } = [];
+    public virtual ICollection<MovimentacaoEstoque> MovimentacoesEstoques { get; set; } = [];
+
+    [ForeignKey(nameof(LocalId))]
+    public virtual Local Local { get; set; } = null!;
 }

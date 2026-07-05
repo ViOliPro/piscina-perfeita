@@ -12,6 +12,7 @@ namespace PiscinaPerfeita.Api.Dtos.Request
         public string? Cidade { get; set; }
         public string? Estado { get; set; }
         public string? Pais { get; set; }
+
         [RegularExpression(@"^\d{5}-\d{3}$", ErrorMessage = "CEP must be in the format 12345-678")]
         public string? Cep { get; set; }
     }
