@@ -16,6 +16,7 @@ public partial class PiscinaPerfeitaContext : DbContext
     public virtual DbSet<Piscina> Piscinas { get; set; }
     public virtual DbSet<Produto> Produtos { get; set; }
     public virtual DbSet<Usuario> Usuarios { get; set; }
+    public virtual DbSet<Local> Locais { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -74,6 +75,13 @@ public partial class PiscinaPerfeitaContext : DbContext
             entity.Property(e => e.Email).HasMaxLength(256).HasColumnName("email");
             entity.Property(e => e.Nome).HasMaxLength(150).HasColumnName("nome");
             entity.Property(e => e.SenhaHash).HasMaxLength(255).HasColumnName("password");
+            entity.Property(e => e.CreatedAt).HasColumnType("timestamp with time zone").HasColumnName("createtat");
+        });
+
+        modelBuilder.Entity<Local>(entity =>
+        {
+            entity.ToTable("Locais", "piscina-perfeita");
+            entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()"); // Mudado para gerar automático
             entity.Property(e => e.CreatedAt).HasColumnType("timestamp with time zone").HasColumnName("createtat");
         });
 
