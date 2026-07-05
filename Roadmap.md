@@ -26,9 +26,9 @@
 - **Objetivo:** Corrigir a modelagem e implementar o suporte a múltiplos Condomínios (`Local`).
 - **Banco de Dados:**
   - [ ] Remover `PiscinaId` da tabela `Estoque`.
-  - [ ] Criar entidade `Local` e vincular `Piscinas` e `Estoque` a ela.
   - [ ] Tornar parâmetros de `Analise` opcionais (`Nullable`).
   - [ ] Adicionar campo `QuantidadeMinima` ao estoque.
+  - [ ] Criar entidade `Local` e vincular `Piscinas` e `Estoque` a ela.
   - [ ] Gerar e rodar as Migrations correspondentes.
 - **Backend & Frontend:**
   - [ ] Ajustar as camadas de Services, Repositories e DTOs.
