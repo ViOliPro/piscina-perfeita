@@ -12,6 +12,7 @@ export const API_BASE_URL =
 export const API_ENDPOINTS = {
   // Autenticação  (AccountController → api/account/...)
   login: `${API_BASE_URL}/account/login`,
+  switchLocal: `${API_BASE_URL}/account/SwitchLocal`,
   forgotPassword: `${API_BASE_URL}/account/forgot-password`, // a implementar no backend
   resetPassword: `${API_BASE_URL}/account/reset-password`, // a implementar no backend
 
@@ -41,6 +42,17 @@ export const API_ENDPOINTS = {
   // Movimentações
   movimentacoes: `${API_BASE_URL}/movimentacoes`,
   movimentacaoById: (id) => `${API_BASE_URL}/movimentacoes/${id}`,
+
+  // Locais (condomínios/unidades)
+  locais: `${API_BASE_URL}/locais`,
+  localById: (id) => `${API_BASE_URL}/locais/${id}`,
+
+  // Vínculos Usuário ↔ Local (UsuariosLocaisController)
+  usuariosLocais: `${API_BASE_URL}/usuarioslocais`,
+  usuarioLocalById: (id) => `${API_BASE_URL}/usuarioslocais/${id}`,
+  meusLocais: `${API_BASE_URL}/usuarioslocais/meus`,
+  locaisPorUsuario: (usuarioId) =>
+    `${API_BASE_URL}/usuarioslocais/usuario/${usuarioId}`,
 };
 
 // ----------------------------------------------------------
@@ -66,13 +78,30 @@ export const ANALISE_FAIXAS = {
 // Roles de usuário (espelha o enum C# Role)
 // ----------------------------------------------------------
 export const ROLES = {
-  ADMIN: 0,
-  USER: 1,
+  ADMIN: 0, // Role.SuperAdmin no backend
+  USER: 1, // Role.Usuario no backend
 };
 
 export const ROLE_LABELS = {
-  [ROLES.ADMIN]: "Admin",
-  [ROLES.USER]: "User",
+  [ROLES.ADMIN]: "SuperAdmin",
+  [ROLES.USER]: "Usuário",
+};
+
+// ----------------------------------------------------------
+// Perfis de usuário por Local (espelha o enum C# Perfil)
+// Diferente de Role (acesso global ao sistema), o Perfil define o
+// nível de permissão do usuário dentro de um Local/condomínio específico.
+// ----------------------------------------------------------
+export const PERFIS = {
+  ADMINISTRADOR: 0,
+  OPERADOR: 1,
+  VISUALIZADOR: 2,
+};
+
+export const PERFIL_LABELS = {
+  [PERFIS.ADMINISTRADOR]: "Administrador",
+  [PERFIS.OPERADOR]: "Operador",
+  [PERFIS.VISUALIZADOR]: "Visualizador",
 };
 
 // ----------------------------------------------------------

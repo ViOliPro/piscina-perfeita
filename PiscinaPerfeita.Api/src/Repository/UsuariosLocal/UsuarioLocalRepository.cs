@@ -19,9 +19,12 @@ public class UsuarioLocalRepository : IUsuarioLocalRepository
             .UsuariosLocal.Select(u => new UsuarioLocalResponseDto
             {
                 Id = u.Id,
-                UsuarioId = u.Id,
+                UsuarioId = u.UsuarioId,
                 LocalId = u.LocalId ?? null,
+                LocalNome = u.Local != null ? u.Local.Nome : null,
                 Perfil = u.Perfil,
+                CreatedAt = u.CreatedAt,
+                Ativo = u.Ativo,
             })
             .ToListAsync();
     }
@@ -33,9 +36,12 @@ public class UsuarioLocalRepository : IUsuarioLocalRepository
             .Select(u => new UsuarioLocalResponseDto
             {
                 Id = u.Id,
-                UsuarioId = u.Id,
+                UsuarioId = u.UsuarioId,
                 LocalId = u.LocalId ?? null,
+                LocalNome = u.Local != null ? u.Local.Nome : null,
                 Perfil = u.Perfil,
+                CreatedAt = u.CreatedAt,
+                Ativo = u.Ativo,
             })
             .FirstOrDefaultAsync();
 
@@ -70,6 +76,24 @@ public class UsuarioLocalRepository : IUsuarioLocalRepository
             .FirstOrDefaultAsync();
 
         return usuarioDto ?? null;
+    }
+
+    public async Task<List<UsuarioLocalResponseDto>> GetAllByUserId(Guid userId)
+    {
+        return await _context
+            .UsuariosLocal.Where(u => u.UsuarioId == userId && u.Ativo)
+            .Select(u => new UsuarioLocalResponseDto
+            {
+                Id = u.Id,
+                UsuarioId = u.UsuarioId,
+                LocalId = u.LocalId ?? null,
+                LocalNome = u.Local != null ? u.Local.Nome : null,
+                Perfil = u.Perfil,
+                CreatedAt = u.CreatedAt,
+                Ativo = u.Ativo,
+            })
+            .OrderBy(u => u.LocalNome)
+            .ToListAsync();
     }
 
     public async Task Create(UsuarioLocal usuarioLocal)

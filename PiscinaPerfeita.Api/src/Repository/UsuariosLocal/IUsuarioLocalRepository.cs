@@ -11,6 +11,9 @@ namespace PiscinaPerfeita.Api.Repository.UsuariosLocal
 
         Task<UsuarioLocalResponseDto?> GetByUserId(Guid userId);
 
+        // Retorna TODOS os vínculos ativos do usuário (para o seletor de "Trocar Local")
+        Task<List<UsuarioLocalResponseDto>> GetAllByUserId(Guid userId);
+
         Task<int> QtdUserByLocal(Guid id);
 
         Task Create(UsuarioLocal usuarioLocal);

@@ -94,10 +94,34 @@ export function AuthProvider({ children }) {
     setError(null);
   }, []);
 
+  // Troca o Local (condomínio/unidade) ativo — usada quando o usuário tem
+  // vínculo com mais de um Local e precisa alternar entre eles.
+  // Emite um novo token JWT (com o novo local_id) e atualiza a sessão.
+  const switchLocal = useCallback(async (newLocalId) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await authService.switchLocal(newLocalId);
+      const accessToken = res.accessToken;
+      const expiresIn   = res.expiresIn ?? 28800;
+      const userPayload = res.user;
+
+      saveSession(accessToken, userPayload, expiresIn);
+      setToken(accessToken);
+      setUser(userPayload);
+      return true;
+    } catch (err) {
+      setError(err.message ?? "Erro ao trocar de local.");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const isAuthenticated = !!token;
 
   return (
-    <AuthContext.Provider value={{ token, user, isAuthenticated, loading, error, login, logout, setError }}>
+    <AuthContext.Provider value={{ token, user, isAuthenticated, loading, error, login, logout, switchLocal, setError }}>
       {children}
     </AuthContext.Provider>
   );

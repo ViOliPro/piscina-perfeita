@@ -1,8 +1,7 @@
-﻿using PiscinaPerfeita.Api.Dtos.Request;
+using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Helpers.Authenticated;
 using PiscinaPerfeita.Api.Models;
-using PiscinaPerfeita.Api.Repository.Analises;
 using PiscinaPerfeita.Api.Repository.UsuariosLocal;
 
 namespace PiscinaPerfeita.Api.Service.UsuariosLocal
@@ -38,17 +37,28 @@ namespace PiscinaPerfeita.Api.Service.UsuariosLocal
             return usuarioDb;
         }
 
-        public async Task<UsuarioLocalResponseDto> Create(UsuarioLocalRequestDto dto)
+        public async Task<List<UsuarioLocalResponseDto>> GetMeusLocais()
         {
             var userId = _user.GetUserId();
-            var existeUserLocal = await _usuariosLocalRepository.GetByUserId(userId);
+            return await _usuariosLocalRepository.GetAllByUserId(userId);
+        }
 
-            if (existeUserLocal != null && existeUserLocal.LocalId == dto.LocalId)
+        public async Task<List<UsuarioLocalResponseDto>> GetByUsuario(Guid usuarioId)
+        {
+            return await _usuariosLocalRepository.GetAllByUserId(usuarioId);
+        }
+
+        public async Task<UsuarioLocalResponseDto> Create(UsuarioLocalRequestDto dto)
+        {
+            // NOTA: a versão anterior ignorava dto.UsuarioId e sempre vinculava
+            // o usuário logado ao invés do usuário informado no DTO — corrigido aqui.
+            var vinculosExistentes = await _usuariosLocalRepository.GetAllByUserId(dto.UsuarioId);
+            if (vinculosExistentes.Any(v => v.LocalId == dto.LocalId))
                 throw new InvalidOperationException("Este usuário já está cadastrado neste local");
 
             var newUser = new UsuarioLocal
             {
-                UsuarioId = _user.GetUserId(),
+                UsuarioId = dto.UsuarioId,
                 LocalId = dto.LocalId,
                 Perfil = dto.Perfil,
             };
@@ -81,7 +91,7 @@ namespace PiscinaPerfeita.Api.Service.UsuariosLocal
 
             var newUser = new UsuarioLocal
             {
-                UsuarioId = _user.GetUserId(),
+                UsuarioId = dto.UsuarioId,
                 LocalId = dto.LocalId,
                 Perfil = dto.Perfil,
             };
@@ -90,7 +100,7 @@ namespace PiscinaPerfeita.Api.Service.UsuariosLocal
 
             return new UsuarioLocalResponseDto
             {
-                Id = newUser.Id,
+                Id = id,
                 UsuarioId = newUser.UsuarioId,
                 LocalId = newUser.LocalId,
                 Perfil = newUser.Perfil,

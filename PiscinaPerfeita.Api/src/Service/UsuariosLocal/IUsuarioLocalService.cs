@@ -10,5 +10,13 @@ namespace PiscinaPerfeita.Api.Service.UsuariosLocal
         Task<UsuarioLocalResponseDto> Create(UsuarioLocalRequestDto dto);
         Task<UsuarioLocalResponseDto> Update(Guid id, UsuarioLocalRequestDto dto);
         Task Delete(Guid id);
+
+        // Locais vinculados ao usuário atualmente autenticado — usado pelo
+        // seletor "Trocar Local" no front.
+        Task<List<UsuarioLocalResponseDto>> GetMeusLocais();
+
+        // Locais vinculados a um usuário específico — usado nas telas de
+        // administração de usuários.
+        Task<List<UsuarioLocalResponseDto>> GetByUsuario(Guid usuarioId);
     }
 }

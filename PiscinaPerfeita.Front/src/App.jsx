@@ -12,6 +12,7 @@ import Movimentacoes     from "./modules/movimentacoes/Movimentacoes.jsx";
 import Piscinas          from "./modules/piscinas/Piscinas.jsx";
 import Produtos          from "./modules/produtos/Produtos.jsx";
 import Usuarios          from "./modules/usuarios/Usuarios.jsx";
+import Locais            from "./modules/locais/Locais.jsx";
 import { useState }      from "react";
 
 const PAGES = {
@@ -22,6 +23,7 @@ const PAGES = {
   piscinas:      Piscinas,
   produtos:      Produtos,
   usuarios:      Usuarios,
+  locais:        Locais,
 };
 
 // ----------------------------------------------------------

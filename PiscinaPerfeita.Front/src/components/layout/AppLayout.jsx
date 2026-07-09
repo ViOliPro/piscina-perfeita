@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 import { useAuth }       from "../../context/AuthContext.jsx";
 import { useIsMobile }   from "../../hooks/useIsMobile.js";
 import { ROLES, ROLE_LABELS } from "../../config/index.js";
+import { usuarioLocalService } from "../../config/services.js";
 import { LogoIcon }      from "../ui/Logo.jsx";
 
 // ----------------------------------------------------------
@@ -16,6 +17,7 @@ import { LogoIcon }      from "../ui/Logo.jsx";
 // ----------------------------------------------------------
 export const NAV = [
   { id: "dashboard",     label: "Dashboard",    icon: "📊", section: "principal"  },
+  { id: "locais",        label: "Locais",       icon: "📍", section: "cadastros"  },
   { id: "piscinas",      label: "Piscinas",     icon: "🏊", section: "cadastros"  },
   { id: "usuarios",      label: "Usuários",     icon: "👥", section: "cadastros"  },
   { id: "produtos",      label: "Produtos",     icon: "📦", section: "cadastros"  },
@@ -192,6 +194,90 @@ function MobileDrawer({ open, activePage, onNavigate, onClose }) {
 // ----------------------------------------------------------
 // Topbar
 // ----------------------------------------------------------
+function LocalSwitcher() {
+  const { user, switchLocal } = useAuth();
+  const [locais, setLocais]   = useState([]);
+  const [open, setOpen]       = useState(false);
+  const [busy, setBusy]       = useState(false);
+
+  useEffect(() => {
+    let ativo = true;
+    usuarioLocalService
+      .meusLocais()
+      .then((res) => { if (ativo) setLocais(res ?? []); })
+      .catch(() => { /* silencioso: indicador é acessório, não trava a tela */ });
+    return () => { ativo = false; };
+  }, [user?.localId]);
+
+  const localAtual = locais.find((l) => l.localId === user?.localId);
+  const nomeAtual = localAtual?.localNome ?? "Local não definido";
+
+  // Só um local vinculado (ou nenhum ainda carregado): mostra badge estático
+  if (locais.length <= 1) {
+    return (
+      <span
+        title={nomeAtual}
+        style={{
+          fontSize: 10, fontWeight: 600, color: "#1a5f80",
+          background: "rgba(46,134,171,.10)", borderRadius: 10,
+          padding: "2px 8px", whiteSpace: "nowrap", maxWidth: 160,
+          overflow: "hidden", textOverflow: "ellipsis",
+        }}
+      >
+        📍 {nomeAtual}
+      </span>
+    );
+  }
+
+  async function handleSwitch(localId) {
+    if (localId === user?.localId) { setOpen(false); return; }
+    setBusy(true);
+    const ok = await switchLocal(localId);
+    setBusy(false);
+    setOpen(false);
+    if (ok) window.location.reload(); // garante que todas as telas recarreguem com o novo local
+  }
+
+  return (
+    <div style={{ position: "relative" }}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        disabled={busy}
+        style={{
+          display: "flex", alignItems: "center", gap: 4,
+          fontSize: 10, fontWeight: 600, color: "#1a5f80",
+          background: "rgba(46,134,171,.10)", border: "none", borderRadius: 10,
+          padding: "2px 8px", cursor: "pointer", maxWidth: 180,
+        }}
+      >
+        📍 <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{nomeAtual}</span> ▾
+      </button>
+      {open && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 4px)", left: 0,
+          background: "#fff", borderRadius: 8, boxShadow: "0 4px 20px rgba(0,0,0,.15)",
+          minWidth: 200, zIndex: 200, overflow: "hidden",
+        }}>
+          {locais.map((l) => (
+            <button
+              key={l.id}
+              onClick={() => handleSwitch(l.localId)}
+              style={{
+                display: "block", width: "100%", textAlign: "left",
+                padding: "8px 12px", border: "none", cursor: "pointer",
+                background: l.localId === user?.localId ? "rgba(46,134,171,.08)" : "#fff",
+                fontSize: 13, color: "#0A1628",
+              }}
+            >
+              {l.localId === user?.localId ? "✓ " : ""}{l.localNome ?? "Local sem nome"}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Topbar({ activePage, onMenuToggle }) {
   const isMobile = useIsMobile();
   const { user, logout } = useAuth();
@@ -230,8 +316,11 @@ function Topbar({ activePage, onMenuToggle }) {
       )}
 
       {/* Título */}
-      <div style={{ flex: 1, fontSize: isMobile ? 15 : 15, fontWeight: 600, color: "#0A1628" }}>
-        {pageTitle}
+      <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+        <span style={{ fontSize: isMobile ? 15 : 15, fontWeight: 600, color: "#0A1628" }}>
+          {pageTitle}
+        </span>
+        {!isMobile && <LocalSwitcher />}
       </div>
 
       {/* Avatar + menu (desktop) / apenas avatar (mobile já tem sidebar) */}

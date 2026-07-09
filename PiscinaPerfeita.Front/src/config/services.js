@@ -12,6 +12,8 @@ import {
   fromApiAnalise,   fromApiAnaliseList,   toApiAnalise,
   fromApiEstoque,   fromApiEstoqueList,   toApiEstoque,
   fromApiMovimentacao, fromApiMovimentacaoList, toApiMovimentacao,
+  fromApiLocal,     fromApiLocalList,     toApiLocal,
+  fromApiUsuarioLocal, fromApiUsuarioLocalList, toApiUsuarioLocal,
 } from "./mappers.js";
 
 // ----------------------------------------------------------
@@ -60,6 +62,39 @@ export const authService = {
 
   forgotPassword: (dto) => post(API_ENDPOINTS.forgotPassword, dto),
   resetPassword:  (dto) => post(API_ENDPOINTS.resetPassword,  dto),
+
+  // Troca o Local (condomínio/unidade) ativo do usuário logado e emite um
+  // novo token JWT já com o novo local_id no claim. O backend identifica o
+  // usuário pelo token (Authorization header) — não é mais necessário (nem
+  // aceito) enviar o userId no corpo da requisição.
+  switchLocal: (newLocalId) =>
+    post(`${API_ENDPOINTS.switchLocal}?newLocalId=${newLocalId}`).then(fromApiAuth),
+};
+
+// ----------------------------------------------------------
+// Locais (condomínios/unidades)
+// ----------------------------------------------------------
+export const localService = {
+  listar:    ()          => get(API_ENDPOINTS.locais).then(fromApiLocalList),
+  buscar:    (id)        => get(API_ENDPOINTS.localById(id)).then(fromApiLocal),
+  criar:     (dto)       => post(API_ENDPOINTS.locais,          toApiLocal(dto)).then(fromApiLocal),
+  atualizar: (id, dto)   => put(API_ENDPOINTS.localById(id),    toApiLocal(dto)).then(fromApiLocal),
+  excluir:   (id)        => del(API_ENDPOINTS.localById(id)),
+};
+
+// ----------------------------------------------------------
+// Vínculos Usuário ↔ Local (Perfil por Local)
+// ----------------------------------------------------------
+export const usuarioLocalService = {
+  listar:        ()            => get(API_ENDPOINTS.usuariosLocais).then(fromApiUsuarioLocalList),
+  buscar:        (id)          => get(API_ENDPOINTS.usuarioLocalById(id)).then(fromApiUsuarioLocal),
+  // Locais vinculados ao usuário autenticado — alimenta o seletor "Trocar Local".
+  meusLocais:    ()            => get(API_ENDPOINTS.meusLocais).then(fromApiUsuarioLocalList),
+  // Locais vinculados a um usuário específico — usado na administração de usuários.
+  porUsuario:    (usuarioId)   => get(API_ENDPOINTS.locaisPorUsuario(usuarioId)).then(fromApiUsuarioLocalList),
+  criar:         (dto)         => post(API_ENDPOINTS.usuariosLocais,       toApiUsuarioLocal(dto)).then(fromApiUsuarioLocal),
+  atualizar:     (id, dto)     => put(API_ENDPOINTS.usuarioLocalById(id),  toApiUsuarioLocal(dto)).then(fromApiUsuarioLocal),
+  excluir:       (id)          => del(API_ENDPOINTS.usuarioLocalById(id)),
 };
 
 // ----------------------------------------------------------

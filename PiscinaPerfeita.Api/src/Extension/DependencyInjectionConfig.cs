@@ -1,6 +1,7 @@
 ﻿using PiscinaPerfeita.Api.Helpers.Authenticated;
 using PiscinaPerfeita.Api.Repository.Analises;
 using PiscinaPerfeita.Api.Repository.Estoques;
+using PiscinaPerfeita.Api.Repository.Locais;
 using PiscinaPerfeita.Api.Repository.MovimentacoesEstoque;
 using PiscinaPerfeita.Api.Repository.Piscinas;
 using PiscinaPerfeita.Api.Repository.Produtos;
@@ -9,6 +10,7 @@ using PiscinaPerfeita.Api.Repository.UsuariosLocal;
 using PiscinaPerfeita.Api.Service.Account;
 using PiscinaPerfeita.Api.Service.Analises;
 using PiscinaPerfeita.Api.Service.Estoques;
+using PiscinaPerfeita.Api.Service.Locais;
 using PiscinaPerfeita.Api.Service.MovimentacoesEstoque;
 using PiscinaPerfeita.Api.Service.Piscinas;
 using PiscinaPerfeita.Api.Service.Produtos;
@@ -30,6 +32,7 @@ namespace PiscinaPerfeita.Api.Extension
             services.AddScoped<IMovimentacaoService, MovimentacaoService>();
             services.AddScoped<IAccountService, AccountService>();
             services.AddScoped<IUsuarioLocalService, UsuarioLocalService>();
+            services.AddScoped<ILocalService, LocalService>();
             //Autheticated
             services.AddScoped<IAuthenticatedUser, AuthenticatedUser>();
 
@@ -41,6 +44,7 @@ namespace PiscinaPerfeita.Api.Extension
             services.AddScoped<IAnaliseRepository, AnaliseRepository>();
             services.AddScoped<IMovimentacaoRepository, MovimentacaoRepository>();
             services.AddScoped<IUsuarioLocalRepository, UsuarioLocalRepository>();
+            services.AddScoped<ILocalRepository, LocalRepository>();
 
             // Qualquer outra injeção (Validadores, Helpers, etc) entra aqui embaixo
 
