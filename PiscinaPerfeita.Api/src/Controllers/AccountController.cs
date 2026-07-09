@@ -14,7 +14,8 @@ namespace PiscinaPerfeita.Api.Controllers
 
         public AccountController(IAccountService accountService)
         {
-            _accountService = accountService ?? throw new ArgumentNullException(nameof(accountService));
+            _accountService =
+                accountService ?? throw new ArgumentNullException(nameof(accountService));
         }
 
         // Login
@@ -33,5 +34,23 @@ namespace PiscinaPerfeita.Api.Controllers
             }
         }
 
+        // Novo JWT se o usuario mudar de local
+        [HttpPost("SwitchLocal")]
+        [AllowAnonymous]
+        public async Task<ActionResult<AccountResponseDto>> SwitchLocal(
+            [FromBody] Guid userId,
+            Guid newLocalId
+        )
+        {
+            try
+            {
+                var res = await _accountService.SwitchLocal(userId, newLocalId);
+                return Ok(res);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }
