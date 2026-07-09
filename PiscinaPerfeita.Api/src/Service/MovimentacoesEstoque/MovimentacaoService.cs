@@ -1,6 +1,5 @@
 ﻿using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
-using PiscinaPerfeita.Api.Helpers;
 using PiscinaPerfeita.Api.Helpers.Authenticated;
 using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Repository.MovimentacoesEstoque;
@@ -125,7 +124,7 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
                 Id = id,
                 Piscina = new NomeIdDto(movimentacaoUpdated.PiscinaId, null),
                 Produto = new NomeIdDto(movimentacaoUpdated.ProdutoId, null),
-                TipoMovimentacao = (Dtos.Response.Tipo)movimentacaoUpdated.TipoMovimentacao,
+                TipoMovimentacao = (Models.Tipo)movimentacaoUpdated.TipoMovimentacao,
                 Quantidade = movimentacaoUpdated.Quantidade,
             };
         }

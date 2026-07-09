@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Models.Interfaces;
 
 namespace PiscinaPerfeita.Api.Models
@@ -36,11 +37,5 @@ namespace PiscinaPerfeita.Api.Models
 
         [ForeignKey(nameof(LocalId))]
         public virtual Local? Local { get; set; }
-    }
-
-    public enum Tipo
-    {
-        Entrada = 0,
-        Saida = 1,
     }
 }

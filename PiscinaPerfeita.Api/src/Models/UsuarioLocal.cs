@@ -12,14 +12,13 @@ namespace PiscinaPerfeita.Api.Models
 
         public Guid UsuarioId { get; set; }
 
-        public Guid LocalId { get; set; }
+        public Guid? LocalId { get; set; } = null;
 
-        public bool Ativo { get; set; } = false;
+        public bool Ativo { get; set; } = true;
 
         public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
         public Perfil Perfil { get; set; } = Perfil.Visualizador;
-
 
         [ForeignKey(nameof(UsuarioId))]
         public virtual Usuario Usuario { get; set; } = null!;
@@ -28,11 +27,10 @@ namespace PiscinaPerfeita.Api.Models
         public virtual Local Local { get; set; } = null!;
     }
 
-
     public enum Perfil
     {
         Administrador = 0,
         Operador = 1,
-        Visualizador = 2
+        Visualizador = 2,
     }
 }

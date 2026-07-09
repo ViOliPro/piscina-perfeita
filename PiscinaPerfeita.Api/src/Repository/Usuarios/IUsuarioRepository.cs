@@ -1,11 +1,10 @@
-﻿using PiscinaPerfeita.Api.Models;
-using PiscinaPerfeita.Api.Dtos.Response;
+﻿using PiscinaPerfeita.Api.Dtos.Response;
+using PiscinaPerfeita.Api.Models;
 
 namespace PiscinaPerfeita.Api.Repository.Usuarios
 {
     public interface IUsuarioRepository
     {
-
         Task<List<UsuarioResponseDto>> Show();
 
         Task<UsuarioResponseDto?> GetById(Guid id);

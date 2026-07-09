@@ -21,7 +21,7 @@ public class MovimentacaoRepository : IMovimentacaoRepository
             .MovimentacoesEstoques.Select(m => new MovimentacaoEstoqueResponseDto
             {
                 Id = m.Id,
-                TipoMovimentacao = (Dtos.Response.Tipo)m.TipoMovimentacao,
+                TipoMovimentacao = (Models.Tipo)m.TipoMovimentacao,
                 Quantidade = m.Quantidade,
                 DataMovimentacao = m.DataMovimentacao,
                 Piscina = new NomeIdDto(m.PiscinaId, m.Piscina.Nome),
@@ -39,7 +39,7 @@ public class MovimentacaoRepository : IMovimentacaoRepository
             .Select(m => new MovimentacaoEstoqueResponseDto
             {
                 Id = m.Id,
-                TipoMovimentacao = (Dtos.Response.Tipo)m.TipoMovimentacao,
+                TipoMovimentacao = (Models.Tipo)m.TipoMovimentacao,
                 Quantidade = m.Quantidade,
                 DataMovimentacao = m.DataMovimentacao,
                 Piscina = new NomeIdDto(m.PiscinaId, m.Piscina.Nome),

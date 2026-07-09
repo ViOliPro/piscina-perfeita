@@ -1,6 +1,4 @@
-﻿using PiscinaPerfeita.Api.Models;
-
-namespace PiscinaPerfeita.Api.Dtos.Response;
+﻿namespace PiscinaPerfeita.Api.Dtos.Response;
 
 public partial class EstoqueResponseDto
 {

@@ -1,5 +1,5 @@
-﻿using PiscinaPerfeita.Api.Models;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
+using PiscinaPerfeita.Api.Models;
 
 namespace PiscinaPerfeita.Api.Dtos.Response
 {
@@ -25,6 +25,4 @@ namespace PiscinaPerfeita.Api.Dtos.Response
         // Piscina analisada
         public NomeIdDto? Piscina { get; set; }
     }
-
 }
-

@@ -1,19 +1,19 @@
-﻿using PiscinaPerfeita.Api.Service.Usuarios;
-using PiscinaPerfeita.Api.Repository.Usuarios;
-using PiscinaPerfeita.Api.Service.Estoques;
-using PiscinaPerfeita.Api.Repository.Estoques;
-using PiscinaPerfeita.Api.Service.Analises;
+﻿using PiscinaPerfeita.Api.Helpers.Authenticated;
 using PiscinaPerfeita.Api.Repository.Analises;
-using PiscinaPerfeita.Api.Service.MovimentacoesEstoque;
+using PiscinaPerfeita.Api.Repository.Estoques;
 using PiscinaPerfeita.Api.Repository.MovimentacoesEstoque;
-using PiscinaPerfeita.Api.Service.Piscinas;
 using PiscinaPerfeita.Api.Repository.Piscinas;
-using PiscinaPerfeita.Api.Service.Produtos;
 using PiscinaPerfeita.Api.Repository.Produtos;
+using PiscinaPerfeita.Api.Repository.Usuarios;
+using PiscinaPerfeita.Api.Repository.UsuariosLocal;
 using PiscinaPerfeita.Api.Service.Account;
-using PiscinaPerfeita.Api.Helpers.Authenticated;
-
-
+using PiscinaPerfeita.Api.Service.Analises;
+using PiscinaPerfeita.Api.Service.Estoques;
+using PiscinaPerfeita.Api.Service.MovimentacoesEstoque;
+using PiscinaPerfeita.Api.Service.Piscinas;
+using PiscinaPerfeita.Api.Service.Produtos;
+using PiscinaPerfeita.Api.Service.Usuarios;
+using PiscinaPerfeita.Api.Service.UsuariosLocal;
 
 namespace PiscinaPerfeita.Api.Extension
 {
@@ -29,9 +29,9 @@ namespace PiscinaPerfeita.Api.Extension
             services.AddScoped<IAnaliseService, AnaliseService>();
             services.AddScoped<IMovimentacaoService, MovimentacaoService>();
             services.AddScoped<IAccountService, AccountService>();
+            services.AddScoped<IUsuarioLocalService, UsuarioLocalService>();
             //Autheticated
             services.AddScoped<IAuthenticatedUser, AuthenticatedUser>();
-
 
             // 2. Registre aqui todos os seus Repositories
             services.AddScoped<IUsuarioRepository, UsuarioRepository>();
@@ -40,7 +40,7 @@ namespace PiscinaPerfeita.Api.Extension
             services.AddScoped<IProdutoRepository, ProdutoRepository>();
             services.AddScoped<IAnaliseRepository, AnaliseRepository>();
             services.AddScoped<IMovimentacaoRepository, MovimentacaoRepository>();
-
+            services.AddScoped<IUsuarioLocalRepository, UsuarioLocalRepository>();
 
             // Qualquer outra injeção (Validadores, Helpers, etc) entra aqui embaixo
 

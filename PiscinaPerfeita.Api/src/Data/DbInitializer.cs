@@ -14,6 +14,7 @@ namespace PiscinaPerfeita.Api.Data
         {
             await context.Database.MigrateAsync();
 
+            // Verifica se já existem usuários no banco de dados
             if (await context.Usuarios.AnyAsync())
                 return;
 
@@ -23,7 +24,7 @@ namespace PiscinaPerfeita.Api.Data
                     Nome = configuration["ADMIN_NAME"] ?? "Admin",
                     Email = configuration["ADMIN_EMAIL"],
                     SenhaHash = BCrypt.Net.BCrypt.HashPassword(configuration["ADMIN_PASSWORD"]),
-                    Role = Role.Admin,
+                    Role = Role.SuperAdmin,
                 }
             );
 

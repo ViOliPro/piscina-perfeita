@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PiscinaPerfeita.Api.Data;
@@ -11,9 +12,11 @@ using PiscinaPerfeita.Api.Data;
 namespace PiscinaPerfeita.Api.Migrations
 {
     [DbContext(typeof(PiscinaPerfeitaContext))]
-    partial class PiscinaPerfeitaContextModelSnapshot : ModelSnapshot
+    [Migration("20260706003025_TableLocal")]
+    partial class TableLocal
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -327,10 +330,6 @@ namespace PiscinaPerfeita.Api.Migrations
                         .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
-                    b.Property<string>("Cpf")
-                        .HasColumnType("text")
-                        .HasColumnName("cpf");
-
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("createtat");
@@ -340,7 +339,7 @@ namespace PiscinaPerfeita.Api.Migrations
                         .HasColumnType("character varying(256)")
                         .HasColumnName("email");
 
-                    b.Property<Guid?>("LocalId")
+                    b.Property<Guid>("LocalId")
                         .HasColumnType("uuid")
                         .HasColumnName("localid");
 
@@ -358,10 +357,6 @@ namespace PiscinaPerfeita.Api.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
                         .HasColumnName("password");
-
-                    b.Property<Guid?>("UltimoLocalId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("ultimolocalid");
 
                     b.HasKey("Id")
                         .HasName("pk_usuarios");
@@ -388,7 +383,7 @@ namespace PiscinaPerfeita.Api.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("createtat");
 
-                    b.Property<Guid?>("LocalId")
+                    b.Property<Guid>("LocalId")
                         .HasColumnType("uuid")
                         .HasColumnName("localid");
 
@@ -554,6 +549,8 @@ namespace PiscinaPerfeita.Api.Migrations
                     b.HasOne("PiscinaPerfeita.Api.Models.Local", "Local")
                         .WithMany()
                         .HasForeignKey("LocalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
                         .HasConstraintName("fk_usuarios_locais_localid");
 
                     b.Navigation("Local");
@@ -564,6 +561,8 @@ namespace PiscinaPerfeita.Api.Migrations
                     b.HasOne("PiscinaPerfeita.Api.Models.Local", "Local")
                         .WithMany()
                         .HasForeignKey("LocalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
                         .HasConstraintName("fk_usuarioslocal_locais_localid");
 
                     b.HasOne("PiscinaPerfeita.Api.Models.Usuario", "Usuario")

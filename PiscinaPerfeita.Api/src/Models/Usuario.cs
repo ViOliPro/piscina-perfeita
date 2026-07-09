@@ -11,12 +11,16 @@ namespace PiscinaPerfeita.Api.Models
         [Key]
         public Guid Id { get; set; }
 
-        public Guid LocalId { get; set; }
+        public Guid? LocalId { get; set; } = null;
+
+        public Guid? UltimoLocalId { get; set; } = null;
 
         public string Nome { get; set; } = null!;
 
         [Column("Email")]
         public string? Email { get; set; }
+
+        public string? Cpf { get; set; }
 
         public string? SenhaHash { get; set; }
 

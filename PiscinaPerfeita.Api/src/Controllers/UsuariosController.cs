@@ -8,14 +8,14 @@ namespace PiscinaPerfeita.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    
     public class UsuariosController : ControllerBase
     {
         private readonly IUsuarioService _usuariosService;
 
         public UsuariosController(IUsuarioService usuariosService)
         {
-            _usuariosService = usuariosService ?? throw new ArgumentNullException(nameof(usuariosService));
+            _usuariosService =
+                usuariosService ?? throw new ArgumentNullException(nameof(usuariosService));
         }
 
         // 1. GET: api/clientes (Retorna todos os registros do banco)
@@ -31,7 +31,6 @@ namespace PiscinaPerfeita.Api.Controllers
             {
                 return BadRequest(ex.Message);
             }
-
         }
 
         // 2. GET: api/clientes/id (Retorna o registro com id)
@@ -90,7 +89,6 @@ namespace PiscinaPerfeita.Api.Controllers
             {
                 return Unauthorized(new { message = ex.Message });
             }
-
         }
 
         [HttpDelete("{id}")]
@@ -109,7 +107,6 @@ namespace PiscinaPerfeita.Api.Controllers
             {
                 return Unauthorized(new { message = ex.Message });
             }
-
         }
     }
 }

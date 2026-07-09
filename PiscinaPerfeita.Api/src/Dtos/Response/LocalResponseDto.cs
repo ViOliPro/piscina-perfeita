@@ -1,5 +1,4 @@
-﻿
-namespace PiscinaPerfeita.Api.Dtos.Response
+﻿namespace PiscinaPerfeita.Api.Dtos.Response
 {
     public class LocalResponseDto
     {
@@ -13,6 +12,5 @@ namespace PiscinaPerfeita.Api.Dtos.Response
         public string? Estado { get; set; }
         public string? Pais { get; set; }
         public string? Cep { get; set; }
-
     }
 }
