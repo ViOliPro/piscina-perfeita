@@ -67,7 +67,7 @@ services:
         value: ""
 
       - key: Cors__AllowedOrigins
-        value: "https://piscina-perfeita-front.onrender.com"
+        value: "https://piscina-perfeita-front-roel.onrender.com/"
 
   # ------------------------------------------------------------
   # Front (React/Vite) — Static Site (Distribuído via CDN global)
@@ -80,7 +80,7 @@ services:
     staticPublishPath: ./dist
     envVars:
       - key: VITE_API_BASE_URL
-        value: "https://piscina-perfeita-api.onrender.com/api"
+        value: "https://piscina-perfeita-api-roel.onrender.com/api"
     routes:
       # SPA fallback para evitar erros de 404 ao atualizar páginas internas (F5)
       - type: rewrite
