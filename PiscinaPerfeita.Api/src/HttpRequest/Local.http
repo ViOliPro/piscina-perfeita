@@ -1,7 +1,7 @@
 @host=localhost
 @port=5258
-@path=api/Usuarios
-@query=32018871-0cbe-4f7f-8d21-4fd26886e58d
+@path=api/Locais
+@query=5b053622-05fe-4648-ba8f-a4de12aaa663
 @PiscinaPerfeita.Api_HostAddress=http://{{host}}:{{port}}/{{path}}
 
 @nome = teste02

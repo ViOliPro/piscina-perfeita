@@ -11,6 +11,14 @@ public class ProdutoResponseDto
 
     public string UnidadeMedida { get; set; } = string.Empty;
 
+    public string? Fabricante { get; set; } = string.Empty;
+
+    public string? Marca { get; set; } = string.Empty;
+
+    public string? Observacoes { get; set; } = string.Empty;
+
+    public string? Categoria { get; set; } = string.Empty;
+
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public virtual ICollection<NomeIdDto> Estoques { get; set; } = new List<NomeIdDto>();
 

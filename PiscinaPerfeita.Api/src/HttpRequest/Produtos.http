@@ -1,18 +1,22 @@
 @host=localhost
 @port=5258
 @path=api/Produtos
-@query = 1d1b7e36-9f9d-41d6-838a-7e7dd15cd68a
+@query = 9b9bc24e-9e6f-44c1-a6f8-06f1d7942c33
 @PiscinaPerfeita.Api_HostAddress=http://{{host}}:{{port}}/{{path}}
 
-@nome = PH
-@undMedida = ML
+@nome = Tudo funcionando
+@undMedida = ml
+@fabricante = Segue o baile
+@marca = Ph+
+@obs = Acho que deu bom
+@categoria
 
 // Token Jwt
-@token
-
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIzMjAxODg3MS0wY2JlLTRmN2YtOGQyMS00ZmQyNjg4NmU1OGQiLCJlbWFpbCI6InRlc3RlMDFAcGlzY2luYXBlcmZlaXRhLmNvbSIsInJvbGUiOiJVc3VhcmlvIiwidW5pcXVlX25hbWUiOiJUZXN0ZSAwMSIsImxvY2FsX2lkIjoiMjM5NDMxNmQtNWU4Yi00MzQ5LTk5YWMtMmJiN2RiNDMzZjFhIiwicGVyZmlsIjoiQWRtaW5pc3RyYWRvciIsIm5iZiI6MTc4MzgxMDQ1NywiZXhwIjoxNzgzODM5MjU3LCJpYXQiOjE3ODM4MTA0NTcsImlzcyI6IlBpc2NpbmFQZXJmZWl0YSIsImF1ZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NTI1OCJ9.A7aaav8F52450_KtXuimFAw79569XjsuBFQy_1sbhUo
 
 GET {{PiscinaPerfeita.Api_HostAddress}}/
 Accept: application/json
+Authorization: Bearer {{token}}
 ###
 
 GET {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
@@ -27,7 +31,11 @@ Accept: application/json
 
 {
   "Nome": "{{nome}}",
-  "UnidadeMedida": "{{undMedida}}"
+  "UnidadeMedida": "{{undMedida}}",
+  "Fabricante": "{{fabricante}}",
+  "Marca": "{{marca}}",
+  "Observacoes": "{{obs}}",
+  "Categoria": "{{categoria}}"
 }
 ###
 
@@ -37,7 +45,11 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 {
   "Nome": "{{nome}}",
-  "UnidadeMedida": "{{undMedida}}"
+  "UnidadeMedida": "{{undMedida}}",
+  "Fabricante": "{{fabricante}}",
+  "Marca": "{{marca}}",
+  "Observacoes": "{{obs}}",
+  "Categoria": "{{categoria}}"
 }
 ###
 

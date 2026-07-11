@@ -63,7 +63,6 @@ function AnaliseForm({ piscinas, usuarios, onSubmit, onCancel, loading }) {
     observacoes: "",
   });
 
-  console.log({ form: form, userId: form.usuarioId });
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
   function handleSubmit(e) {
     e.preventDefault();
