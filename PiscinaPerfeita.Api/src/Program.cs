@@ -74,7 +74,19 @@ if (string.IsNullOrEmpty(connectionString))
 
 // 2. Configura o DbContext com a string limpa
 builder.Services.AddDbContext<PiscinaPerfeitaContext>(options =>
-    options.UseNpgsql(connectionString).UseLowerCaseNamingConvention()
+    options
+        .UseNpgsql(
+            connectionString,
+            npgsql =>
+            {
+                npgsql.EnableRetryOnFailure(
+                    maxRetryCount: 5,
+                    maxRetryDelay: TimeSpan.FromSeconds(30),
+                    errorCodesToAdd: null
+                );
+            }
+        )
+        .UseLowerCaseNamingConvention()
 );
 
 // Injeção de dependências
@@ -168,10 +180,17 @@ catch (Exception ex)
 {
     Console.Error.WriteLine("\n\n==================================================");
     Console.Error.WriteLine($"ERRO REAL NA INICIALIZAÇÃO DA API: {ex.Message}");
-    if (ex.InnerException != null)
+
+    var e = ex;
+    while (e != null)
     {
-        Console.Error.WriteLine($"DETALHE: {ex.InnerException.Message}");
+        Console.Error.WriteLine(e.GetType().FullName);
+        Console.Error.WriteLine(e.Message);
+        Console.Error.WriteLine(e.StackTrace);
+        Console.Error.WriteLine("--------------------------------");
+        e = e.InnerException;
     }
+
     Console.Error.WriteLine("==================================================\n\n");
     throw;
 }
