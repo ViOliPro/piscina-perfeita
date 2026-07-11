@@ -10,6 +10,7 @@ using PiscinaPerfeita.Api.Extension;
 
 // 1. Inicializa o builder e carrega as variáveis de ambiente IMEDIATAMENTE
 var builder = WebApplication.CreateBuilder(args);
+
 builder.Configuration.AddEnvironmentVariables();
 
 // 2. Configuração de Localização
@@ -21,12 +22,14 @@ var localizationOptions = new RequestLocalizationOptions
     SupportedUICultures = new List<CultureInfo> { defaultCulture },
 };
 
-// 3. JWT Authentication
+// 3. JWT Authentication (Agora sim, depois do Env.Load())
 var jwtKey = builder.Configuration["Jwt:Key"];
+
 if (string.IsNullOrWhiteSpace(jwtKey))
     throw new Exception("Jwt:Key não configurado no ambiente");
 
 var key = Encoding.ASCII.GetBytes(jwtKey);
+
 builder
     .Services.AddAuthentication(options =>
     {
@@ -48,26 +51,6 @@ builder
         };
     });
 
-// 4. CONFIGURAÇÃO DO CORS (Apenas uma vez, centralizando as políticas)
-builder.Services.AddCors(options =>
-{
-    // Política restrita para o seu front-end local
-    options.AddPolicy("AllowFrontend", policy =>
-    {
-        policy.WithOrigins("http://localhost:5173")
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
-
-    // Política aberta (se você precisar usar em algum outro momento)
-    options.AddPolicy("AppCors", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
-});
-
 // Authorization
 builder.Services.AddAuthorization();
 
@@ -81,6 +64,7 @@ if (Assembly.GetEntryAssembly()?.GetName().Name != "ef")
 
 // 1. Recupera a string de conexão já formatada do .env
 var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"];
+
 if (string.IsNullOrEmpty(connectionString))
 {
     throw new InvalidOperationException(
@@ -97,10 +81,40 @@ builder.Services.AddDbContext<PiscinaPerfeitaContext>(options =>
 builder.Services.ResolveDependencies();
 builder.Services.AddHttpContextAccessor();
 
+// CORS
+// Sem "Cors:AllowedOrigins" configurado, mantém o comportamento atual
+// (libera qualquer origem) — adequado enquanto o projeto está em fase de
+// testes com poucas pessoas. Quando o domínio de produção for definido,
+// basta configurar essa variável (ver docker-compose.yml/.env.example)
+// para restringir e não precisar tocar em código depois.
+var allowedOrigins = builder.Configuration["Cors:AllowedOrigins"];
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(
+        "AppCors",
+        policy =>
+        {
+            if (string.IsNullOrWhiteSpace(allowedOrigins))
+            {
+                policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+            }
+            else
+            {
+                var origins = allowedOrigins.Split(
+                    ',',
+                    StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
+                );
+
+                policy.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod();
+            }
+        }
+    );
+});
+
 try
 {
     var app = builder.Build();
-
     // --- BLOCO DA SEEDER ---
     using (var scope = app.Services.CreateScope())
     {
@@ -109,6 +123,8 @@ try
         try
         {
             var context = services.GetRequiredService<PiscinaPerfeitaContext>();
+
+            // Buscando o serviço de configuração do container de Injeção de Dependência
             var configuration = services.GetRequiredService<IConfiguration>();
 
             await DbInitializer.SeedAsync(context, configuration);
@@ -128,12 +144,13 @@ try
 
     app.UseRequestLocalization(localizationOptions);
     app.UseHttpsRedirection();
-
-    // O UseCors DEVE vir antes da Autenticação e Autorização
-    app.UseCors("AllowFrontend");
-
+    app.UseCors("AppCors");
     app.UseAuthentication();
     app.UseAuthorization();
+
+    // Endpoint simples e anônimo para health check (usado pelo HEALTHCHECK
+    // do Dockerfile e por orquestradores como Docker Compose/Kubernetes).
+    app.MapGet("/health", () => Results.Ok(new { status = "ok" })).AllowAnonymous();
 
     app.MapControllers();
 
