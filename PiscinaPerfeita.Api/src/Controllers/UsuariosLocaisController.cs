@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
@@ -20,7 +20,7 @@ namespace PiscinaPerfeita.Api.Controllers
                 ?? throw new ArgumentNullException(nameof(usuariosLocaisService));
         }
 
-        // GET: api/usuarioslocais
+        // GET: api/usuarioslocais  (somente SuperAdmin)
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UsuarioLocalResponseDto>>> Get()
         {
@@ -29,9 +29,9 @@ namespace PiscinaPerfeita.Api.Controllers
                 var vinculos = await _usuariosLocaisService.Show();
                 return Ok(vinculos);
             }
-            catch (Exception ex)
+            catch (UnauthorizedAccessException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return Unauthorized(new { message = ex.Message });
             }
         }
 
@@ -63,13 +63,13 @@ namespace PiscinaPerfeita.Api.Controllers
                 var vinculos = await _usuariosLocaisService.GetByUsuario(usuarioId);
                 return Ok(vinculos);
             }
-            catch (Exception ex)
+            catch (UnauthorizedAccessException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return Unauthorized(new { message = ex.Message });
             }
         }
 
-        // GET: api/usuarioslocais/{id}
+        // GET: api/usuarioslocais/{id}  (somente SuperAdmin)
         [HttpGet("{id}")]
         public async Task<ActionResult<UsuarioLocalResponseDto>> GetById(Guid id)
         {
@@ -82,9 +82,14 @@ namespace PiscinaPerfeita.Api.Controllers
             {
                 return NotFound(new { message = ex.Message });
             }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
         }
 
-        // POST: api/usuarioslocais
+        // POST: api/usuarioslocais  (somente SuperAdmin)
+        // É o passo de "vincular": liga um usuário (já criado) a um Local (já criado).
         [HttpPost]
         public async Task<ActionResult<UsuarioLocalResponseDto>> Create(UsuarioLocalRequestDto dto)
         {
@@ -97,9 +102,19 @@ namespace PiscinaPerfeita.Api.Controllers
             {
                 return BadRequest(new { message = ex.Message });
             }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
         }
 
-        // PUT: api/usuarioslocais/{id}
+        // PUT: api/usuarioslocais/{id}  (somente SuperAdmin)
+        // Também usado para oficializar o vínculo pendente (LocalId nulo)
+        // criado automaticamente junto do usuário.
         [HttpPut("{id}")]
         public async Task<ActionResult<UsuarioLocalResponseDto>> Update(
             Guid id,
@@ -115,9 +130,13 @@ namespace PiscinaPerfeita.Api.Controllers
             {
                 return NotFound(new { message = ex.Message });
             }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
         }
 
-        // DELETE: api/usuarioslocais/{id}
+        // DELETE: api/usuarioslocais/{id}  (somente SuperAdmin)
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(Guid id)
         {
@@ -129,6 +148,10 @@ namespace PiscinaPerfeita.Api.Controllers
             catch (KeyNotFoundException ex)
             {
                 return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
             }
         }
     }

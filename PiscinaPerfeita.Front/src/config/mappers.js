@@ -63,6 +63,10 @@ export function fromApiAuthUser(raw) {
       const v = field(raw, "localId", "LocalId");
       return v && v !== "00000000-0000-0000-0000-000000000000" ? v : null;
     })(),
+    // Perfil no Local ativo (ou do vínculo pendente, se ainda não tiver
+    // nenhum Local) — usado para guiar um Administrador sem local a criar
+    // o primeiro Local antes de liberar o resto do sistema.
+    perfil: field(raw, "perfil", "Perfil"),
   };
 }
 
@@ -110,11 +114,20 @@ export function fromApiUsuarioList(rawList) {
  * (UsuarioRequestUpdateDto não os possui); enviá-los numa atualização é
  * inofensivo, pois o model binding do ASP.NET simplesmente os ignora.
  */
-export function toApiUsuario({ nome, email, senhaHash, role, cpf, perfil, localId }) {
+export function toApiUsuario({
+  nome,
+  email,
+  senhaHash,
+  role,
+  cpf,
+  perfil,
+  localId,
+}) {
   const dto = { Nome: nome, Email: email, Role: role ?? 1 };
   if (senhaHash) dto.senhaHash = senhaHash; // nome do campo no request dto
   if (cpf) dto.Cpf = cpf;
-  if (perfil !== undefined && perfil !== null && perfil !== "") dto.Perfil = parseInt(perfil);
+  if (perfil !== undefined && perfil !== null && perfil !== "")
+    dto.Perfil = parseInt(perfil);
   if (localId) dto.LocalId = localId;
   return dto;
 }
@@ -271,6 +284,7 @@ export function fromApiEstoque(raw) {
     produtoId: field(raw, "produtoId", "ProdutoId"),
     usuarioId: field(raw, "usuarioId", "UsuarioId"),
     quantidadeAtual: field(raw, "quantidadeAtual", "QuantidadeAtual") ?? 0,
+    quantidadeMinima: field(raw, "quantidadeMinima", "QuantidadeMinima") ?? 5,
     // Relacionamentos
     piscina: raw?.piscina
       ? fromApiPiscina(raw.piscina)
@@ -299,6 +313,7 @@ export function toApiEstoque({
   produtoId,
   usuarioId,
   quantidadeAtual,
+  quantidadeMinima,
 }) {
   return {
     PiscinaId: piscinaId,
@@ -306,6 +321,8 @@ export function toApiEstoque({
     UsuarioId: usuarioId,
     QuantidadeAtual:
       quantidadeAtual != null ? parseFloat(quantidadeAtual) : null,
+    QuantidadeMinima:
+      quantidadeMinima != null ? parseFloat(quantidadeMinima) : null,
   };
 }
 
@@ -405,7 +422,15 @@ export function fromApiLocalList(rawList) {
 }
 
 export function toApiLocal({
-  nome, descricao, telefone, observacoes, endereco, cidade, estado, pais, cep,
+  nome,
+  descricao,
+  telefone,
+  observacoes,
+  endereco,
+  cidade,
+  estado,
+  pais,
+  cep,
 }) {
   return {
     Nome: nome,

@@ -21,13 +21,37 @@ public class UsuarioRepository : IUsuarioRepository
                 Id = u.Id,
                 Nome = u.Nome,
                 Email = u.Email ?? string.Empty,
+                Cpf = u.Cpf ?? string.Empty,
                 CreatedAt = u.CreatedAt,
+                Role = u.Role,
                 Piscinas = u
                     .Piscinas.Where(p => p.UsuarioId == u.Id)
                     .Select(p => new NomeIdDto(p.Id, p.Nome))
                     .ToList(),
             })
             .ToListAsync();
+    }
+
+    public async Task<List<UsuarioResponseDto>> FilterRoleUsuario()
+    {
+        var usuarioDto = await _context
+            .Usuarios.Where(u => u.Role == Role.Usuario)
+            .Select(u => new UsuarioResponseDto
+            {
+                Id = u.Id,
+                Nome = u.Nome,
+                Email = u.Email ?? string.Empty,
+                Cpf = u.Cpf ?? string.Empty,
+                CreatedAt = u.CreatedAt,
+                Role = u.Role,
+                Piscinas = u
+                    .Piscinas.Where(p => p.UsuarioId == u.Id)
+                    .Select(p => new NomeIdDto(p.Id, p.Nome))
+                    .ToList(),
+            })
+            .ToListAsync();
+
+        return usuarioDto;
     }
 
     public async Task<UsuarioResponseDto?> GetById(Guid id)
@@ -39,7 +63,9 @@ public class UsuarioRepository : IUsuarioRepository
                 Id = u.Id,
                 Nome = u.Nome,
                 Email = u.Email ?? string.Empty,
+                Cpf = u.Cpf ?? string.Empty,
                 CreatedAt = u.CreatedAt,
+                Role = u.Role,
                 Piscinas = u
                     .Piscinas.Where(p => p.UsuarioId == id)
                     .Select(p => new NomeIdDto(p.Id, p.Nome))

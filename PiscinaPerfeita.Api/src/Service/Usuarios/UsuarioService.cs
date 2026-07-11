@@ -2,6 +2,7 @@
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Helpers.Authenticated;
 using PiscinaPerfeita.Api.Models;
+using PiscinaPerfeita.Api.Repository.Locais;
 using PiscinaPerfeita.Api.Repository.Usuarios;
 using PiscinaPerfeita.Api.Repository.UsuariosLocal;
 
@@ -11,12 +12,14 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
     {
         private readonly IUsuarioRepository _usuariosRepository;
         private readonly IUsuarioLocalRepository _usuariosLocalRepository;
+        private readonly ILocalRepository _locaisRepository;
         private readonly IAuthenticatedUser _user;
 
         public UsuarioService(
             IUsuarioRepository usuariosRepository,
             IAuthenticatedUser user,
-            IUsuarioLocalRepository usuariosLocalRepository
+            IUsuarioLocalRepository usuariosLocalRepository,
+            ILocalRepository locaisRepository
         )
         {
             _usuariosRepository =
@@ -24,12 +27,25 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             _usuariosLocalRepository =
                 usuariosLocalRepository
                 ?? throw new ArgumentNullException(nameof(usuariosLocalRepository));
+            _locaisRepository =
+                locaisRepository ?? throw new ArgumentNullException(nameof(locaisRepository));
             _user = user ?? throw new ArgumentNullException(nameof(user));
         }
 
         public async Task<List<UsuarioResponseDto>> Show()
         {
-            return await _usuariosRepository.Show();
+            try
+            {
+                var usuarioLogado = _user.IsSuperAdmin();
+                if (usuarioLogado)
+                    return await _usuariosRepository.Show();
+
+                return await _usuariosRepository.FilterRoleUsuario();
+            }
+            catch
+            {
+                throw new Exception("Erro com a requisicao");
+            }
         }
 
         public async Task<UsuarioResponseDto> GetById(Guid id)
@@ -149,33 +165,57 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
         private async Task CriarUsuarioLocal(
             Usuario usuarioCriado,
             UsuarioRequestDto dto,
-            CurrentUser usuarioLocalLogado
+            CurrentUser usuarioLogado
         )
         {
-            if (usuarioCriado.Role == Role.SuperAdmin)
+            // Um SuperAdmin cria cada entidade (Local, Usuário, etc.) de forma
+            // independente e faz o vínculo entre elas depois — por isso o
+            // UsuarioLocal nasce "pendente" (LocalId nulo), a menos que o
+            // SuperAdmin já informe um LocalId de propósito no cadastro.
+            // Isso vale mesmo que o SuperAdmin esteja no momento com um Local
+            // ativo (trocado via SwitchLocal): ele administra TODOS os
+            // locais, então não deve herdar automaticamente o local em que
+            // está navegando no momento.
+            if (usuarioLogado.Role == Role.SuperAdmin)
             {
-                var NovoUsuarioLocal = new UsuarioLocal
+                if (dto.LocalId.HasValue)
+                    await GarantirLocalExiste(dto.LocalId.Value);
+
+                var novoUsuarioLocal = new UsuarioLocal
                 {
                     UsuarioId = usuarioCriado.Id,
                     LocalId = dto.LocalId ?? null,
                     Perfil = dto.Perfil ?? Perfil.Administrador,
                 };
 
-                await _usuariosLocalRepository.Create(NovoUsuarioLocal);
+                await _usuariosLocalRepository.Create(novoUsuarioLocal);
                 return;
             }
 
-            if (usuarioLocalLogado == null)
-                throw new InvalidOperationException("Usuário não pertence a nenhum local.");
+            // Um Administrador comum só gerencia usuários dentro do seu
+            // próprio Local — o novo usuário herda automaticamente o Local
+            // de quem o está criando (nunca de um LocalId arbitrário vindo
+            // do DTO, para não vazar usuários entre locais diferentes).
+            if (usuarioLogado.LocalId == null)
+                throw new InvalidOperationException(
+                    "Você precisa estar vinculado a um Local para cadastrar usuários."
+                );
 
             var usuarioLocal = new UsuarioLocal
             {
                 UsuarioId = usuarioCriado.Id,
-                LocalId = usuarioCriado.LocalId ?? usuarioLocalLogado.LocalId,
+                LocalId = usuarioLogado.LocalId,
                 Perfil = dto.Perfil ?? Perfil.Visualizador,
             };
 
             await _usuariosLocalRepository.Create(usuarioLocal);
+        }
+
+        private async Task GarantirLocalExiste(Guid localId)
+        {
+            var local = await _locaisRepository.GetById(localId);
+            if (local == null)
+                throw new KeyNotFoundException($"Local com id {localId} não encontrado.");
         }
     }
 }

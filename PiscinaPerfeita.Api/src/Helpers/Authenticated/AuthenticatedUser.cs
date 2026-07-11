@@ -75,12 +75,30 @@ namespace PiscinaPerfeita.Api.Helpers.Authenticated
         {
             var localId = _accessor.HttpContext?.User?.FindFirst("local_id")?.Value;
 
-            if (string.IsNullOrEmpty(localId))
-                throw new UnauthorizedAccessException(
-                    "Local do usuário não encontrado no sistema."
-                );
+            if (!string.IsNullOrEmpty(localId))
+                return Guid.Parse(localId);
 
-            return Guid.Parse(localId);
+            // Um SuperAdmin tem acesso completo à aplicação (inclusive ao CRUD
+            // de Locais) e não precisa estar vinculado a um Local específico.
+            // Guid.Empty sinaliza "sem restrição de local" para quem consumir
+            // este valor — ver PiscinaPerfeitaContext.CurrentLocalId.
+            if (IsSuperAdmin())
+                return Guid.Empty;
+
+            throw new UnauthorizedAccessException(
+                "Local do usuário não encontrado no sistema."
+            );
+        }
+
+        public bool IsSuperAdmin()
+        {
+            var roleClaim = _accessor
+                .HttpContext?.User?.FindFirst(System.Security.Claims.ClaimTypes.Role)
+                ?.Value;
+
+            return !string.IsNullOrEmpty(roleClaim)
+                && Enum.TryParse(roleClaim, out Role parsedRole)
+                && parsedRole == Role.SuperAdmin;
         }
     }
 }

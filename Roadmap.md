@@ -25,15 +25,15 @@
 
 - **Objetivo:** Corrigir a modelagem e implementar o suporte a múltiplos Condomínios (`Local`).
 - **Banco de Dados:**
-  - [ ] Remover `PiscinaId` da tabela `Estoque`.
-  - [ ] Remover `Valor` da tabela `MovimentacaoEstoque`.
-  - [ ] Tornar parâmetros de `Analise` opcionais (`Nullable`).
-  - [ ] Adicionar campo `QuantidadeMinima` ao estoque.
-  - [ ] Criar entidade `Local` e vincular `Piscinas` e `Estoque` a ela.
+  - [ x ] Remover `PiscinaId` da tabela `Estoque`.
+  - [ x ] Remover `Valor` da tabela `MovimentacaoEstoque`.
+  - [ x ] Tornar parâmetros de `Analise` opcionais (`Nullable`).
+  - [ x ] Adicionar campo `QuantidadeMinima` ao estoque.
+  - [ x ] Criar entidade `Local` e vincular `Piscinas` e `Estoque` a ela.
   - [ ] Gerar e rodar as Migrations correspondentes.
 - **Backend & Frontend:**
-  - [ ] Ajustar as camadas de Services, Repositories e DTOs.
-  - [ ] Atualizar interfaces visuais de estoque e análises para lidar com campos nulos e com a nova lógica de Locais.
+  - [ x ] Ajustar as camadas de Services, Repositories e DTOs.
+  - [ x ] Atualizar interfaces visuais de estoque e análises para lidar com campos nulos e com a nova lógica de Locais.
 
 ### Versão 1.2.0 — Controle de Permissões (RBAC)
 

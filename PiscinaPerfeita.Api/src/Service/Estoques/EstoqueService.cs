@@ -61,9 +61,9 @@ namespace PiscinaPerfeita.Api.Service.Estoques
             var estoque = new Estoque
             {
                 ProdutoId = dto.ProdutoId,
-                UsuarioId = _user.GetUserId(),
+                UsuarioId = dto.UsuarioId ?? _user.GetUserId(),
                 QuantidadeAtual = dto.QuantidadeAtual,
-                QuantidadeMinima = dto.QuantidadeMinima,
+                QuantidadeMinima = dto.QuantidadeMinima ?? 5,
             };
 
             await _estoqueRepository.Create(estoque);

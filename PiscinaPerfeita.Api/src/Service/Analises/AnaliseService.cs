@@ -43,21 +43,18 @@ namespace PiscinaPerfeita.Api.Service.Analises
         {
             var analiseDb = await _analiseRepository.GetById(id);
 
-            if (analiseDb == null)
-            {
-                throw new KeyNotFoundException(
+            return analiseDb == null
+                ? throw new KeyNotFoundException(
                     $"Não possivel localizar uma analise com o id {id} informado"
-                );
-            }
-
-            return analiseDb;
+                )
+                : analiseDb;
         }
 
         // Metodo Create: Cria um novo Analise com base nos dados fornecidos, incluindo as informações relacionadas de piscina e produto.
         public async Task<AnaliseResponseDto> Create(AnaliseRequestDto dto)
         {
             var piscinaDb = await _piscinaRepository.GetById(dto.PiscinaId);
-            if (piscinaDb == null)
+            if (piscinaDb ==null)
                 throw new KeyNotFoundException("Problemas ao registrar, piscina não localizado");
 
             var userDb = await _userRepository.GetById(_user.GetUserId());
@@ -66,15 +63,17 @@ namespace PiscinaPerfeita.Api.Service.Analises
                     "Problemas ao registrar, usuario ID analise não localizado"
                 );
 
+
             var analise = new Analise
             {
                 PiscinaId = dto.PiscinaId,
-                UsuarioId = _user.GetUserId(),
-                Ph = dto.Ph,
-                CloroLivre = dto.CloroLivre,
-                Alcalinidade = dto.Alcalinidade,
-                Temperatura = dto.Temperatura,
+                UsuarioId = dto.UsuarioId ?? _user.GetUserId(),
+                Ph = dto.Ph ?? null,
+                CloroLivre = dto.CloroLivre ?? null,
+                Alcalinidade = dto.Alcalinidade ?? null,
+                Temperatura = dto.Temperatura ?? null,
                 Observacoes = dto.Observacoes,
+                DataAnalise = dto.DataAnalise?.ToUniversalTime() ?? DateTimeOffset.UtcNow
             };
 
             await _analiseRepository.Create(analise);

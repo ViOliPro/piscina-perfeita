@@ -9,6 +9,11 @@ namespace PiscinaPerfeita.Api.Repository.Usuarios
 
         Task<UsuarioResponseDto?> GetById(Guid id);
 
+        //Se o usuario logado for um usuario
+        //A lista de usuario lista apenas Usuarios daquele Local
+        // Não lista nenhum usuario com a Role SuperAdmin
+        Task<List<UsuarioResponseDto>> FilterRoleUsuario();
+
         Task Create(Usuario usuario);
 
         Task Update(Guid id, Usuario usuario);

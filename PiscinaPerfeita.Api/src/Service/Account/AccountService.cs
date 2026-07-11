@@ -1,4 +1,4 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
@@ -39,12 +39,13 @@ namespace PiscinaPerfeita.Api.Service.Account
             // Verifica se a senha fornecida corresponde à armazenada
             VerifyPasswordCheck(request.Password, usuario.SenhaHash);
 
-            // Validação da lógica de usuário Local (Retorna o Guid resolvido)
-            Guid? localIdAtivo = await ValidacaoUsuarioLocal(usuario.Id, usuario);
+            // Validação da lógica de usuário Local (retorna o Local ativo e o
+            // Perfil correspondente a esse Local — ou ao vínculo pendente).
+            var (localIdAtivo, perfilAtivo) = await ValidacaoUsuarioLocal(usuario.Id, usuario);
             string stringLocalId = localIdAtivo?.ToString() ?? string.Empty;
 
             // Geração do Token JWT
-            var stringToken = NewToken(usuario, stringLocalId);
+            var stringToken = NewToken(usuario, stringLocalId, perfilAtivo);
 
             // Retorna o token JWT e informações do usuário
             return new AccountResponseDto
@@ -54,10 +55,12 @@ namespace PiscinaPerfeita.Api.Service.Account
                 expiresIn = 28800, // 8 horas em segundos
                 User = new UserResponseDto
                 {
+                    UserId = usuario.Id,
                     Nome = usuario.Nome ?? string.Empty,
                     Email = usuario.Email ?? string.Empty,
                     LocalId = localIdAtivo ?? Guid.Empty,
                     Role = usuario.Role,
+                    Perfil = perfilAtivo,
                 },
             };
         }
@@ -71,9 +74,9 @@ namespace PiscinaPerfeita.Api.Service.Account
                 throw new KeyNotFoundException("Usuário não encontrado.");
 
             // 2. Valida se o usuário realmente tem vínculo ativo com o local que está tentando acessar
-            var vinculos = await _usuarioLocalRepository.Vinculo(userId, newLocalId);
+            var vinculo = await _usuarioLocalRepository.Vinculo(userId, newLocalId);
 
-            if (vinculos == null)
+            if (vinculo == null)
                 throw new UnauthorizedAccessException(
                     "Você não tem permissão para acessar este condomínio/local."
                 );
@@ -92,8 +95,8 @@ namespace PiscinaPerfeita.Api.Service.Account
             };
             await _usuarioRepository.Update(userId, usuarioUpdated);
 
-            // 4. Gera o novo Token com o local alterado
-            var stringToken = NewToken(usuarioUpdated, newLocalId.ToString());
+            // 4. Gera o novo Token com o local e o perfil (referente a este local) alterados
+            var stringToken = NewToken(usuarioUpdated, newLocalId.ToString(), vinculo.Perfil);
 
             return new AccountResponseDto
             {
@@ -102,10 +105,12 @@ namespace PiscinaPerfeita.Api.Service.Account
                 expiresIn = 28800,
                 User = new UserResponseDto
                 {
+                    UserId = usuario.Id,
                     Nome = usuario.Nome ?? string.Empty,
                     Email = usuario.Email ?? string.Empty,
                     LocalId = newLocalId,
                     Role = usuario.Role,
+                    Perfil = vinculo.Perfil,
                 },
             };
         }
@@ -138,31 +143,38 @@ namespace PiscinaPerfeita.Api.Service.Account
             return true;
         }
 
-        // Validação e lógica do Usuario Local (Ajustado para retornar Guid?)
-        private async Task<Guid?> ValidacaoUsuarioLocal(Guid userId, Usuario usuario)
+        // Validação e lógica do Usuario Local — retorna o Local que ficará
+        // ativo na sessão e o Perfil do usuário NESSE local (ou do vínculo
+        // pendente, quando o usuário ainda não está ligado a nenhum Local —
+        // ex.: um Administrador recém-criado, que precisa criar seu primeiro
+        // Local antes de usar o resto do sistema).
+        private async Task<(Guid? LocalId, Perfil Perfil)> ValidacaoUsuarioLocal(
+            Guid userId,
+            Usuario usuario
+        )
         {
-            var locaisDoUsuario = await _usuarioLocalRepository.GetByUserId(userId);
+            var vinculos = await _usuarioLocalRepository.GetAllByUserId(userId);
 
-            if (locaisDoUsuario == null)
+            if (vinculos == null || vinculos.Count == 0)
                 throw new KeyNotFoundException("Este usuário não está vinculado a nenhum local!");
 
-            Guid? localIdAtivo = null;
-            var totalRegistros = await _usuarioLocalRepository.QtdUserByLocal(userId);
-
-            if (totalRegistros > 1)
-            {
-                localIdAtivo = usuario.UltimoLocalId ?? usuario.LocalId ?? locaisDoUsuario.LocalId;
-            }
+            Guid? localIdAtivo;
+            if (vinculos.Count > 1)
+                localIdAtivo = usuario.UltimoLocalId ?? usuario.LocalId ?? vinculos[0].LocalId;
             else
-            {
-                localIdAtivo = locaisDoUsuario.LocalId;
-            }
+                localIdAtivo = vinculos[0].LocalId;
 
-            return localIdAtivo;
+            // Perfil referente ao Local que efetivamente ficou ativo — pode
+            // divergir do primeiro vínculo da lista quando há mais de um.
+            var perfilAtivo =
+                vinculos.FirstOrDefault(v => v.LocalId == localIdAtivo)?.Perfil
+                ?? vinculos[0].Perfil;
+
+            return (localIdAtivo, perfilAtivo);
         }
 
         // Simplificado: removido o async desnecessário já que a criação do token é puramente síncrona em memória
-        private string NewToken(Usuario usuario, string stringLocalId)
+        private string NewToken(Usuario usuario, string stringLocalId, Perfil perfil)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key =
@@ -179,6 +191,7 @@ namespace PiscinaPerfeita.Api.Service.Account
                         new Claim(ClaimTypes.Role, usuario.Role.ToString()),
                         new Claim(ClaimTypes.Name, usuario.Nome ?? string.Empty),
                         new Claim("local_id", stringLocalId),
+                        new Claim("perfil", perfil.ToString()),
                     }
                 ),
                 Expires = DateTime.UtcNow.AddHours(8),

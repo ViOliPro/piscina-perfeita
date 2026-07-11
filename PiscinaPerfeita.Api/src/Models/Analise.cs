@@ -17,7 +17,7 @@ namespace PiscinaPerfeita.Api.Models
 
         public Guid LocalId { get; set; }
 
-        public DateTimeOffset DataAnalise { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset DataAnalise { get; set; }
 
         public decimal? Ph { get; set; }
 

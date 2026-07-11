@@ -133,7 +133,7 @@ namespace PiscinaPerfeita.Api.Migrations
                     ph = table.Column<decimal>(type: "numeric", nullable: true),
                     clorolivre = table.Column<decimal>(type: "numeric", nullable: true),
                     alcalinidade = table.Column<decimal>(type: "numeric", nullable: true),
-                    temperatura = table.Column<List<decimal>>(type: "numeric[]", nullable: true),
+                    temperatura = table.Column<List<decimal>>(type: "numeric", nullable: true),
                     observacoes = table.Column<string>(type: "text", nullable: true),
                 },
                 constraints: table =>

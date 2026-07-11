@@ -84,7 +84,7 @@ export const ROLES = {
 
 export const ROLE_LABELS = {
   [ROLES.ADMIN]: "SuperAdmin",
-  [ROLES.USER]: "Usuário",
+  [ROLES.USER]: "Usuario",
 };
 
 // ----------------------------------------------------------

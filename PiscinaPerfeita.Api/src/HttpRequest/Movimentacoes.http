@@ -13,7 +13,7 @@
 
 GET {{PiscinaPerfeita.Api_HostAddress}}/
 Accept: application/json
-Authorization: Bearer {{token}}
+
 ###
 
 GET {{PiscinaPerfeita.Api_HostAddress}}/{{query}}

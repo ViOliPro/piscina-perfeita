@@ -102,9 +102,8 @@ function MovimentacaoForm({
             <option value={TIPO_MOVIMENTACAO.SAIDA}>Saída</option>
           </select>
         </FormField>
-        <FormField label="Responsável *">
+        <FormField label="Responsável">
           <select
-            required
             style={inputStyle}
             value={form.usuarioId}
             onChange={set("usuarioId")}
@@ -127,17 +126,6 @@ function MovimentacaoForm({
             style={inputStyle}
             value={form.quantidade}
             onChange={set("quantidade")}
-          />
-        </FormField>
-        <FormField label="Valor (R$)">
-          <input
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="0.00"
-            style={inputStyle}
-            value={form.valor}
-            onChange={set("valor")}
           />
         </FormField>
         <FormField label="Data e hora *">
@@ -252,14 +240,6 @@ export default function Movimentacoes() {
       key: "quantidade",
       label: "Quantidade",
       render: (v, r) => `${v ?? "—"} ${r.produto?.unidadeMedida ?? ""}`,
-    },
-    {
-      key: "valor",
-      label: "Valor",
-      render: (v) =>
-        v
-          ? v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-          : "—",
     },
     {
       key: "dataMovimentacao",

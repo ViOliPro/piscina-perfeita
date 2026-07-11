@@ -23,6 +23,10 @@ public partial class PiscinaPerfeitaContext : DbContext
     // Propriedade para acessar o LocalId do usuário autenticado
     private Guid CurrentLocalId => authenticatedUser.GetLocalId();
 
+    // Um SuperAdmin enxerga TODOS os registros, de qualquer Local — o filtro
+    // global de LocalId é ignorado para ele (ver OnModelCreating abaixo).
+    private bool IsSuperAdminUser => authenticatedUser.IsSuperAdmin();
+
     public virtual DbSet<Analise> Analises { get; set; }
     public virtual DbSet<Estoque> Estoques { get; set; }
     public virtual DbSet<MovimentacaoEstoque> MovimentacoesEstoques { get; set; }
@@ -53,9 +57,16 @@ public partial class PiscinaPerfeitaContext : DbContext
                     nameof(CurrentLocalId)
                 );
 
-                // Expressao final: e => e.LocalId == this.CurrentLocalId
+                // this.IsSuperAdminUser — um SuperAdmin ignora o filtro de Local
+                var isSuperAdminProperty = Expression.Property(
+                    dbContectInstance,
+                    nameof(IsSuperAdminUser)
+                );
+
+                // Expressao final: e => e.LocalId == this.CurrentLocalId || this.IsSuperAdminUser
                 var comparison = Expression.Equal(property, localIdProperty);
-                var lambda = Expression.Lambda(comparison, parameter);
+                var comparisonOuSuperAdmin = Expression.OrElse(comparison, isSuperAdminProperty);
+                var lambda = Expression.Lambda(comparisonOuSuperAdmin, parameter);
 
                 modelBuilder.Entity(entityType.ClrType).HasQueryFilter(lambda);
             }
@@ -171,8 +182,20 @@ public partial class PiscinaPerfeitaContext : DbContext
 
         foreach (var entry in entries)
         {
-            // Atribui o LocalId automaticamente antes de salvar no banco
-            ((IBelongsToLocal)entry.Entity).LocalId = authenticatedUser.GetLocalId();
+            // Atribui o LocalId automaticamente antes de salvar no banco.
+            // Um SuperAdmin sem Local vinculado tem GetLocalId() == Guid.Empty
+            // (não lança mais exceção — ver AuthenticatedUser.GetLocalId) para
+            // permitir leitura/gestão completa da aplicação. Mas criar um
+            // registro pertencente a um Local (Piscina, Produto, etc.) exige
+            // um Local ativo de verdade, então falhamos aqui com uma mensagem
+            // clara em vez de gravar um LocalId inválido no banco.
+            var localId = authenticatedUser.GetLocalId();
+            if (localId == Guid.Empty)
+                throw new InvalidOperationException(
+                    "Selecione um Local ativo antes de criar este registro."
+                );
+
+            ((IBelongsToLocal)entry.Entity).LocalId = localId;
         }
 
         return base.SaveChangesAsync(cancellationToken);

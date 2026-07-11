@@ -17,5 +17,10 @@ namespace PiscinaPerfeita.Api.Dtos.Response
         public string Nome { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public Role? Role { get; set; }
+
+        // Perfil do usuário no Local ativo (ou do vínculo pendente, se ainda
+        // não tiver nenhum Local) — usado pelo front para saber se deve
+        // guiar um Administrador sem local a criar o primeiro Local.
+        public Perfil? Perfil { get; set; }
     }
 }

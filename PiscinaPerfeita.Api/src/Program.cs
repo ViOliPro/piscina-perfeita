@@ -10,7 +10,6 @@ using PiscinaPerfeita.Api.Extension;
 
 // 1. Inicializa o builder e carrega as variáveis de ambiente IMEDIATAMENTE
 var builder = WebApplication.CreateBuilder(args);
-
 builder.Configuration.AddEnvironmentVariables();
 
 // 2. Configuração de Localização
@@ -22,14 +21,12 @@ var localizationOptions = new RequestLocalizationOptions
     SupportedUICultures = new List<CultureInfo> { defaultCulture },
 };
 
-// 3. JWT Authentication (Agora sim, depois do Env.Load())
+// 3. JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"];
-
 if (string.IsNullOrWhiteSpace(jwtKey))
     throw new Exception("Jwt:Key não configurado no ambiente");
 
 var key = Encoding.ASCII.GetBytes(jwtKey);
-
 builder
     .Services.AddAuthentication(options =>
     {
@@ -51,6 +48,26 @@ builder
         };
     });
 
+// 4. CONFIGURAÇÃO DO CORS (Apenas uma vez, centralizando as políticas)
+builder.Services.AddCors(options =>
+{
+    // Política restrita para o seu front-end local
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+
+    // Política aberta (se você precisar usar em algum outro momento)
+    options.AddPolicy("AppCors", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 // Authorization
 builder.Services.AddAuthorization();
 
@@ -64,7 +81,6 @@ if (Assembly.GetEntryAssembly()?.GetName().Name != "ef")
 
 // 1. Recupera a string de conexão já formatada do .env
 var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"];
-
 if (string.IsNullOrEmpty(connectionString))
 {
     throw new InvalidOperationException(
@@ -81,21 +97,10 @@ builder.Services.AddDbContext<PiscinaPerfeitaContext>(options =>
 builder.Services.ResolveDependencies();
 builder.Services.AddHttpContextAccessor();
 
-// CORS
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy(
-        "AppCors",
-        policy =>
-        {
-            policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
-        }
-    );
-});
-
 try
 {
     var app = builder.Build();
+
     // --- BLOCO DA SEEDER ---
     using (var scope = app.Services.CreateScope())
     {
@@ -104,8 +109,6 @@ try
         try
         {
             var context = services.GetRequiredService<PiscinaPerfeitaContext>();
-
-            // Buscando o serviço de configuração do container de Injeção de Dependência
             var configuration = services.GetRequiredService<IConfiguration>();
 
             await DbInitializer.SeedAsync(context, configuration);
@@ -125,9 +128,13 @@ try
 
     app.UseRequestLocalization(localizationOptions);
     app.UseHttpsRedirection();
-    app.UseCors("AppCors");
+
+    // O UseCors DEVE vir antes da Autenticação e Autorização
+    app.UseCors("AllowFrontend");
+
     app.UseAuthentication();
     app.UseAuthorization();
+
     app.MapControllers();
 
     app.Run();
