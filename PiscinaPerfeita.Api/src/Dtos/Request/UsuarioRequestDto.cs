@@ -1,6 +1,7 @@
-﻿using PiscinaPerfeita.Api.Dtos.Response;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using PiscinaPerfeita.Api.Dtos.Response;
+using PiscinaPerfeita.Api.Models;
 
 namespace PiscinaPerfeita.Api.Dtos.Request
 {
@@ -12,11 +13,17 @@ namespace PiscinaPerfeita.Api.Dtos.Request
         [EmailAddress(ErrorMessage = "O campo Email deve ser um endereço de e-mail válido.")]
         public string Email { get; set; } = string.Empty;
 
+        public string Cpf { get; set; } = string.Empty;
+
         [MinLength(8, ErrorMessage = "O campo Senha deve ter pelo menos 8 caracteres.")]
         [DataType(DataType.Password)]
         [DisplayName("Password")]
         public string? SenhaHash { get; set; } = string.Empty;
         public Role Role { get; set; }
+
+        public Perfil? Perfil { get; set; }
+
+        public Guid? LocalId { get; set; }
     }
 
     public class UsuarioRequestUpdateDto
@@ -32,5 +39,4 @@ namespace PiscinaPerfeita.Api.Dtos.Request
         public string? SenhaHash { get; set; } = string.Empty;
         public Role? Role { get; set; }
     }
-
 }

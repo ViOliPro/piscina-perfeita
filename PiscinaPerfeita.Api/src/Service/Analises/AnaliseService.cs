@@ -1,10 +1,10 @@
 ﻿using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
-using PiscinaPerfeita.Api.Repository.Analises;
-using PiscinaPerfeita.Api.Repository.Usuarios;
-using PiscinaPerfeita.Api.Repository.Piscinas;
-using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Helpers.Authenticated;
+using PiscinaPerfeita.Api.Models;
+using PiscinaPerfeita.Api.Repository.Analises;
+using PiscinaPerfeita.Api.Repository.Piscinas;
+using PiscinaPerfeita.Api.Repository.Usuarios;
 
 namespace PiscinaPerfeita.Api.Service.Analises
 {
@@ -15,14 +15,21 @@ namespace PiscinaPerfeita.Api.Service.Analises
         private readonly IUsuarioRepository _userRepository;
         private readonly IPiscinaRepository _piscinaRepository;
 
-        public AnaliseService(IAnaliseRepository analisesRepository, IAuthenticatedUser user, IUsuarioRepository userRepository, IPiscinaRepository piscinaRepository)
+        public AnaliseService(
+            IAnaliseRepository analisesRepository,
+            IAuthenticatedUser user,
+            IUsuarioRepository userRepository,
+            IPiscinaRepository piscinaRepository
+        )
         {
-            _analiseRepository = analisesRepository ?? throw new ArgumentNullException(nameof(analisesRepository));
+            _analiseRepository =
+                analisesRepository ?? throw new ArgumentNullException(nameof(analisesRepository));
             _user = user ?? throw new ArgumentNullException(nameof(user));
-            _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
-            _piscinaRepository = piscinaRepository ?? throw new ArgumentNullException(nameof(piscinaRepository));
+            _userRepository =
+                userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+            _piscinaRepository =
+                piscinaRepository ?? throw new ArgumentNullException(nameof(piscinaRepository));
         }
-
 
         // Implementação dos métodos do serviço
         // Metodo Show: Retorna uma lista de todos os estoques, incluindo as informações relacionadas de piscina e produto.
@@ -31,49 +38,45 @@ namespace PiscinaPerfeita.Api.Service.Analises
             return await _analiseRepository.Show();
         }
 
-
         // Metodo GetById: Retorna um estoque específico com base no ID, incluindo as informações relacionadas de piscina e produto.
         public async Task<AnaliseResponseDto> GetById(Guid id)
         {
             var analiseDb = await _analiseRepository.GetById(id);
 
-            if (analiseDb == null)
-            {
-                throw new KeyNotFoundException($"Não possivel localizar uma analise com o id {id} informado");
-            }
-
-            return analiseDb;
+            return analiseDb == null
+                ? throw new KeyNotFoundException(
+                    $"Não possivel localizar uma analise com o id {id} informado"
+                )
+                : analiseDb;
         }
-
 
         // Metodo Create: Cria um novo Analise com base nos dados fornecidos, incluindo as informações relacionadas de piscina e produto.
         public async Task<AnaliseResponseDto> Create(AnaliseRequestDto dto)
         {
-
             var piscinaDb = await _piscinaRepository.GetById(dto.PiscinaId);
-            if (piscinaDb == null)
+            if (piscinaDb ==null)
                 throw new KeyNotFoundException("Problemas ao registrar, piscina não localizado");
 
             var userDb = await _userRepository.GetById(_user.GetUserId());
             if (userDb == null)
-                throw new KeyNotFoundException("Problemas ao registrar, usuario ID analise não localizado");
-
-
+                throw new KeyNotFoundException(
+                    "Problemas ao registrar, usuario ID analise não localizado"
+                );
 
 
             var analise = new Analise
             {
                 PiscinaId = dto.PiscinaId,
-                UsuarioId = _user.GetUserId(),
-                Ph = dto.Ph,
-                CloroLivre = dto.CloroLivre,
-                Alcalinidade = dto.Alcalinidade,
-                Temperatura = dto.Temperatura,
-                Observacoes = dto.Observacoes
+                UsuarioId = dto.UsuarioId ?? _user.GetUserId(),
+                Ph = dto.Ph ?? null,
+                CloroLivre = dto.CloroLivre ?? null,
+                Alcalinidade = dto.Alcalinidade ?? null,
+                Temperatura = dto.Temperatura ?? null,
+                Observacoes = dto.Observacoes,
+                DataAnalise = dto.DataAnalise?.ToUniversalTime() ?? DateTimeOffset.UtcNow
             };
 
             await _analiseRepository.Create(analise);
-
 
             return new AnaliseResponseDto
             {
@@ -85,10 +88,9 @@ namespace PiscinaPerfeita.Api.Service.Analises
                 Temperatura = analise.Temperatura,
                 Observacoes = analise.Observacoes,
                 Piscina = new NomeIdDto(analise.PiscinaId, piscinaDb.Nome),
-                Usuario = new NomeIdDto ( analise.UsuarioId, userDb.Nome )
+                Usuario = new NomeIdDto(analise.UsuarioId, userDb.Nome),
             };
         }
-
 
         // Metodo Update: Atualiza um estoque existente com base no ID e nos dados fornecidos, incluindo as informações relacionadas de piscina e produto.
         public async Task<AnaliseResponseDto> Update(Guid id, AnaliseRequestDto dto)
@@ -107,11 +109,10 @@ namespace PiscinaPerfeita.Api.Service.Analises
                 CloroLivre = dto.CloroLivre,
                 Alcalinidade = dto.Alcalinidade,
                 Temperatura = dto.Temperatura,
-                Observacoes = dto.Observacoes
+                Observacoes = dto.Observacoes,
             };
 
             await _analiseRepository.Update(id, analisesUpdated);
-
 
             return new AnaliseResponseDto
             {
@@ -123,10 +124,9 @@ namespace PiscinaPerfeita.Api.Service.Analises
                 Temperatura = analisesUpdated.Temperatura,
                 Observacoes = analisesUpdated.Observacoes,
                 Piscina = new NomeIdDto(analisesUpdated.PiscinaId, null),
-                Usuario = new NomeIdDto(analisesUpdated.UsuarioId, null)
+                Usuario = new NomeIdDto(analisesUpdated.UsuarioId, null),
             };
         }
-
 
         // Metodo Delete: Exclui um estoque existente com base no ID.
         public async Task Delete(Guid id)
@@ -138,7 +138,6 @@ namespace PiscinaPerfeita.Api.Service.Analises
             }
 
             await _analiseRepository.Delete(id);
-
         }
     }
 }

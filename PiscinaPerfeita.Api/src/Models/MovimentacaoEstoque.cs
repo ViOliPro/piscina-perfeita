@@ -1,11 +1,12 @@
-﻿
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using PiscinaPerfeita.Api.Models;
+using PiscinaPerfeita.Api.Models.Interfaces;
 
 namespace PiscinaPerfeita.Api.Models
 {
     [Table("MovimentacoesEstoque", Schema = "piscina-perfeita")]
-    public partial class MovimentacaoEstoque
+    public partial class MovimentacaoEstoque : IBelongsToLocal
     {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Key]
@@ -17,11 +18,11 @@ namespace PiscinaPerfeita.Api.Models
 
         public Guid UsuarioId { get; set; }
 
+        public Guid LocalId { get; set; }
+
         public Tipo TipoMovimentacao { get; set; }
 
         public decimal? Quantidade { get; set; }
-
-        public string Valor { get; set; } = string.Empty;
 
         public DateTimeOffset DataMovimentacao { get; set; } = DateTimeOffset.UtcNow;
 
@@ -33,11 +34,8 @@ namespace PiscinaPerfeita.Api.Models
 
         [ForeignKey("UsuarioId")]
         public virtual Usuario Usuarios { get; set; } = null!;
-    }
 
-    public enum Tipo
-    {
-        Entrada = 0,
-        Saida = 1
+        [ForeignKey(nameof(LocalId))]
+        public virtual Local? Local { get; set; }
     }
 }

@@ -1,0 +1,126 @@
+# ============================================================
+#  PiscinaPerfeita — docker-compose
+#
+#  Sobe 4 serviços: banco (Postgres), API (.NET), front (React/Vite
+#  servido por Nginx) e Caddy na frente de tudo, terminando HTTPS.
+#
+#  Uso:
+#    1. cp .env.example .env   (e preencha os valores)
+#    2. docker compose up --build
+#    3. App: https://localhost (certificado local — o navegador vai
+#       avisar que não confia nele, é esperado enquanto não há um
+#       domínio de produção definido em DOMAIN no .env)
+#
+#  O Postgres continua exposto em POSTGRES_PORT (padrão 5432) pra você
+#  plugar o pgAdmin/DBeaver/etc. direto, como fazia antes do Docker.
+#  A API e o front NÃO são mais expostos direto ao host — tudo passa
+#  pelo Caddy agora, inclusive em dev/testes.
+# ============================================================
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-piscina_perfeita}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  api:
+    build:
+      context: ./PiscinaPerfeita.Api/src
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # O código lê "ConnectionStrings:DefaultConnection" — em variável de
+      # ambiente isso vira "ConnectionStrings__DefaultConnection" (a
+      # convenção de nesting do ASP.NET Core usa "__" para virar ":").
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=${POSTGRES_DB:-piscina_perfeita};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
+      Jwt__Key: ${JWT_KEY:?defina JWT_KEY no .env (mínimo 32 caracteres)}
+      Jwt__Issuer: ${JWT_ISSUER:-PiscinaPerfeita}
+      Jwt__Audience: ${JWT_AUDIENCE:-PiscinaPerfeita}
+      # Usuário SuperAdmin criado pelo seeder (DbInitializer) no primeiro start.
+      ADMIN_NAME: ${ADMIN_NAME:-Admin}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?defina ADMIN_EMAIL no .env}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?defina ADMIN_PASSWORD no .env}
+      ADMIN_CPF: ${ADMIN_CPF:-}
+      # Vazio = libera qualquer origem (comportamento atual). Defina com o(s)
+      # domínio(s) do front quando for pra produção — ex.: https://app.piscinaperfeita.com.br
+      Cors__AllowedOrigins: ${CORS_ALLOWED_ORIGINS:-}
+    # Sem "ports": a API só é acessível de dentro da rede do Docker agora
+    # (via Nginx do front, que já faz proxy de /api e /health) — ninguém
+    # de fora bate direto na porta 10000.
+    expose:
+      - "10000"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  front:
+    build:
+      context: ./PiscinaPerfeita.Front
+      dockerfile: Dockerfile
+      args:
+        # Relativo: o Nginx do próprio container faz proxy de /api para o
+        # serviço "api" (ver PiscinaPerfeita.Front/nginx.conf).
+        VITE_API_BASE_URL: /api
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    # Idem: sem "ports" — só o Caddy fala com o front, por dentro da rede
+    # do Docker. Quem acessa de fora é sempre via HTTPS no Caddy.
+    expose:
+      - "80"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      front:
+        condition: service_healthy
+    environment:
+      # "localhost" (padrão) → certificado local automático, só para
+      # testes. Domínio de verdade aqui → Let's Encrypt automático, sem
+      # precisar mexer em mais nada.
+      DOMAIN: ${DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

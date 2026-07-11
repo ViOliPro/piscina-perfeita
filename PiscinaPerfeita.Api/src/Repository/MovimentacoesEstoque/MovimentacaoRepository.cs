@@ -17,38 +17,39 @@ public class MovimentacaoRepository : IMovimentacaoRepository
     // Exemplo de método para obter todas as movimentações de estoque
     public async Task<List<MovimentacaoEstoqueResponseDto>> Show()
     {
-        return await _context.MovimentacoesEstoques.Select(m => new MovimentacaoEstoqueResponseDto
-        {
-            Id = m.Id,
-            TipoMovimentacao = (Dtos.Response.Tipo)m.TipoMovimentacao,
-            Quantidade = m.Quantidade,
-            Valor = m.Valor,
-            DataMovimentacao = m.DataMovimentacao,
-            Piscina = new NomeIdDto(m.PiscinaId, m.Piscina.Nome),
-            Produto = new NomeIdDto(m.ProdutoId, m.Produto.Nome),
-            Usuario = new NomeIdDto(m.UsuarioId, m.Usuarios.Nome)
-        }).ToListAsync();
+        return await _context
+            .MovimentacoesEstoques.Select(m => new MovimentacaoEstoqueResponseDto
+            {
+                Id = m.Id,
+                TipoMovimentacao = (Models.Tipo)m.TipoMovimentacao,
+                Quantidade = m.Quantidade,
+                DataMovimentacao = m.DataMovimentacao,
+                Piscina = new NomeIdDto(m.PiscinaId, m.Piscina.Nome),
+                Produto = new NomeIdDto(m.ProdutoId, m.Produto.Nome),
+                Usuario = new NomeIdDto(m.UsuarioId, m.Usuarios.Nome),
+            })
+            .ToListAsync();
     }
-
 
     // Exemplo de método para obter uma movimentação de estoque por ID
     public async Task<MovimentacaoEstoqueResponseDto?> GetById(Guid id)
     {
-        var movimentacao = await _context.MovimentacoesEstoques.Where(m => m.Id == id).Select(m => new MovimentacaoEstoqueResponseDto
-        {
-            Id = m.Id,
-            TipoMovimentacao = (Dtos.Response.Tipo)m.TipoMovimentacao,
-            Quantidade = m.Quantidade,
-            Valor = m.Valor,
-            DataMovimentacao = m.DataMovimentacao,
-            Piscina = new NomeIdDto(m.PiscinaId, m.Piscina.Nome),
-            Produto = new NomeIdDto(m.ProdutoId, m.Produto.Nome),
-            Usuario = new NomeIdDto(m.UsuarioId, m.Usuarios.Nome)
-        }).FirstOrDefaultAsync();
+        var movimentacao = await _context
+            .MovimentacoesEstoques.Where(m => m.Id == id)
+            .Select(m => new MovimentacaoEstoqueResponseDto
+            {
+                Id = m.Id,
+                TipoMovimentacao = (Models.Tipo)m.TipoMovimentacao,
+                Quantidade = m.Quantidade,
+                DataMovimentacao = m.DataMovimentacao,
+                Piscina = new NomeIdDto(m.PiscinaId, m.Piscina.Nome),
+                Produto = new NomeIdDto(m.ProdutoId, m.Produto.Nome),
+                Usuario = new NomeIdDto(m.UsuarioId, m.Usuarios.Nome),
+            })
+            .FirstOrDefaultAsync();
 
         return movimentacao ?? null;
     }
-
 
     // Exemplo de método para criar uma nova movimentação de estoque
     public async Task Create(MovimentacaoEstoque movimentacao)
@@ -56,7 +57,6 @@ public class MovimentacaoRepository : IMovimentacaoRepository
         _context.MovimentacoesEstoques.Add(movimentacao);
         await _context.SaveChangesAsync();
     }
-
 
     // Exemplo de método para atualizar uma movimentação de estoque existente
     public async Task Update(Guid id, MovimentacaoEstoque movimentacao)
@@ -70,11 +70,9 @@ public class MovimentacaoRepository : IMovimentacaoRepository
         mov.UsuarioId = movimentacao.UsuarioId;
         mov.TipoMovimentacao = movimentacao.TipoMovimentacao;
         mov.Quantidade = movimentacao.Quantidade;
-        mov.Valor = movimentacao.Valor;
         mov.DataMovimentacao = movimentacao.DataMovimentacao;
 
         await _context.SaveChangesAsync();
-
     }
 
     // Exemplo de método para excluir uma movimentação de estoque
@@ -88,9 +86,5 @@ public class MovimentacaoRepository : IMovimentacaoRepository
 
         _context.Remove(mov);
         await _context.SaveChangesAsync();
-
     }
-
-
-
 }

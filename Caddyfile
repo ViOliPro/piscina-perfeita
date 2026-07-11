@@ -1,0 +1,25 @@
+# ============================================================
+#  PiscinaPerfeita — Caddyfile (HTTPS)
+#
+#  O Caddy decide sozinho o tipo de certificado com base em $DOMAIN:
+#  - Domínio público de verdade (ex.: app.piscinaperfeita.com.br) →
+#    emite e renova automaticamente um certificado Let's Encrypt.
+#  - "localhost" ou um IP (padrão enquanto não há domínio ainda) →
+#    gera um certificado local (self-signed) automaticamente — o
+#    navegador vai avisar que não confia nele na primeira vez, o que é
+#    esperado nessa fase inicial.
+#
+#  Definir DOMAIN no .env quando o domínio de produção existir é a
+#  ÚNICA mudança necessária para passar a ter um certificado válido.
+# ============================================================
+{$DOMAIN:localhost} {
+    encode gzip
+
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    reverse_proxy front:80
+}

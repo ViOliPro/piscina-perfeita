@@ -82,13 +82,32 @@ builder.Services.ResolveDependencies();
 builder.Services.AddHttpContextAccessor();
 
 // CORS
+// Sem "Cors:AllowedOrigins" configurado, mantém o comportamento atual
+// (libera qualquer origem) — adequado enquanto o projeto está em fase de
+// testes com poucas pessoas. Quando o domínio de produção for definido,
+// basta configurar essa variável (ver docker-compose.yml/.env.example)
+// para restringir e não precisar tocar em código depois.
+var allowedOrigins = builder.Configuration["Cors:AllowedOrigins"];
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(
         "AppCors",
         policy =>
         {
-            policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+            if (string.IsNullOrWhiteSpace(allowedOrigins))
+            {
+                policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+            }
+            else
+            {
+                var origins = allowedOrigins.Split(
+                    ',',
+                    StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
+                );
+
+                policy.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod();
+            }
         }
     );
 });
@@ -128,6 +147,11 @@ try
     app.UseCors("AppCors");
     app.UseAuthentication();
     app.UseAuthorization();
+
+    // Endpoint simples e anônimo para health check (usado pelo HEALTHCHECK
+    // do Dockerfile e por orquestradores como Docker Compose/Kubernetes).
+    app.MapGet("/health", () => Results.Ok(new { status = "ok" })).AllowAnonymous();
+
     app.MapControllers();
 
     app.Run();

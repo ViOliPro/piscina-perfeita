@@ -1,18 +1,24 @@
-# Include any files or directories that you don't want to be copied to your
-
-# container here (e.g., local build artifacts, temporary files, etc.).
-
-#
-
-# For more help, visit the .dockerignore file reference guide at
-
-# https://docs.docker.com/go/build-context-dockerignore/
-
+# Build artifacts
 bin/
 obj/
+**/bin/
+**/obj/
+
+# IDE / editor
 .vs/
-.git/
 .vscode/
-node_modules/
+.idea/
+
+# Versionamento
+.git/
+.gitignore
+
+# Segredos locais (nunca devem ir para a imagem)
 .env
-README.Docker
+.env.*
+appsettings.Development.json
+
+# Outros
+node_modules/
+README.Docker.md
+*.user

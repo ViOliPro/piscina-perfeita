@@ -11,10 +11,16 @@ namespace PiscinaPerfeita.Api.Models
         [Key]
         public Guid Id { get; set; }
 
+        public Guid? LocalId { get; set; } = null;
+
+        public Guid? UltimoLocalId { get; set; } = null;
+
         public string Nome { get; set; } = null!;
 
         [Column("Email")]
         public string? Email { get; set; }
+
+        public string? Cpf { get; set; }
 
         public string? SenhaHash { get; set; }
 
@@ -22,6 +28,9 @@ namespace PiscinaPerfeita.Api.Models
 
         [Column("CreatedAt")]
         public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
-        public virtual ICollection<Piscina> Piscinas { get; set; } = new List<Piscina>();
+        public virtual ICollection<Piscina> Piscinas { get; set; } = [];
+
+        [ForeignKey(nameof(LocalId))]
+        public virtual Local Local { get; set; } = null!;
     }
 }

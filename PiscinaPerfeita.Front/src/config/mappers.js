@@ -53,9 +53,20 @@ export function fromApiAuth(raw) {
 export function fromApiAuthUser(raw) {
   if (!raw) return null;
   return {
+    userId: field(raw, "userId", "UserId"),
     nome: field(raw, "nome", "Nome"),
     email: field(raw, "email", "Email"),
     role: field(raw, "role", "Role") ?? 1,
+    // Local ativo (condomínio/unidade) do usuário nesta sessão.
+    // Guid.Empty (vindo do backend) é normalizado para null.
+    localId: (() => {
+      const v = field(raw, "localId", "LocalId");
+      return v && v !== "00000000-0000-0000-0000-000000000000" ? v : null;
+    })(),
+    // Perfil no Local ativo (ou do vínculo pendente, se ainda não tiver
+    // nenhum Local) — usado para guiar um Administrador sem local a criar
+    // o primeiro Local antes de liberar o resto do sistema.
+    perfil: field(raw, "perfil", "Perfil"),
   };
 }
 
@@ -80,8 +91,15 @@ export function fromApiUsuario(raw) {
     id: field(raw, "id", "Id"),
     nome: field(raw, "nome", "Nome"),
     email: field(raw, "email", "Email"),
+    cpf: field(raw, "cpf", "Cpf") ?? "",
     role: field(raw, "role", "Role") ?? 1,
     createdAt: field(raw, "createdAt", "CreatedAt") ?? null,
+    // Local (condomínio/unidade) ao qual o usuário está vinculado.
+    // Só é retornado pela API na criação; em updates costuma vir null.
+    localId: field(raw, "localId", "LocalId") ?? null,
+    ultimoLocalId: field(raw, "ultimoLocalId", "UltimoLocalId") ?? null,
+    // Perfil (papel do usuário dentro do local: Administrador/Operador/Visualizador)
+    perfil: field(raw, "perfil", "Perfil"),
   };
 }
 
@@ -90,12 +108,27 @@ export function fromApiUsuarioList(rawList) {
 }
 
 /**
- * Usuario (front)  →  UsuarioRequestDto
- * senhaHash é enviado como "Password" — o backend faz o hash com BCrypt
+ * Usuario (front)  →  UsuarioRequestDto (criação) / UsuarioRequestUpdateDto (edição)
+ * senhaHash é enviado como "Password" — o backend faz o hash com BCrypt.
+ * cpf, perfil e localId só são consumidos pelo backend na criação
+ * (UsuarioRequestUpdateDto não os possui); enviá-los numa atualização é
+ * inofensivo, pois o model binding do ASP.NET simplesmente os ignora.
  */
-export function toApiUsuario({ nome, email, senhaHash, role }) {
+export function toApiUsuario({
+  nome,
+  email,
+  senhaHash,
+  role,
+  cpf,
+  perfil,
+  localId,
+}) {
   const dto = { Nome: nome, Email: email, Role: role ?? 1 };
   if (senhaHash) dto.senhaHash = senhaHash; // nome do campo no request dto
+  if (cpf) dto.Cpf = cpf;
+  if (perfil !== undefined && perfil !== null && perfil !== "")
+    dto.Perfil = parseInt(perfil);
+  if (localId) dto.LocalId = localId;
   return dto;
 }
 
@@ -112,7 +145,11 @@ export function fromApiPiscina(raw) {
 
   return {
     id: field(raw, "id", "Id"),
-    usuario: field(raw, "usuarioId", "UsuarioId"),
+    // Campo escalar simples — necessário para pré-preencher o <select> do
+    // formulário de edição. Antes essa chave era sobrescrita abaixo pelo
+    // objeto de relacionamento (mesmo nome "usuario"), deixando o campo
+    // "Responsável" sempre vazio ao editar uma piscina existente.
+    usuarioId: field(raw, "usuarioId", "UsuarioId"),
     nome: field(raw, "nome", "Nome"),
     volumeLitros: field(raw, "volumeLitros", "VolumeLitros") ?? null,
     profundidadeMedia:
@@ -247,6 +284,7 @@ export function fromApiEstoque(raw) {
     produtoId: field(raw, "produtoId", "ProdutoId"),
     usuarioId: field(raw, "usuarioId", "UsuarioId"),
     quantidadeAtual: field(raw, "quantidadeAtual", "QuantidadeAtual") ?? 0,
+    quantidadeMinima: field(raw, "quantidadeMinima", "QuantidadeMinima") ?? 5,
     // Relacionamentos
     piscina: raw?.piscina
       ? fromApiPiscina(raw.piscina)
@@ -275,6 +313,7 @@ export function toApiEstoque({
   produtoId,
   usuarioId,
   quantidadeAtual,
+  quantidadeMinima,
 }) {
   return {
     PiscinaId: piscinaId,
@@ -282,6 +321,8 @@ export function toApiEstoque({
     UsuarioId: usuarioId,
     QuantidadeAtual:
       quantidadeAtual != null ? parseFloat(quantidadeAtual) : null,
+    QuantidadeMinima:
+      quantidadeMinima != null ? parseFloat(quantidadeMinima) : null,
   };
 }
 
@@ -350,5 +391,88 @@ export function toApiMovimentacao({
     Quantidade: quantidade != null ? parseFloat(quantidade) : null,
     Valor: valor != null ? parseFloat(valor) : null,
     DataMovimentacao: dataMovimentacao,
+  };
+}
+
+// ----------------------------------------------------------
+// Local (condomínio/unidade)
+// ----------------------------------------------------------
+
+/**
+ * LocalResponseDto  →  Local (front)
+ */
+export function fromApiLocal(raw) {
+  if (!raw) return null;
+  return {
+    id: field(raw, "id", "Id"),
+    nome: field(raw, "nome", "Nome"),
+    descricao: field(raw, "descricao", "Descricao") ?? "",
+    telefone: field(raw, "telefone", "Telefone") ?? "",
+    observacoes: field(raw, "observacoes", "Observacoes") ?? "",
+    endereco: field(raw, "endereco", "Endereco") ?? "",
+    cidade: field(raw, "cidade", "Cidade") ?? "",
+    estado: field(raw, "estado", "Estado") ?? "",
+    pais: field(raw, "pais", "Pais") ?? "",
+    cep: field(raw, "cep", "Cep") ?? "",
+  };
+}
+
+export function fromApiLocalList(rawList) {
+  return (rawList ?? []).map(fromApiLocal);
+}
+
+export function toApiLocal({
+  nome,
+  descricao,
+  telefone,
+  observacoes,
+  endereco,
+  cidade,
+  estado,
+  pais,
+  cep,
+}) {
+  return {
+    Nome: nome,
+    Descricao: descricao || null,
+    Telefone: telefone || null,
+    Observacoes: observacoes || null,
+    Endereco: endereco || null,
+    Cidade: cidade || null,
+    Estado: estado || null,
+    Pais: pais || null,
+    Cep: cep || null,
+  };
+}
+
+// ----------------------------------------------------------
+// UsuarioLocal (vínculo usuário ↔ local, com Perfil)
+// ----------------------------------------------------------
+
+/**
+ * UsuarioLocalResponseDto  →  UsuarioLocal (front)
+ */
+export function fromApiUsuarioLocal(raw) {
+  if (!raw) return null;
+  return {
+    id: field(raw, "id", "Id"),
+    usuarioId: field(raw, "usuarioId", "UsuarioId"),
+    localId: field(raw, "localId", "LocalId") ?? null,
+    localNome: field(raw, "localNome", "LocalNome") ?? null,
+    perfil: field(raw, "perfil", "Perfil"),
+    createdAt: field(raw, "createdAt", "CreatedAt") ?? null,
+    ativo: field(raw, "ativo", "Ativo") ?? true,
+  };
+}
+
+export function fromApiUsuarioLocalList(rawList) {
+  return (rawList ?? []).map(fromApiUsuarioLocal);
+}
+
+export function toApiUsuarioLocal({ usuarioId, localId, perfil }) {
+  return {
+    UsuarioId: usuarioId,
+    LocalId: localId,
+    Perfil: perfil != null ? parseInt(perfil) : 2,
   };
 }

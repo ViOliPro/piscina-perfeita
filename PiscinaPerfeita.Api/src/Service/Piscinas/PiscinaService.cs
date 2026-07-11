@@ -13,14 +13,18 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IAuthenticatedUser _user;
 
-
-        public PiscinaService(IPiscinaRepository piscinaRepository, IUsuarioRepository usuarioRepository, IAuthenticatedUser user)
+        public PiscinaService(
+            IPiscinaRepository piscinaRepository,
+            IUsuarioRepository usuarioRepository,
+            IAuthenticatedUser user
+        )
         {
-            _piscinaRepository = piscinaRepository ?? throw new ArgumentNullException(nameof(piscinaRepository));
-            _usuarioRepository = usuarioRepository ?? throw new ArgumentNullException(nameof(usuarioRepository));
+            _piscinaRepository =
+                piscinaRepository ?? throw new ArgumentNullException(nameof(piscinaRepository));
+            _usuarioRepository =
+                usuarioRepository ?? throw new ArgumentNullException(nameof(usuarioRepository));
             _user = user ?? throw new ArgumentNullException(nameof(user));
         }
-
 
         // Implementação dos métodos do serviço
         // Metodo Show: Retorna uma lista de todos as piscinas.
@@ -28,7 +32,6 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
         {
             return await _piscinaRepository.Show();
         }
-
 
         // Metodo GetById: Retorna uma piscina específico com base no ID.
         public async Task<PiscinaResponseDto> GetById(Guid id)
@@ -43,16 +46,16 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
             return piscina;
         }
 
-
         // Metodo Create: Cria um novo piscina com base nos dados fornecidos.
         public async Task<PiscinaResponseDto> Create(PiscinaRequestDto dto)
         {
-
             var usuario = await _usuarioRepository.GetById(dto.UsuarioId);
 
             if (usuario == null)
             {
-                throw new KeyNotFoundException($"Não foi possível criar a piscina usuario{dto.UsuarioId} não existe.");
+                throw new KeyNotFoundException(
+                    $"Não foi possível criar a piscina usuario{dto.UsuarioId} não existe."
+                );
             }
 
             var piscina = new Piscina
@@ -60,11 +63,11 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
                 Nome = dto.Nome,
                 VolumeLitros = dto.VolumeLitros,
                 ProfundidadeMedia = dto.ProfundidadeMedia,
-                UsuarioId = dto.UsuarioId
+                UsuarioId = dto.UsuarioId,
+                LocalId = dto.LocalId
             };
 
             await _piscinaRepository.Create(piscina);
-
 
             return new PiscinaResponseDto
             {
@@ -73,11 +76,9 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
                 VolumeLitros = piscina.VolumeLitros,
                 ProfundidadeMedia = piscina.ProfundidadeMedia,
                 CreatedAt = piscina.CreatedAt,
-                UsuarioPiscina = new NomeIdDto(piscina.UsuarioId, usuario.Nome)
+                UsuarioPiscina = new NomeIdDto(piscina.UsuarioId, usuario.Nome),
             };
-
         }
-
 
         // Metodo Update: Atualiza uma piscina existente com base no ID e nos dados fornecidos.
         public async Task<PiscinaResponseDto> Update(Guid id, PiscinaRequestDto dto)
@@ -92,7 +93,9 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
 
             if (usuario == null)
             {
-                throw new KeyNotFoundException($"Não foi possível criar a piscina usuario{dto.UsuarioId} não existe.");
+                throw new KeyNotFoundException(
+                    $"Não foi possível criar a piscina usuario{dto.UsuarioId} não existe."
+                );
             }
 
             var piscinaUpdated = new Piscina
@@ -101,7 +104,7 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
                 Nome = dto.Nome,
                 VolumeLitros = dto.VolumeLitros,
                 ProfundidadeMedia = dto.ProfundidadeMedia,
-                UsuarioId = dto.UsuarioId
+                UsuarioId = dto.UsuarioId,
             };
 
             await _piscinaRepository.Update(id, piscinaUpdated);
@@ -113,11 +116,9 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
                 VolumeLitros = dto.VolumeLitros,
                 ProfundidadeMedia = dto.ProfundidadeMedia,
                 CreatedAt = piscinaDb.CreatedAt,
-                UsuarioPiscina = new NomeIdDto(dto.UsuarioId, usuario.Nome)
+                UsuarioPiscina = new NomeIdDto(dto.UsuarioId, usuario.Nome),
             };
-
         }
-
 
         // Metodo Delete: Exclui uma piscina existente com base no ID.
         public async Task Delete(Guid id)

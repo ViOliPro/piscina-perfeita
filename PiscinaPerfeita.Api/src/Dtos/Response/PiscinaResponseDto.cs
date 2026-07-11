@@ -18,17 +18,13 @@ public class PiscinaResponseDto
     // Retorna o Id e Nome do usuário associado à piscina
     public NomeIdDto? UsuarioPiscina { get; set; }
 
+    public virtual ICollection<AnalisePiscinaResponseDto> AnalisePiscina { get; set; } =
+        new List<AnalisePiscinaResponseDto>();
 
-
-    public virtual ICollection<AnalisePiscinaResponseDto> AnalisePiscina { get; set; } = new List<AnalisePiscinaResponseDto>();
-
-    public virtual ICollection<MovimentacaoEstoquePiscinaResponsetDto> MovimentacoesEstoques { get; set; } = new List<MovimentacaoEstoquePiscinaResponsetDto>();
+    public virtual ICollection<MovimentacaoEstoquePiscinaResponsetDto> MovimentacoesEstoques { get; set; } =
+        new List<MovimentacaoEstoquePiscinaResponsetDto>();
 
     public virtual ICollection<NomeIdDto> Estoques { get; set; } = new List<NomeIdDto>();
-
-
-
-
 }
 
 public class AnalisePiscinaResponseDto

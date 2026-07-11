@@ -1,15 +1,11 @@
-﻿using PiscinaPerfeita.Api.Models;
-namespace PiscinaPerfeita.Api.Dtos.Response;
+﻿namespace PiscinaPerfeita.Api.Dtos.Response;
 
 public partial class EstoqueResponseDto
 {
     public Guid Id { get; set; }
     public ProdutoEstoque? Produto { get; set; }
     public decimal? QuantidadeAtual { get; set; }
-
-    // Retorna o Id e Nome da piscina associada ao estoque
-    public NomeIdDto? Piscina { get; set; }
-
+    public decimal? QuantidadeMinima { get; set; }
 }
 
 public class ProdutoEstoque

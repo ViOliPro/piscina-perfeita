@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Dtos.Response;
+using PiscinaPerfeita.Api.Models;
 
 namespace PiscinaPerfeita.Api.Repository.Analises;
 
@@ -15,38 +15,41 @@ public class AnaliseRepository : IAnaliseRepository
 
     public async Task<List<AnaliseResponseDto>> Show()
     {
-        return await _context.Analises.Select(a => new AnaliseResponseDto
-        {
-            Id = a.Id,
-            DataAnalise = a.DataAnalise,
-            Ph = a.Ph,
-            CloroLivre = a.CloroLivre,
-            Alcalinidade = a.Alcalinidade,
-            Temperatura = a.Temperatura,
-            Observacoes = a.Observacoes,
+        return await _context
+            .Analises.Select(a => new AnaliseResponseDto
+            {
+                Id = a.Id,
+                DataAnalise = a.DataAnalise,
+                Ph = a.Ph,
+                CloroLivre = a.CloroLivre,
+                Alcalinidade = a.Alcalinidade,
+                Temperatura = a.Temperatura,
+                Observacoes = a.Observacoes,
 
-            Piscina = a.Piscina != null ? new NomeIdDto(a.PiscinaId, a.Piscina.Nome) : null,
-            Usuario = a.Usuario != null ? new NomeIdDto(a.UsuarioId, a.Usuario.Nome) : null
-
-        }).ToListAsync();
+                Piscina = a.Piscina != null ? new NomeIdDto(a.PiscinaId, a.Piscina.Nome) : null,
+                Usuario = a.Usuario != null ? new NomeIdDto(a.UsuarioId, a.Usuario.Nome) : null,
+            })
+            .ToListAsync();
     }
 
     public async Task<AnaliseResponseDto?> GetById(Guid id)
     {
-        var analise = await _context.Analises.Where(e => e.Id == id).Select(a => new AnaliseResponseDto
-        {
-            Id = a.Id,
-            DataAnalise = a.DataAnalise,
-            Ph = a.Ph,
-            CloroLivre = a.CloroLivre,
-            Alcalinidade = a.Alcalinidade,
-            Temperatura = a.Temperatura,
-            Observacoes = a.Observacoes,
+        var analise = await _context
+            .Analises.Where(e => e.Id == id)
+            .Select(a => new AnaliseResponseDto
+            {
+                Id = a.Id,
+                DataAnalise = a.DataAnalise,
+                Ph = a.Ph,
+                CloroLivre = a.CloroLivre,
+                Alcalinidade = a.Alcalinidade,
+                Temperatura = a.Temperatura,
+                Observacoes = a.Observacoes,
 
-            Piscina = a.Piscina != null ? new NomeIdDto(a.PiscinaId, a.Piscina.Nome) : null,
-            Usuario = a.Usuario != null ? new NomeIdDto(a.UsuarioId, a.Usuario.Nome) : null
-
-        }).FirstOrDefaultAsync();
+                Piscina = a.Piscina != null ? new NomeIdDto(a.PiscinaId, a.Piscina.Nome) : null,
+                Usuario = a.Usuario != null ? new NomeIdDto(a.UsuarioId, a.Usuario.Nome) : null,
+            })
+            .FirstOrDefaultAsync();
 
         return analise ?? null;
     }
@@ -72,7 +75,6 @@ public class AnaliseRepository : IAnaliseRepository
         analiseToUpdate.UsuarioId = analise.UsuarioId;
 
         await _context.SaveChangesAsync();
-
     }
 
     public async Task Delete(Guid id)
@@ -85,9 +87,5 @@ public class AnaliseRepository : IAnaliseRepository
 
         _context.Remove(analise);
         await _context.SaveChangesAsync();
-
     }
-
-
-
 }

@@ -1,0 +1,116 @@
+# ============================================================
+#  PiscinaPerfeita — Render Blueprint
+#
+#  Diferente do docker-compose.yml (feito pra um VPS/servidor genérico),
+#  este arquivo descreve os serviços do jeito nativo do Render:
+#  - Postgres gerenciado (sem container "db" próprio)
+#  - API como Web Service (usa o Dockerfile existente)
+#  - Front como Static Site (build estático, servido pelo CDN do Render
+#    — mais simples e mais barato que rodar Nginx em container aqui)
+#
+#  O Render já entrega HTTPS automático pra tudo (onrender.com e domínio
+#  próprio) — por isso NÃO existe Caddy nem docker-compose neste arquivo.
+#
+#  Como usar:
+#    1. Dashboard do Render → New → Blueprint → conecte este repositório.
+#    2. Render lê este arquivo e te pede pra confirmar os valores com
+#       "sync: false" abaixo (ADMIN_EMAIL, ADMIN_PASSWORD etc.).
+#    3. Depois do primeiro deploy, confira se as URLs públicas geradas
+#       batem com "piscina-perfeita-api.onrender.com" e
+#       "piscina-perfeita-front.onrender.com" (ver nota mais abaixo).
+#       Se o Render tiver adicionado um sufixo (nome já em uso por outra
+#       conta), ajuste CORS_ALLOWED_ORIGINS e VITE_API_BASE_URL abaixo
+#       e re-sincronize o Blueprint.
+# ============================================================
+
+databases:
+  - name: piscina-perfeita-db
+    databaseName: piscina_perfeita
+    user: piscina
+    plan: free # troque para "starter" (ou maior) antes de ter usuários reais
+
+services:
+  # ------------------------------------------------------------
+  # API (.NET) — Web Service via Docker, usa o Dockerfile existente
+  # ------------------------------------------------------------
+  - type: web
+    name: piscina-perfeita-api
+    runtime: docker
+    dockerContext: ./PiscinaPerfeita.Api/src
+    dockerfilePath: ./PiscinaPerfeita.Api/src/Dockerfile
+    plan: starter # o plano "free" hiberna com inatividade — evite pro backend
+    healthCheckPath: /health
+    envVars:
+      # Render fornece host/porta/nome/usuário/senha do Postgres
+      # separados — montamos a connection string no formato que o
+      # Npgsql espera (Host=...;Port=...;...), já que o formato
+      # "postgres://" que o Render também oferece não é aceito direto
+      # pelo Npgsql.
+      - key: DB_HOST
+        fromDatabase:
+          name: piscina-perfeita-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: piscina-perfeita-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: piscina-perfeita-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: piscina-perfeita-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: piscina-perfeita-db
+          property: password
+      - key: ConnectionStrings__DefaultConnection
+        value: "Host=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}"
+
+      - key: Jwt__Key
+        generateValue: true # Render gera uma chave segura sozinho
+      - key: Jwt__Issuer
+        value: PiscinaPerfeita
+      - key: Jwt__Audience
+        value: PiscinaPerfeita
+
+      # Usuário SuperAdmin criado pelo seeder (DbInitializer) no primeiro start.
+      - key: ADMIN_NAME
+        value: Admin
+      - key: ADMIN_EMAIL
+        sync: false # Render pede esse valor na hora de criar o Blueprint
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_CPF
+        value: ""
+
+      # Ajuste para o domínio real do front assim que tiver um custom
+      # domain configurado (veja a nota no topo do arquivo).
+      - key: Cors__AllowedOrigins
+        value: "https://piscina-perfeita-front.onrender.com"
+
+  # ------------------------------------------------------------
+  # Front (React/Vite) — Static Site: build estático no CDN do Render.
+  # Mais simples que rodar o Dockerfile+Nginx aqui (sem necessidade de
+  # ajustar o Nginx pra escutar na porta dinâmica $PORT do Render).
+  # ------------------------------------------------------------
+  - type: web
+    runtime: static
+    name: piscina-perfeita-front
+    rootDir: ./PiscinaPerfeita.Front
+    buildCommand: yarn install --frozen-lockfile && yarn build
+    staticPublishPath: ./dist
+    envVars:
+      # Diferente do docker-compose (onde isso é relativo, "/api", e o
+      # Nginx faz proxy), aqui o Static Site não tem como fazer proxy
+      # reverso — o bundle precisa apontar direto pra URL pública da API.
+      - key: VITE_API_BASE_URL
+        value: "https://piscina-perfeita-api.onrender.com/api"
+    routes:
+      # SPA: qualquer rota cai no index.html (senão dá 404 ao dar F5
+      # numa rota tipo /usuarios).
+      - type: rewrite
+        source: /*
+        destination: /index.html
