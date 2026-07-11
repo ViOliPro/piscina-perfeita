@@ -42,7 +42,7 @@ services:
     runtime: docker
     dockerContext: ./PiscinaPerfeita.Api/src
     dockerfilePath: ./PiscinaPerfeita.Api/src/Dockerfile
-    plan: starter # plano starter evita a hibernação do backend (.NET demora um pouco no cold start)
+    plan: free
     healthCheckPath: /health
     envVars:
       # Monta a Connection String diretamente usando as propriedades nativas do banco do Render
@@ -74,7 +74,8 @@ services:
   # ------------------------------------------------------------
   # Front (React/Vite) — Static Site (Distribuído via CDN global)
   # ------------------------------------------------------------
-  - type: static # <--- CORRIGIDO: O tipo correto para sites estáticos no Render
+  - type: web
+    runtime: static
     name: piscina-perfeita-front
     plan: free # Sites estáticos são 100% gratuitos no Render
     rootDir: ./PiscinaPerfeita.Front
