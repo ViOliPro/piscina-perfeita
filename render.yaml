@@ -60,10 +60,10 @@ services:
       - key: ADMIN_NAME
         value: Admin
       - key: ADMIN_EMAIL
-        value: ""
+        value: admin@piscinaperfeita.com
         sync: false # Render solicita este valor no painel durante o primeiro sync
       - key: ADMIN_PASSWORD
-        value: ""
+        value: $2b$10$.NNCYqXlRlxShg8uheB3rehcdwCMFaeFru61CxHAJeZatQY20t4tu
         sync: false
       - key: ADMIN_CPF
         value: ""
