@@ -74,7 +74,19 @@ if (string.IsNullOrEmpty(connectionString))
 
 // 2. Configura o DbContext com a string limpa
 builder.Services.AddDbContext<PiscinaPerfeitaContext>(options =>
-    options.UseNpgsql(connectionString).UseLowerCaseNamingConvention()
+    options
+        .UseNpgsql(
+            connectionString,
+            npgsql =>
+            {
+                npgsql.EnableRetryOnFailure(
+                    maxRetryCount: 5,
+                    maxRetryDelay: TimeSpan.FromSeconds(30),
+                    errorCodesToAdd: null
+                );
+            }
+        )
+        .UseLowerCaseNamingConvention()
 );
 
 // Injeção de dependências
@@ -115,27 +127,6 @@ builder.Services.AddCors(options =>
 try
 {
     var app = builder.Build();
-    // --- BLOCO DA SEEDER ---
-    using (var scope = app.Services.CreateScope())
-    {
-        var services = scope.ServiceProvider;
-
-        try
-        {
-            var context = services.GetRequiredService<PiscinaPerfeitaContext>();
-
-            // Buscando o serviço de configuração do container de Injeção de Dependência
-            var configuration = services.GetRequiredService<IConfiguration>();
-
-            await DbInitializer.SeedAsync(context, configuration);
-        }
-        catch (Exception ex)
-        {
-            var logger = services.GetRequiredService<ILogger<Program>>();
-            logger.LogError(ex, "Erro ao executar o Seed do banco.");
-        }
-    }
-    // --- FIM DO BLOCO ---
 
     if (app.Environment.IsDevelopment() && Assembly.GetEntryAssembly()?.GetName().Name != "ef")
     {
@@ -154,6 +145,31 @@ try
 
     app.MapControllers();
 
+    // Seeder
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+        try
+        {
+            var context = services.GetRequiredService<PiscinaPerfeitaContext>();
+
+            // Isso aplica qualquer Migration pendente no banco de dados automaticamente
+            context.Database.Migrate();
+
+            // Buscando o serviço de configuração do container de Injeção de Dependência
+            var configuration = services.GetRequiredService<IConfiguration>();
+
+            await DbInitializer.SeedAsync(context, configuration);
+            // Se você tiver um DbInitializer (seeder) para criar o Admin:
+            // DbInitializer.Initialize(context);
+        }
+        catch (Exception ex)
+        {
+            var logger = services.GetRequiredService<ILogger<Program>>();
+            logger.LogError(ex, "Ocorreu um erro ao aplicar as migrations no banco.");
+        }
+    }
+    //Fim do bloco
     app.Run();
 }
 catch (HostAbortedException)
@@ -164,10 +180,17 @@ catch (Exception ex)
 {
     Console.Error.WriteLine("\n\n==================================================");
     Console.Error.WriteLine($"ERRO REAL NA INICIALIZAÇÃO DA API: {ex.Message}");
-    if (ex.InnerException != null)
+
+    var e = ex;
+    while (e != null)
     {
-        Console.Error.WriteLine($"DETALHE: {ex.InnerException.Message}");
+        Console.Error.WriteLine(e.GetType().FullName);
+        Console.Error.WriteLine(e.Message);
+        Console.Error.WriteLine(e.StackTrace);
+        Console.Error.WriteLine("--------------------------------");
+        e = e.InnerException;
     }
+
     Console.Error.WriteLine("==================================================\n\n");
     throw;
 }
