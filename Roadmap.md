@@ -21,7 +21,7 @@
 
 ## 2. ROADMAP EVOLUTIVO (FUTURO)
 
-### [EM ANDAMENTO] Versão 0.9.0 / 1.1.0 — Refatoração da Base e Escopo Territorial
+### Versão 0.9.0 / 1.1.0 — Refatoração da Base e Escopo Territorial
 
 - **Objetivo:** Corrigir a modelagem e implementar o suporte a múltiplos Condomínios (`Local`).
 - **Banco de Dados:**
@@ -45,10 +45,24 @@
 - **Objetivo:** Evitar falta de insumos.
 - **Funcionalidade:** Criação do conceito de `Categoria` de produtos (Limpeza, Elétrica, Jardinagem). Alertas visuais e notificações no dashboard para itens com estoque abaixo do nível de segurança.
 
-### Versão 1.4.0 — Múltiplos Depósitos Físicos
+- **Banco de dados:**
+  - [ x ] Adicionar campo `Categoria` ao produto.
+  - [ x ] Adicionar campo `Observacoes` ao produto.
+  - [ x ] Adicionar campo `Fabricante` ao produto.
+  - [ x ] Adicionar campo `Marca` ao produto.
+  - [ x ] Criar Migrations das alteracoes.
+  - [ x ] Atualizar o Front para refletir as mudancas.
+
+### [EM ANDAMENTO] Versão 1.4.0 — Múltiplos Depósitos Físicos
 
 - **Objetivo:** Mapear a realidade logística de grandes condomínios.
 - **Funcionalidade:** Criação da entidade `Deposito` vinculada ao `Local`. O estoque passa a pertencer a depósitos específicos (ex: "Almoxarifado Central" vs. "Quarto de Máquinas").
+
+- **Banco de dados:**
+- [ x ] Criacao da entidade Deposito. - Atributos: Id, Nome, LocalId (FK).
+- [ x ] Vincular Deposito a tabela Estoque.
+- [ x ] Gerar MIgration.
+- [ x ] Atualizar o front.
 
 ### Versão 1.5.0 — Conciliação e Inventários Periódicos
 

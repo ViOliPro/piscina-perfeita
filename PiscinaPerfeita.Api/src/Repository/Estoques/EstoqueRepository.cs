@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Models;
 
@@ -13,8 +13,7 @@ public class EstoqueRepository : IEstoqueRepository
         _context = context ?? throw new ArgumentNullException(nameof(context));
     }
 
-    // Implementação dos métodos do repositório
-    // Metodo Show: Retorna uma lista de todos os estoques, incluindo as informações relacionadas de piscina e produto.
+    // Metodo Show: Retorna uma lista de todos os estoques, incluindo as informações relacionadas de produto e depósito.
     public async Task<List<EstoqueResponseDto>> Show()
     {
         return await _context
@@ -32,11 +31,16 @@ public class EstoqueRepository : IEstoqueRepository
                             UnidadeMedida = a.Produto.UnidadeMedida,
                         }
                         : null,
+                // Bug corrigido: antes o Deposito nunca era preenchido aqui
+                // (só no Create/Update do Service) — a listagem sempre
+                // voltava com Deposito=null.
+                Deposito =
+                    a.Deposito != null ? new NomeIdDto(a.DepositoId, a.Deposito.Nome) : null,
             })
             .ToListAsync();
     }
 
-    // Metodo GetById: Retorna um estoque específico com base no ID fornecido, incluindo as informações relacionadas de piscina e produto.
+    // Metodo GetById: Retorna um estoque específico com base no ID fornecido, incluindo as informações relacionadas de produto e depósito.
     public async Task<EstoqueResponseDto?> GetById(Guid id)
     {
         var estoque = await _context
@@ -55,6 +59,8 @@ public class EstoqueRepository : IEstoqueRepository
                             UnidadeMedida = a.Produto.UnidadeMedida,
                         }
                         : null,
+                Deposito =
+                    a.Deposito != null ? new NomeIdDto(a.DepositoId, a.Deposito.Nome) : null,
             })
             .FirstOrDefaultAsync();
 
@@ -93,5 +99,12 @@ public class EstoqueRepository : IEstoqueRepository
 
         _context.Remove(estoque);
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<Estoque?> GetEntidadeByProdutoEDeposito(Guid produtoId, Guid depositoId)
+    {
+        return await _context.Estoques.FirstOrDefaultAsync(e =>
+            e.ProdutoId == produtoId && e.DepositoId == depositoId
+        );
     }
 }

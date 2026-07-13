@@ -14,6 +14,14 @@ public partial class Produto : IBelongsToLocal
     public string Nome { get; set; } = string.Empty;
     public string UnidadeMedida { get; set; } = string.Empty;
 
+    public string? Fabricante { get; set; } = null;
+
+    public string? Marca { get; set; } = null;
+
+    public string? Categoria { get; set; } = null;
+
+    public string? Observacoes { get; set; } = null;
+
     public virtual ICollection<Estoque> Estoques { get; set; } = [];
     public virtual ICollection<MovimentacaoEstoque> MovimentacoesEstoques { get; set; } = [];
 

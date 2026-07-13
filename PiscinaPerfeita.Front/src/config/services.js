@@ -9,9 +9,11 @@ import {
   fromApiUsuario,   fromApiUsuarioList,   toApiUsuario,
   fromApiPiscina,   fromApiPiscinaList,   toApiPiscina,
   fromApiProduto,   fromApiProdutoList,   toApiProduto,
+  fromApiDeposito,  fromApiDepositoList,  toApiDeposito,
   fromApiAnalise,   fromApiAnaliseList,   toApiAnalise,
   fromApiEstoque,   fromApiEstoqueList,   toApiEstoque,
   fromApiMovimentacao, fromApiMovimentacaoList, toApiMovimentacao,
+  fromApiAplicacaoProduto, fromApiAplicacaoProdutoList, toApiAplicacaoProduto,
   fromApiLocal,     fromApiLocalList,     toApiLocal,
   fromApiUsuarioLocal, fromApiUsuarioLocalList, toApiUsuarioLocal,
 } from "./mappers.js";
@@ -131,6 +133,17 @@ export const produtoService = {
 };
 
 // ----------------------------------------------------------
+// Depósitos (vinculados ao Local)
+// ----------------------------------------------------------
+export const depositoService = {
+  listar:    ()          => get(API_ENDPOINTS.depositos).then(fromApiDepositoList),
+  buscar:    (id)        => get(API_ENDPOINTS.depositoById(id)).then(fromApiDeposito),
+  criar:     (dto)       => post(API_ENDPOINTS.depositos,          toApiDeposito(dto)).then(fromApiDeposito),
+  atualizar: (id, dto)   => put(API_ENDPOINTS.depositoById(id),    toApiDeposito(dto)).then(fromApiDeposito),
+  excluir:   (id)        => del(API_ENDPOINTS.depositoById(id)),
+};
+
+// ----------------------------------------------------------
 // Análises
 // ----------------------------------------------------------
 export const analiseService = {
@@ -159,4 +172,28 @@ export const movimentacaoService = {
   listar:  ()    => get(API_ENDPOINTS.movimentacoes).then(fromApiMovimentacaoList),
   buscar:  (id)  => get(API_ENDPOINTS.movimentacaoById(id)).then(fromApiMovimentacao),
   criar:   (dto) => post(API_ENDPOINTS.movimentacoes, toApiMovimentacao(dto)).then(fromApiMovimentacao),
+
+  // Feature de contagem física / Ajuste de Inventário: envia a contagem de
+  // vários produtos de um depósito de uma vez; a API calcula a diferença
+  // contra o estoque lógico e gera os ajustes necessários.
+  contagemInventario: (depositoId, usuarioId, itens) =>
+    post(API_ENDPOINTS.contagemInventario, {
+      DepositoId: depositoId,
+      UsuarioId: usuarioId || null,
+      Itens: itens.map((i) => ({
+        ProdutoId: i.produtoId,
+        QuantidadeContada: parseFloat(i.quantidadeContada),
+      })),
+    }),
+};
+
+// ----------------------------------------------------------
+// Aplicações de produto (Piscina + Produto + Quantidade + Data +
+// Análise relacionada) — ao criar, o backend gera automaticamente a
+// MovimentacaoEstoque e atualiza o Estoque do Depósito informado.
+// ----------------------------------------------------------
+export const aplicacaoProdutoService = {
+  listar: ()     => get(API_ENDPOINTS.aplicacoesProduto).then(fromApiAplicacaoProdutoList),
+  buscar: (id)   => get(API_ENDPOINTS.aplicacaoProdutoById(id)).then(fromApiAplicacaoProduto),
+  criar:  (dto)  => post(API_ENDPOINTS.aplicacoesProduto, toApiAplicacaoProduto(dto)).then(fromApiAplicacaoProduto),
 };

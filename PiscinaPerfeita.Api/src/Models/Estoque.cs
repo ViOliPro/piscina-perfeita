@@ -17,6 +17,8 @@ public partial class Estoque : IBelongsToLocal
 
     public Guid LocalId { get; set; }
 
+    public Guid DepositoId { get; set; }
+
     public decimal? QuantidadeAtual { get; set; }
 
     public decimal? QuantidadeMinima { get; set; }
@@ -29,4 +31,7 @@ public partial class Estoque : IBelongsToLocal
 
     [ForeignKey(nameof(LocalId))]
     public virtual Local? Local { get; set; }
+
+    [ForeignKey(nameof(DepositoId))]
+    public virtual Deposito? Deposito { get; set; }
 }

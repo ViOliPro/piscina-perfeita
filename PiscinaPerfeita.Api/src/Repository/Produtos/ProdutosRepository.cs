@@ -21,6 +21,10 @@ public class ProdutoRepository : IProdutoRepository
             Id = p.Id,
             Nome = p.Nome,
             UnidadeMedida = p.UnidadeMedida,
+            Fabricante = p.Fabricante,
+            Marca = p.Marca,
+            Observacoes = p.Observacoes,
+            Categoria = p.Categoria,
             Estoques = p.Estoques.Select(e => new NomeIdDto(e.Id, e.Produto.Nome)).ToList(),
 
             MovimentacoesEstoques = p.MovimentacoesEstoques.Select(m => new MovimentacaoEstoqueProdutoResponseDto
@@ -43,6 +47,10 @@ public class ProdutoRepository : IProdutoRepository
                 Id = p.Id,
                 Nome = p.Nome,
                 UnidadeMedida = p.UnidadeMedida,
+                Fabricante = p.Fabricante,
+                Marca = p.Marca,
+                Observacoes = p.Observacoes,
+                Categoria = p.Categoria,
                 Estoques = p.Estoques.Select(e => new NomeIdDto(e.Id, e.Produto.Nome)).ToList(),
 
                 MovimentacoesEstoques = p.MovimentacoesEstoques.Select(m => new MovimentacaoEstoqueProdutoResponseDto
@@ -73,6 +81,10 @@ public class ProdutoRepository : IProdutoRepository
 
         produtoToUpdate.Nome = produto.Nome;
         produtoToUpdate.UnidadeMedida = produto.UnidadeMedida;
+        produtoToUpdate.Fabricante = produto.Fabricante;
+        produtoToUpdate.Marca = produto.Marca;
+        produtoToUpdate.Observacoes = produto.Observacoes;
+        produtoToUpdate.Categoria = produto.Categoria;
 
         await _context.SaveChangesAsync();
 

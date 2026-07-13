@@ -1,0 +1,59 @@
+@host=localhost
+@port=5258
+@path=api/UsuariosLocais
+@query=5b053622-05fe-4648-ba8f-a4de12aaa663
+@PiscinaPerfeita.Api_HostAddress=http://{{host}}:{{port}}/{{path}}
+
+@nome = Vinicius Oliveira
+@email = admin@teste.com.br
+@senha = 123456789
+@role = 0
+
+// Token Jwt
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIwZTNmZDg2MC01MzIxLTRkZTItYjc2OC1jZThlZjJlOGE4NTIiLCJlbWFpbCI6ImFkbWluQHBpc2NpbmFwZXJmZWl0YS5jb20iLCJyb2xlIjoiU3VwZXJBZG1pbiIsInVuaXF1ZV9uYW1lIjoiVmluaWNpdXMgT2xpdmVpcmEiLCJsb2NhbF9pZCI6IiIsInBlcmZpbCI6IkFkbWluaXN0cmFkb3IiLCJuYmYiOjE3ODM4MDkzMzEsImV4cCI6MTc4MzgzODEzMSwiaWF0IjoxNzgzODA5MzMxLCJpc3MiOiJQaXNjaW5hUGVyZmVpdGEiLCJhdWQiOiJodHRwOi8vbG9jYWxob3N0OjUyNTgifQ.dOXB67qiIyCyHchUPT582B8zvbgtKGHW99LGOiTUU9M
+
+
+###
+GET {{PiscinaPerfeita.Api_HostAddress}}/
+Accept: application/json
+Authorization: Bearer {{token}}
+
+
+###
+
+GET {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+POST {{PiscinaPerfeita.Api_HostAddress}}
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
+
+
+{
+  "Nome": "{{nome}}",
+  "Email": "{{email}}",
+  "SenhaHash": "{{senha}}",
+  "Role": {{role}}
+}
+###
+
+PUT {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
+Accept: application/json
+Content-Type: application/json
+
+
+{
+  "Nome": "{{nome}}",
+  "Email": "{{email}}",
+  "SenhaHash": "{{senha}}",
+  "Role": {{role}}
+}
+###
+
+DELETE {{PiscinaPerfeita.Api_HostAddress}}/{{query}}
+Authorization: Bearer {{token}}
+###

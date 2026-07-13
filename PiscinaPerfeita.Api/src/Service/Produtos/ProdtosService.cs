@@ -22,16 +22,8 @@ namespace PiscinaPerfeita.Api.Service.Produtos
         // Metodo Show: Retorna uma lista de todos os estoques, incluindo as informações relacionadas de piscina e produto.
         public async Task<List<ProdutoResponseDto>> Show()
         {
-            var produtos = await _produtoRepository.Show();
-            return
-            [
-                .. produtos.Select(u => new ProdutoResponseDto
-                {
-                    Id = u.Id,
-                    Nome = u.Nome,
-                    UnidadeMedida = u.UnidadeMedida,
-                }),
-            ];
+            return await _produtoRepository.Show();
+
         }
 
         // Metodo GetById: Retorna um estoque específico com base no ID, incluindo as informações relacionadas de piscina e produto.
@@ -42,12 +34,7 @@ namespace PiscinaPerfeita.Api.Service.Produtos
             if (produtos == null)
                 throw new KeyNotFoundException($"Produto com id {id} não encontrado.");
 
-            return new ProdutoResponseDto
-            {
-                Id = produtos.Id,
-                Nome = produtos.Nome,
-                UnidadeMedida = produtos.UnidadeMedida,
-            };
+            return produtos;
         }
 
         // Metodo Create: Cria um novo estoque com base nos dados fornecidos, incluindo as informações relacionadas de piscina e produto.
@@ -62,6 +49,10 @@ namespace PiscinaPerfeita.Api.Service.Produtos
                 Id = produtos.Id,
                 Nome = produtos.Nome,
                 UnidadeMedida = produtos.UnidadeMedida,
+                Fabricante = dto.Fabricante ?? null,
+                Marca = dto.Marca ?? null,
+                Observacoes = dto.Observacoes ?? null,
+                Categoria = dto.Categoria ?? null
             };
         }
 
@@ -82,6 +73,10 @@ namespace PiscinaPerfeita.Api.Service.Produtos
                 Id = id,
                 Nome = u.Nome,
                 UnidadeMedida = u.UnidadeMedida,
+                Fabricante = dto.Fabricante,
+                Marca = dto.Marca,
+                Observacoes = dto.Observacoes,
+                Categoria = dto.Categoria
             };
         }
 

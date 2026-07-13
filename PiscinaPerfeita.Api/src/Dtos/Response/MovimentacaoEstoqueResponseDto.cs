@@ -1,4 +1,4 @@
-﻿using PiscinaPerfeita.Api.Models;
+using PiscinaPerfeita.Api.Models;
 
 namespace PiscinaPerfeita.Api.Dtos.Response
 {
@@ -10,13 +10,18 @@ namespace PiscinaPerfeita.Api.Dtos.Response
 
         public decimal? Quantidade { get; set; }
 
+        public string? UnidadeLancamento { get; set; }
+
         public DateTimeOffset? DataMovimentacao { get; set; }
 
-        // Produto movimentado
+        // Piscina em que o produto foi/será utilizado
         public NomeIdDto? Piscina { get; set; }
 
-        // Produto que realizou a movimentação
+        // Produto movimentado
         public NomeIdDto? Produto { get; set; }
+
+        // Depósito de onde saiu / para onde entrou o produto
+        public NomeIdDto? Deposito { get; set; }
 
         // Usuario que realizou a movimentação
         public NomeIdDto? Usuario { get; set; }

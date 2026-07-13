@@ -5,6 +5,8 @@ using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Repository.Estoques;
 using PiscinaPerfeita.Api.Repository.Piscinas;
 using PiscinaPerfeita.Api.Repository.Produtos;
+using PiscinaPerfeita.Api.Repository.Depositos;
+
 
 namespace PiscinaPerfeita.Api.Service.Estoques
 {
@@ -13,12 +15,14 @@ namespace PiscinaPerfeita.Api.Service.Estoques
         private readonly IEstoqueRepository _estoqueRepository;
         private readonly IPiscinaRepository _piscinaRepository;
         private readonly IProdutoRepository _produtoRepository;
+        private readonly IDepositoRepository _depositoRepository;
         private readonly IAuthenticatedUser _user;
 
         public EstoqueService(
             IEstoqueRepository estoqueRepository,
             IPiscinaRepository piscinaRepository,
             IProdutoRepository produtoRepository,
+            IDepositoRepository depositoRepository,
             IAuthenticatedUser user
         )
         {
@@ -28,6 +32,8 @@ namespace PiscinaPerfeita.Api.Service.Estoques
                 piscinaRepository ?? throw new ArgumentNullException(nameof(piscinaRepository));
             _produtoRepository =
                 produtoRepository ?? throw new ArgumentNullException(nameof(produtoRepository));
+            _depositoRepository =
+   depositoRepository ?? throw new ArgumentNullException(nameof(depositoRepository));
             _user = user ?? throw new ArgumentNullException(nameof(user));
         }
 
@@ -58,10 +64,17 @@ namespace PiscinaPerfeita.Api.Service.Estoques
                     $"Não foi encontrado um produto com o id {dto.ProdutoId}"
                 );
 
+            var depositoDb = await _depositoRepository.GetById(dto.DepositoId);
+            if (depositoDb == null)
+                throw new KeyNotFoundException(
+                    $"Não foi encontrado um deposito com o id {dto.DepositoId}"
+                );
+
             var estoque = new Estoque
             {
                 ProdutoId = dto.ProdutoId,
                 UsuarioId = dto.UsuarioId ?? _user.GetUserId(),
+                DepositoId = dto.DepositoId,
                 QuantidadeAtual = dto.QuantidadeAtual,
                 QuantidadeMinima = dto.QuantidadeMinima ?? 5,
             };
@@ -73,6 +86,8 @@ namespace PiscinaPerfeita.Api.Service.Estoques
                 Id = estoque.Id,
                 QuantidadeAtual = estoque.QuantidadeAtual,
                 QuantidadeMinima = estoque.QuantidadeMinima,
+                Deposito = new NomeIdDto(dto.DepositoId, depositoDb.Nome),
+
                 Produto = new ProdutoEstoque
                 {
                     Id = estoque.ProdutoId,
@@ -97,10 +112,17 @@ namespace PiscinaPerfeita.Api.Service.Estoques
                     $"Não foi encontrado um produto com o id {dto.ProdutoId}"
                 );
 
+            var depositoDb = await _depositoRepository.GetById(dto.DepositoId);
+            if (depositoDb == null)
+                throw new KeyNotFoundException(
+                    $"Não foi encontrado um deposito com o id {dto.DepositoId}"
+                );
+
             var estoqueUpdated = new Estoque
             {
                 Id = id,
                 ProdutoId = dto.ProdutoId,
+                DepositoId = dto.DepositoId,
                 QuantidadeAtual = dto.QuantidadeAtual,
                 QuantidadeMinima = dto.QuantidadeMinima,
             };
@@ -112,6 +134,7 @@ namespace PiscinaPerfeita.Api.Service.Estoques
                 Id = estoqueDb.Id,
                 QuantidadeAtual = estoqueDb.QuantidadeAtual,
                 QuantidadeMinima = estoqueDb.QuantidadeMinima,
+                Deposito = new NomeIdDto(dto.DepositoId, depositoDb.Nome),
 
                 Produto = new ProdutoEstoque
                 {

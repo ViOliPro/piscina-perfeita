@@ -8,14 +8,17 @@ import {
   inputStyle, LoadingSpinner, ErrorMessage,
 } from "../../components/ui/index.jsx";
 import { produtoService } from "../../config/services.js";
-import { UNIDADES_MEDIDA } from "../../config/index.js";
+import { UNIDADES_MEDIDA, CATEGORIAS_PRODUTO_SUGESTOES } from "../../config/index.js";
 
 // ----------------------------------------------------------
 // Formulário
 // ----------------------------------------------------------
 function ProdutoForm({ initial, onSubmit, onCancel, loading }) {
   const [form, setForm] = useState(
-    initial ?? { nome: "", unidadeMedida: "kg" }
+    initial ?? {
+      nome: "", unidadeMedida: "kg",
+      fabricante: "", marca: "", categoria: "", observacoes: "",
+    }
   );
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
@@ -35,6 +38,27 @@ function ProdutoForm({ initial, onSubmit, onCancel, loading }) {
           <select required style={inputStyle} value={form.unidadeMedida} onChange={set("unidadeMedida")}>
             {UNIDADES_MEDIDA.map((u) => <option key={u} value={u}>{u}</option>)}
           </select>
+        </FormField>
+        <FormField label="Categoria">
+          <input
+            type="text" list="categorias-produto-sugestoes" placeholder="Ex.: Químicos"
+            style={inputStyle} value={form.categoria} onChange={set("categoria")}
+          />
+          <datalist id="categorias-produto-sugestoes">
+            {CATEGORIAS_PRODUTO_SUGESTOES.map((c) => <option key={c} value={c} />)}
+          </datalist>
+        </FormField>
+        <FormField label="Fabricante">
+          <input type="text" placeholder="Ex.: HTH"
+            style={inputStyle} value={form.fabricante} onChange={set("fabricante")} />
+        </FormField>
+        <FormField label="Marca">
+          <input type="text" placeholder="Ex.: HTH Ultra"
+            style={inputStyle} value={form.marca} onChange={set("marca")} />
+        </FormField>
+        <FormField label="Observações" fullWidth>
+          <input type="text" placeholder="Detalhes adicionais sobre o produto"
+            style={inputStyle} value={form.observacoes} onChange={set("observacoes")} />
         </FormField>
       </FormGrid>
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
@@ -93,11 +117,17 @@ export default function Produtos() {
   }
 
   const filtered = produtos.filter((p) =>
-    p.nome.toLowerCase().includes(search.toLowerCase())
+    p.nome.toLowerCase().includes(search.toLowerCase()) ||
+    (p.marca ?? "").toLowerCase().includes(search.toLowerCase()) ||
+    (p.fabricante ?? "").toLowerCase().includes(search.toLowerCase()) ||
+    (p.categoria ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
   const columns = [
     { key: "nome",          label: "Nome do produto" },
+    { key: "categoria",     label: "Categoria",   render: (v) => v || "—" },
+    { key: "marca",         label: "Marca",       render: (v) => v || "—" },
+    { key: "fabricante",    label: "Fabricante",  render: (v) => v || "—" },
     { key: "unidadeMedida", label: "Unidade de medida" },
     {
       key: "_acoes", label: "",
