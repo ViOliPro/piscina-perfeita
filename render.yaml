@@ -54,9 +54,9 @@ services:
   # ------------------------------------------------------------
   # Front (React/Vite) — Static Site (Distribuído via CDN global)
   # ------------------------------------------------------------
-  - type: static # <--- CORRIGIDO: O tipo correto para sites estáticos no Render
+  - type: web
+    runtime: static
     name: piscina-perfeita-front
-    plan: free # Sites estáticos são 100% gratuitos no Render
     rootDir: ./PiscinaPerfeita.Front
     buildCommand: yarn install --frozen-lockfile && yarn build
     staticPublishPath: ./dist
