@@ -26,7 +26,6 @@ services:
     envVars:
       # Monta a Connection String diretamente usando as propriedades nativas do banco do Render
       - key: ConnectionStrings__DefaultConnection
-        value: "Host=${piscina-perfeita-db.host};Port=${piscina-perfeita-db.port};Database=${piscina-perfeita-db.database};Username=${piscina-perfeita-db.user};Password=${piscina-perfeita-db.password}"
         sync: false
 
       - key: Jwt__Key
@@ -40,16 +39,16 @@ services:
       - key: ADMIN_NAME
         value: Admin
       - key: ADMIN_EMAIL
-        value: ""
         sync: false # Render solicita este valor no painel durante o primeiro sync
+
       - key: ADMIN_PASSWORD
-        value: ""
         sync: false
+
       - key: ADMIN_CPF
         value: ""
 
       - key: Cors__AllowedOrigins
-        value: "https://piscina-perfeita-front-roel.onrender.com/"
+        value: "https://piscina-perfeita-front-roel.onrender.com"
 
   # ------------------------------------------------------------
   # Front (React/Vite) — Static Site (Distribuído via CDN global)
