@@ -21,9 +21,12 @@ export const NAV = [
   { id: "piscinas",      label: "Piscinas",     icon: "🏊", section: "cadastros"  },
   { id: "usuarios",      label: "Usuários",     icon: "👥", section: "cadastros"  },
   { id: "produtos",      label: "Produtos",     icon: "📦", section: "cadastros"  },
+  { id: "depositos",     label: "Depósitos",    icon: "🗄️", section: "cadastros"  },
   { id: "analises",      label: "Análises",     icon: "🧪", section: "operacional"},
+  { id: "aplicacoes",    label: "Aplicações",   icon: "💧", section: "operacional"},
   { id: "estoque",       label: "Estoque",      icon: "🗃️", section: "operacional"},
   { id: "movimentacoes", label: "Movimentações",icon: "↔️", section: "operacional"},
+  { id: "inventario",    label: "Contagem de Inventário", icon: "🔢", section: "operacional"},
 ];
 
 // 5 ítens fixados na bottom nav mobile

@@ -35,6 +35,8 @@ public partial class PiscinaPerfeitaContext : DbContext
     public virtual DbSet<Usuario> Usuarios { get; set; }
     public virtual DbSet<Local> Locais { get; set; }
     public virtual DbSet<UsuarioLocal> UsuariosLocal { get; set; }
+    public virtual DbSet<Deposito> Depositos { get; set; }
+    public virtual DbSet<AplicacaoProduto> AplicacoesProduto { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -168,6 +170,29 @@ public partial class PiscinaPerfeitaContext : DbContext
                 .Property(e => e.CreatedAt)
                 .HasColumnType("timestamp with time zone")
                 .HasColumnName("createtat");
+        });
+
+        modelBuilder.Entity<Deposito>(entity =>
+        {
+            entity.ToTable("Depositos", "piscina-perfeita");
+            entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()"); // Mudado para gerar automático
+
+        });
+
+        modelBuilder.Entity<AplicacaoProduto>(entity =>
+        {
+            entity.ToTable("AplicacoesProduto", "piscina-perfeita");
+            entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.DataAplicacao).HasColumnType("timestamp with time zone");
+
+            // Análise é opcional — se a análise relacionada for excluída,
+            // não queremos apagar o histórico de aplicações (Restrict em
+            // vez de Cascade).
+            entity
+                .HasOne(a => a.Analise)
+                .WithMany()
+                .HasForeignKey(a => a.AnaliseId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         OnModelCreatingPartial(modelBuilder);

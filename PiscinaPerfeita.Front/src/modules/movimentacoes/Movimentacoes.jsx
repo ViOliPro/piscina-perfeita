@@ -23,8 +23,23 @@ import {
   piscinaService,
   produtoService,
   usuarioService,
+  depositoService,
 } from "../../config/services.js";
-import { TIPO_MOVIMENTACAO, TIPO_LABELS } from "../../config/index.js";
+import {
+  TIPO_MOVIMENTACAO,
+  TIPO_LABELS,
+  TIPOS_MOVIMENTACAO_MANUAL,
+  TIPOS_QUE_EXIGEM_PISCINA,
+  UNIDADES_LANCAMENTO,
+} from "../../config/index.js";
+
+// Cor do badge por tipo — entradas em azul, saídas em roxo/vermelho,
+// ajuste em amarelo (é sempre gerado automaticamente, nunca manual).
+function corDoTipo(tipo) {
+  if (tipo === TIPO_MOVIMENTACAO.ENTRADA || tipo === TIPO_MOVIMENTACAO.COMPRA) return "info";
+  if (tipo === TIPO_MOVIMENTACAO.AJUSTE_INVENTARIO) return "warn";
+  return "purple";
+}
 
 // ----------------------------------------------------------
 // Formulário
@@ -33,6 +48,7 @@ function MovimentacaoForm({
   piscinas,
   produtos,
   usuarios,
+  depositos,
   onSubmit,
   onCancel,
   loading,
@@ -40,19 +56,25 @@ function MovimentacaoForm({
   const [form, setForm] = useState({
     piscinaId: "",
     produtoId: "",
+    depositoId: "",
     usuarioId: "",
     tipoMovimentacao: String(TIPO_MOVIMENTACAO.ENTRADA),
     quantidade: "",
+    unidadeLancamento: "",
     valor: "",
     dataMovimentacao: new Date().toISOString().slice(0, 16),
   });
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
+  const tipoNum = parseInt(form.tipoMovimentacao);
+  const piscinaObrigatoria = TIPOS_QUE_EXIGEM_PISCINA.includes(tipoNum);
+
   function handleSubmit(e) {
     e.preventDefault();
     onSubmit({
       ...form,
-      tipoMovimentacao: parseInt(form.tipoMovimentacao),
+      piscinaId: form.piscinaId || null,
+      tipoMovimentacao: tipoNum,
       quantidade: parseFloat(form.quantidade),
       valor: form.valor ? parseFloat(form.valor) : null,
     });
@@ -61,18 +83,36 @@ function MovimentacaoForm({
   return (
     <form onSubmit={handleSubmit}>
       <FormGrid>
-        <FormField label="Piscina *">
+        <FormField label="Tipo *">
           <select
             required
+            style={inputStyle}
+            value={form.tipoMovimentacao}
+            onChange={set("tipoMovimentacao")}
+          >
+            {TIPOS_MOVIMENTACAO_MANUAL.map((t) => (
+              <option key={t} value={t}>{TIPO_LABELS[t]}</option>
+            ))}
+          </select>
+        </FormField>
+        <FormField label="Depósito *">
+          <select required style={inputStyle} value={form.depositoId} onChange={set("depositoId")}>
+            <option value="">Selecione o depósito</option>
+            {depositos.map((d) => <option key={d.id} value={d.id}>{d.nome}</option>)}
+          </select>
+        </FormField>
+        <FormField label={`Piscina ${piscinaObrigatoria ? "*" : "(opcional)"}`}>
+          <select
+            required={piscinaObrigatoria}
             style={inputStyle}
             value={form.piscinaId}
             onChange={set("piscinaId")}
           >
-            <option value="">Selecione a piscina</option>
+            <option value="">
+              {piscinaObrigatoria ? "Selecione a piscina" : "Não se aplica a uma piscina específica"}
+            </option>
             {piscinas.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nome}
-              </option>
+              <option key={p.id} value={p.id}>{p.nome}</option>
             ))}
           </select>
         </FormField>
@@ -85,34 +125,7 @@ function MovimentacaoForm({
           >
             <option value="">Selecione o produto</option>
             {produtos.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nome}
-              </option>
-            ))}
-          </select>
-        </FormField>
-        <FormField label="Tipo *">
-          <select
-            required
-            style={inputStyle}
-            value={form.tipoMovimentacao}
-            onChange={set("tipoMovimentacao")}
-          >
-            <option value={TIPO_MOVIMENTACAO.ENTRADA}>Entrada</option>
-            <option value={TIPO_MOVIMENTACAO.SAIDA}>Saída</option>
-          </select>
-        </FormField>
-        <FormField label="Responsável">
-          <select
-            style={inputStyle}
-            value={form.usuarioId}
-            onChange={set("usuarioId")}
-          >
-            <option value="">Selecione o usuário</option>
-            {usuarios.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.nome}
-              </option>
+              <option key={p.id} value={p.id}>{p.nome} ({p.unidadeMedida})</option>
             ))}
           </select>
         </FormField>
@@ -120,12 +133,42 @@ function MovimentacaoForm({
           <input
             required
             type="number"
-            step="0.01"
-            min="0.01"
+            step="0.0001"
+            min="0.0001"
             placeholder="0.00"
             style={inputStyle}
             value={form.quantidade}
             onChange={set("quantidade")}
+          />
+        </FormField>
+        <FormField label="Unidade do lançamento">
+          <select style={inputStyle} value={form.unidadeLancamento} onChange={set("unidadeLancamento")}>
+            <option value="">Mesma unidade do produto</option>
+            {UNIDADES_LANCAMENTO.map((u) => <option key={u} value={u}>{u}</option>)}
+          </select>
+        </FormField>
+        <FormField label="Responsável *">
+          <select
+            required
+            style={inputStyle}
+            value={form.usuarioId}
+            onChange={set("usuarioId")}
+          >
+            <option value="">Selecione o usuário</option>
+            {usuarios.map((u) => (
+              <option key={u.id} value={u.id}>{u.nome}</option>
+            ))}
+          </select>
+        </FormField>
+        <FormField label="Valor (R$)">
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="0.00"
+            style={inputStyle}
+            value={form.valor}
+            onChange={set("valor")}
           />
         </FormField>
         <FormField label="Data e hora *">
@@ -138,17 +181,8 @@ function MovimentacaoForm({
           />
         </FormField>
       </FormGrid>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: 8,
-          marginTop: 16,
-        }}
-      >
-        <Button variant="ghost" onClick={onCancel} type="button">
-          Cancelar
-        </Button>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
+        <Button variant="ghost" onClick={onCancel} type="button">Cancelar</Button>
         <Button variant="primary" type="submit" disabled={loading}>
           {loading ? "Salvando…" : "Salvar"}
         </Button>
@@ -165,6 +199,7 @@ export default function Movimentacoes() {
   const [piscinas, setPiscinas] = useState([]);
   const [produtos, setProdutos] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
+  const [depositos, setDepositos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -176,16 +211,18 @@ export default function Movimentacoes() {
     async function load() {
       try {
         setLoading(true);
-        const [m, p, pr, u] = await Promise.all([
+        const [m, p, pr, u, d] = await Promise.all([
           movimentacaoService.listar(),
           piscinaService.listar(),
           produtoService.listar(),
           usuarioService.listar(),
+          depositoService.listar(),
         ]);
         setMovimentos(m ?? []);
         setPiscinas(p ?? []);
         setProdutos(pr ?? []);
         setUsuarios(u ?? []);
+        setDepositos(d ?? []);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -198,6 +235,7 @@ export default function Movimentacoes() {
   async function handleSave(dto) {
     try {
       setSaving(true);
+      setError(null);
       const nova = await movimentacaoService.criar(dto);
       setMovimentos((prev) => [nova, ...prev]);
       setModalOpen(false);
@@ -209,7 +247,7 @@ export default function Movimentacoes() {
   }
 
   const filtered = movimentos.filter((m) => {
-    const txt = `${m.produto?.nome} ${m.piscina?.nome}`.toLowerCase();
+    const txt = `${m.produto?.nome} ${m.piscina?.nome} ${m.deposito?.nome}`.toLowerCase();
     return (
       txt.includes(search.toLowerCase()) &&
       (!filtroTipo || m.tipoMovimentacao === parseInt(filtroTipo))
@@ -223,6 +261,11 @@ export default function Movimentacoes() {
       render: (_, r) => r.produto?.nome ?? "—",
     },
     {
+      key: "deposito",
+      label: "Depósito",
+      render: (_, r) => r.deposito?.nome ?? "—",
+    },
+    {
       key: "piscina",
       label: "Piscina",
       render: (_, r) => r.piscina?.nome ?? "—",
@@ -231,15 +274,23 @@ export default function Movimentacoes() {
       key: "tipoMovimentacao",
       label: "Tipo",
       render: (v) => (
-        <Badge variant={v === TIPO_MOVIMENTACAO.ENTRADA ? "info" : "purple"}>
-          {TIPO_LABELS[v]}
+        <Badge variant={corDoTipo(v)}>
+          {TIPO_LABELS[v] ?? "—"}
         </Badge>
       ),
     },
     {
       key: "quantidade",
       label: "Quantidade",
-      render: (v, r) => `${v ?? "—"} ${r.produto?.unidadeMedida ?? ""}`,
+      render: (v, r) => `${v ?? "—"} ${r.unidadeLancamento || ""}`,
+    },
+    {
+      key: "valor",
+      label: "Valor",
+      render: (v) =>
+        v
+          ? v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+          : "—",
     },
     {
       key: "dataMovimentacao",
@@ -259,7 +310,7 @@ export default function Movimentacoes() {
     <div>
       <PageHeader
         title="Movimentações de estoque"
-        description="Entradas e saídas por piscina e produto"
+        description="Entradas, saídas, aplicações e ajustes por depósito e produto"
         action={
           <Button variant="primary" onClick={() => setModalOpen(true)}>
             + Registrar movimentação
@@ -273,16 +324,13 @@ export default function Movimentacoes() {
         <SearchInput
           value={search}
           onChange={setSearch}
-          placeholder="Buscar produto ou piscina…"
+          placeholder="Buscar produto, piscina ou depósito…"
         />
         <FilterSelect
           value={filtroTipo}
           onChange={setFiltroTipo}
           placeholder="Todos os tipos"
-          options={[
-            { value: String(TIPO_MOVIMENTACAO.ENTRADA), label: "Entrada" },
-            { value: String(TIPO_MOVIMENTACAO.SAIDA), label: "Saída" },
-          ]}
+          options={Object.entries(TIPO_LABELS).map(([value, label]) => ({ value, label }))}
         />
       </Toolbar>
 
@@ -303,6 +351,7 @@ export default function Movimentacoes() {
           piscinas={piscinas}
           produtos={produtos}
           usuarios={usuarios}
+          depositos={depositos}
           onSubmit={handleSave}
           onCancel={() => setModalOpen(false)}
           loading={saving}

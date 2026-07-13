@@ -28,6 +28,10 @@ export const API_ENDPOINTS = {
   produtos: `${API_BASE_URL}/produtos`,
   produtoById: (id) => `${API_BASE_URL}/produtos/${id}`,
 
+  // Depósitos (vinculados ao Local)
+  depositos: `${API_BASE_URL}/depositos`,
+  depositoById: (id) => `${API_BASE_URL}/depositos/${id}`,
+
   // Análises
   analises: `${API_BASE_URL}/analises`,
   analiseById: (id) => `${API_BASE_URL}/analises/${id}`,
@@ -42,6 +46,11 @@ export const API_ENDPOINTS = {
   // Movimentações
   movimentacoes: `${API_BASE_URL}/movimentacoes`,
   movimentacaoById: (id) => `${API_BASE_URL}/movimentacoes/${id}`,
+  contagemInventario: `${API_BASE_URL}/movimentacoes/contagem-inventario`,
+
+  // Aplicações de produto (gera movimentação + baixa de estoque automaticamente)
+  aplicacoesProduto: `${API_BASE_URL}/aplicacoesproduto`,
+  aplicacaoProdutoById: (id) => `${API_BASE_URL}/aplicacoesproduto/${id}`,
 
   // Locais (condomínios/unidades)
   locais: `${API_BASE_URL}/locais`,
@@ -84,7 +93,7 @@ export const ROLES = {
 
 export const ROLE_LABELS = {
   [ROLES.ADMIN]: "SuperAdmin",
-  [ROLES.USER]: "Usuario",
+  [ROLES.USER]: "Usuário",
 };
 
 // ----------------------------------------------------------
@@ -106,21 +115,64 @@ export const PERFIL_LABELS = {
 
 // ----------------------------------------------------------
 // Tipos de movimentação (espelha o enum C# Tipo)
+// IMPORTANTE: ENTRADA=0 e SAIDA=1 são os valores originais já gravados no
+// banco — não mude esses números. Os tipos novos entram sempre com
+// números novos no final, nunca no meio da lista.
 // ----------------------------------------------------------
 export const TIPO_MOVIMENTACAO = {
   ENTRADA: 0,
   SAIDA: 1,
+  COMPRA: 2,
+  APLICACAO: 3,
+  PERDA: 4,
+  DESCARTE: 5,
+  AJUSTE_INVENTARIO: 6,
 };
 
 export const TIPO_LABELS = {
   [TIPO_MOVIMENTACAO.ENTRADA]: "Entrada",
   [TIPO_MOVIMENTACAO.SAIDA]: "Saída",
+  [TIPO_MOVIMENTACAO.COMPRA]: "Compra",
+  [TIPO_MOVIMENTACAO.APLICACAO]: "Aplicação",
+  [TIPO_MOVIMENTACAO.PERDA]: "Perda",
+  [TIPO_MOVIMENTACAO.DESCARTE]: "Descarte",
+  [TIPO_MOVIMENTACAO.AJUSTE_INVENTARIO]: "Ajuste de Inventário",
 };
+
+// Tipos que o usuário pode escolher ao registrar uma movimentação manual —
+// Ajuste de Inventário é sempre gerado automaticamente pela tela de
+// contagem física, nunca escolhido diretamente (ver ContagemInventario.jsx).
+export const TIPOS_MOVIMENTACAO_MANUAL = [
+  TIPO_MOVIMENTACAO.ENTRADA,
+  TIPO_MOVIMENTACAO.COMPRA,
+  TIPO_MOVIMENTACAO.SAIDA,
+  TIPO_MOVIMENTACAO.PERDA,
+  TIPO_MOVIMENTACAO.DESCARTE,
+];
+
+// Tipos que exigem uma Piscina associada (mesma regra do backend)
+export const TIPOS_QUE_EXIGEM_PISCINA = [
+  TIPO_MOVIMENTACAO.ENTRADA,
+  TIPO_MOVIMENTACAO.SAIDA,
+  TIPO_MOVIMENTACAO.APLICACAO,
+];
+
+// Unidades de lançamento aceitas para conversão (mesma família de
+// UNIDADES_MEDIDA, mas incluindo submúltiplos como mg/mL que não fazem
+// sentido como unidade "base" de um produto, só como lançamento).
+export const UNIDADES_LANCAMENTO = ["kg", "g", "mg", "L", "mL", "un", "cx", "sc"];
 
 // ----------------------------------------------------------
 // Unidades de medida disponíveis para Produto
 // ----------------------------------------------------------
 export const UNIDADES_MEDIDA = ["kg", "g", "L", "mL", "un", "cx", "sc"];
+
+// Sugestões de categoria de produto — Categoria é um campo de texto livre
+// na API (não um enum), então isso só alimenta um <datalist> de apoio,
+// sem travar o usuário a essas opções.
+export const CATEGORIAS_PRODUTO_SUGESTOES = [
+  "Químicos", "Equipamentos", "Acessórios", "Filtragem", "Limpeza", "Segurança",
+];
 
 // ----------------------------------------------------------
 // Paginação padrão

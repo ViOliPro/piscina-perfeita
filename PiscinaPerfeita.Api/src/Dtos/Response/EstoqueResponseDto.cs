@@ -1,4 +1,6 @@
-﻿namespace PiscinaPerfeita.Api.Dtos.Response;
+﻿using PiscinaPerfeita.Api.Models;
+
+namespace PiscinaPerfeita.Api.Dtos.Response;
 
 public partial class EstoqueResponseDto
 {
@@ -6,6 +8,7 @@ public partial class EstoqueResponseDto
     public ProdutoEstoque? Produto { get; set; }
     public decimal? QuantidadeAtual { get; set; }
     public decimal? QuantidadeMinima { get; set; }
+    public NomeIdDto? Deposito { get; set; }
 }
 
 public class ProdutoEstoque

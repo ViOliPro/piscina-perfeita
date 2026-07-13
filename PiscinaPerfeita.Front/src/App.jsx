@@ -14,7 +14,10 @@ import Piscinas from "./modules/piscinas/Piscinas.jsx";
 import Produtos from "./modules/produtos/Produtos.jsx";
 import Usuarios from "./modules/usuarios/Usuarios.jsx";
 import Locais from "./modules/locais/Locais.jsx";
-import { PERFIS, ROLES } from "./config/index.js";
+import Depositos from "./modules/depositos/Depositos.jsx";
+import Aplicacoes from "./modules/aplicacoes/Aplicacoes.jsx";
+import ContagemInventario from "./modules/inventario/ContagemInventario.jsx";
+import { PERFIS } from "./config/index.js";
 import { useState } from "react";
 
 const PAGES = {
@@ -26,6 +29,9 @@ const PAGES = {
   produtos: Produtos,
   usuarios: Usuarios,
   locais: Locais,
+  depositos: Depositos,
+  aplicacoes: Aplicacoes,
+  inventario: ContagemInventario,
 };
 
 // ----------------------------------------------------------
@@ -34,6 +40,9 @@ const PAGES = {
 function AuthenticatedApp() {
   const { isAuthenticated, user } = useAuth();
   const [activePage, setActivePage] = useState("dashboard");
+  // Preenchimento inicial da tela de Aplicações quando acionada a partir
+  // do botão "Registrar aplicação" em uma Análise (ver Analises.jsx).
+  const [prefillAplicacao, setPrefillAplicacao] = useState(null);
 
   if (!isAuthenticated) return <LoginPage />;
 
@@ -42,17 +51,25 @@ function AuthenticatedApp() {
   // antes de usar o resto do sistema — todo o resto depende de um Local
   // ativo para funcionar.
   const precisaCriarPrimeiroLocal =
-    (user?.perfil ?? user?.Perfil) === PERFIS.ADMINISTRADOR &&
-    !user?.localId &&
-    (user?.role ?? user?.Role) === ROLES.USER;
+    (user?.perfil ?? user?.Perfil) === PERFIS.ADMINISTRADOR && !user?.localId;
 
   if (precisaCriarPrimeiroLocal) return <PrimeiroLocal />;
 
   const PageComponent = PAGES[activePage] ?? Dashboard;
 
+  function handleRegistrarAplicacao(piscinaId, analiseId) {
+    setPrefillAplicacao({ piscinaId, analiseId });
+    setActivePage("aplicacoes");
+  }
+
   return (
     <AppLayout activePage={activePage} onNavigate={setActivePage}>
-      <PageComponent onNavigate={setActivePage} />
+      <PageComponent
+        onNavigate={setActivePage}
+        onRegistrarAplicacao={handleRegistrarAplicacao}
+        prefill={activePage === "aplicacoes" ? prefillAplicacao : null}
+        onPrefillConsumed={() => setPrefillAplicacao(null)}
+      />
     </AppLayout>
   );
 }

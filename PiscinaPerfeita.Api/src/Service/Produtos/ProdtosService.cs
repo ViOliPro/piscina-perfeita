@@ -49,10 +49,10 @@ namespace PiscinaPerfeita.Api.Service.Produtos
                 Id = produtos.Id,
                 Nome = produtos.Nome,
                 UnidadeMedida = produtos.UnidadeMedida,
-                Fabricante = dto.Fabricante,
-                Marca = dto.Marca,
-                Observacoes = dto.Observacoes,
-                Categoria = dto.Categoria
+                Fabricante = dto.Fabricante ?? null,
+                Marca = dto.Marca ?? null,
+                Observacoes = dto.Observacoes ?? null,
+                Categoria = dto.Categoria ?? null
             };
         }
 
