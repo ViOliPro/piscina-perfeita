@@ -13,14 +13,12 @@ namespace PiscinaPerfeita.Api.Service.Estoques
     public class EstoqueService : IEstoqueService
     {
         private readonly IEstoqueRepository _estoqueRepository;
-        private readonly IPiscinaRepository _piscinaRepository;
         private readonly IProdutoRepository _produtoRepository;
         private readonly IDepositoRepository _depositoRepository;
         private readonly IAuthenticatedUser _user;
 
         public EstoqueService(
             IEstoqueRepository estoqueRepository,
-            IPiscinaRepository piscinaRepository,
             IProdutoRepository produtoRepository,
             IDepositoRepository depositoRepository,
             IAuthenticatedUser user
@@ -28,12 +26,10 @@ namespace PiscinaPerfeita.Api.Service.Estoques
         {
             _estoqueRepository =
                 estoqueRepository ?? throw new ArgumentNullException(nameof(estoqueRepository));
-            _piscinaRepository =
-                piscinaRepository ?? throw new ArgumentNullException(nameof(piscinaRepository));
             _produtoRepository =
                 produtoRepository ?? throw new ArgumentNullException(nameof(produtoRepository));
             _depositoRepository =
-   depositoRepository ?? throw new ArgumentNullException(nameof(depositoRepository));
+                depositoRepository ?? throw new ArgumentNullException(nameof(depositoRepository));
             _user = user ?? throw new ArgumentNullException(nameof(user));
         }
 

@@ -36,7 +36,8 @@ import {
 // Cor do badge por tipo — entradas em azul, saídas em roxo/vermelho,
 // ajuste em amarelo (é sempre gerado automaticamente, nunca manual).
 function corDoTipo(tipo) {
-  if (tipo === TIPO_MOVIMENTACAO.ENTRADA || tipo === TIPO_MOVIMENTACAO.COMPRA) return "info";
+  if (tipo === TIPO_MOVIMENTACAO.ENTRADA || tipo === TIPO_MOVIMENTACAO.COMPRA)
+    return "info";
   if (tipo === TIPO_MOVIMENTACAO.AJUSTE_INVENTARIO) return "warn";
   return "purple";
 }
@@ -61,7 +62,6 @@ function MovimentacaoForm({
     tipoMovimentacao: String(TIPO_MOVIMENTACAO.ENTRADA),
     quantidade: "",
     unidadeLancamento: "",
-    valor: "",
     dataMovimentacao: new Date().toISOString().slice(0, 16),
   });
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
@@ -76,7 +76,6 @@ function MovimentacaoForm({
       piscinaId: form.piscinaId || null,
       tipoMovimentacao: tipoNum,
       quantidade: parseFloat(form.quantidade),
-      valor: form.valor ? parseFloat(form.valor) : null,
     });
   }
 
@@ -91,14 +90,25 @@ function MovimentacaoForm({
             onChange={set("tipoMovimentacao")}
           >
             {TIPOS_MOVIMENTACAO_MANUAL.map((t) => (
-              <option key={t} value={t}>{TIPO_LABELS[t]}</option>
+              <option key={t} value={t}>
+                {TIPO_LABELS[t]}
+              </option>
             ))}
           </select>
         </FormField>
         <FormField label="Depósito *">
-          <select required style={inputStyle} value={form.depositoId} onChange={set("depositoId")}>
+          <select
+            required
+            style={inputStyle}
+            value={form.depositoId}
+            onChange={set("depositoId")}
+          >
             <option value="">Selecione o depósito</option>
-            {depositos.map((d) => <option key={d.id} value={d.id}>{d.nome}</option>)}
+            {depositos.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.nome}
+              </option>
+            ))}
           </select>
         </FormField>
         <FormField label={`Piscina ${piscinaObrigatoria ? "*" : "(opcional)"}`}>
@@ -109,10 +119,14 @@ function MovimentacaoForm({
             onChange={set("piscinaId")}
           >
             <option value="">
-              {piscinaObrigatoria ? "Selecione a piscina" : "Não se aplica a uma piscina específica"}
+              {piscinaObrigatoria
+                ? "Selecione a piscina"
+                : "Não se aplica a uma piscina específica"}
             </option>
             {piscinas.map((p) => (
-              <option key={p.id} value={p.id}>{p.nome}</option>
+              <option key={p.id} value={p.id}>
+                {p.nome}
+              </option>
             ))}
           </select>
         </FormField>
@@ -125,7 +139,9 @@ function MovimentacaoForm({
           >
             <option value="">Selecione o produto</option>
             {produtos.map((p) => (
-              <option key={p.id} value={p.id}>{p.nome} ({p.unidadeMedida})</option>
+              <option key={p.id} value={p.id}>
+                {p.nome} ({p.unidadeMedida})
+              </option>
             ))}
           </select>
         </FormField>
@@ -142,9 +158,17 @@ function MovimentacaoForm({
           />
         </FormField>
         <FormField label="Unidade do lançamento">
-          <select style={inputStyle} value={form.unidadeLancamento} onChange={set("unidadeLancamento")}>
+          <select
+            style={inputStyle}
+            value={form.unidadeLancamento}
+            onChange={set("unidadeLancamento")}
+          >
             <option value="">Mesma unidade do produto</option>
-            {UNIDADES_LANCAMENTO.map((u) => <option key={u} value={u}>{u}</option>)}
+            {UNIDADES_LANCAMENTO.map((u) => (
+              <option key={u} value={u}>
+                {u}
+              </option>
+            ))}
           </select>
         </FormField>
         <FormField label="Responsável *">
@@ -156,20 +180,11 @@ function MovimentacaoForm({
           >
             <option value="">Selecione o usuário</option>
             {usuarios.map((u) => (
-              <option key={u.id} value={u.id}>{u.nome}</option>
+              <option key={u.id} value={u.id}>
+                {u.nome}
+              </option>
             ))}
           </select>
-        </FormField>
-        <FormField label="Valor (R$)">
-          <input
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="0.00"
-            style={inputStyle}
-            value={form.valor}
-            onChange={set("valor")}
-          />
         </FormField>
         <FormField label="Data e hora *">
           <input
@@ -181,8 +196,17 @@ function MovimentacaoForm({
           />
         </FormField>
       </FormGrid>
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
-        <Button variant="ghost" onClick={onCancel} type="button">Cancelar</Button>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 8,
+          marginTop: 16,
+        }}
+      >
+        <Button variant="ghost" onClick={onCancel} type="button">
+          Cancelar
+        </Button>
         <Button variant="primary" type="submit" disabled={loading}>
           {loading ? "Salvando…" : "Salvar"}
         </Button>
@@ -247,7 +271,8 @@ export default function Movimentacoes() {
   }
 
   const filtered = movimentos.filter((m) => {
-    const txt = `${m.produto?.nome} ${m.piscina?.nome} ${m.deposito?.nome}`.toLowerCase();
+    const txt =
+      `${m.produto?.nome} ${m.piscina?.nome} ${m.deposito?.nome}`.toLowerCase();
     return (
       txt.includes(search.toLowerCase()) &&
       (!filtroTipo || m.tipoMovimentacao === parseInt(filtroTipo))
@@ -274,23 +299,13 @@ export default function Movimentacoes() {
       key: "tipoMovimentacao",
       label: "Tipo",
       render: (v) => (
-        <Badge variant={corDoTipo(v)}>
-          {TIPO_LABELS[v] ?? "—"}
-        </Badge>
+        <Badge variant={corDoTipo(v)}>{TIPO_LABELS[v] ?? "—"}</Badge>
       ),
     },
     {
       key: "quantidade",
       label: "Quantidade",
       render: (v, r) => `${v ?? "—"} ${r.unidadeLancamento || ""}`,
-    },
-    {
-      key: "valor",
-      label: "Valor",
-      render: (v) =>
-        v
-          ? v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-          : "—",
     },
     {
       key: "dataMovimentacao",
@@ -330,7 +345,10 @@ export default function Movimentacoes() {
           value={filtroTipo}
           onChange={setFiltroTipo}
           placeholder="Todos os tipos"
-          options={Object.entries(TIPO_LABELS).map(([value, label]) => ({ value, label }))}
+          options={Object.entries(TIPO_LABELS).map(([value, label]) => ({
+            value,
+            label,
+          }))}
         />
       </Toolbar>
 
