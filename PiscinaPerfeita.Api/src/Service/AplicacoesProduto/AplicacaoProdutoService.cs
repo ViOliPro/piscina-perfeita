@@ -139,7 +139,7 @@ namespace PiscinaPerfeita.Api.Service.AplicacoesProduto
                 AnaliseId = dto.AnaliseId,
                 Quantidade = dto.Quantidade,
                 UnidadeLancamento = unidadeLancamento,
-                DataAplicacao = dto.DataAplicacao ?? DateTimeOffset.UtcNow,
+                DataAplicacao = dto.DataAplicacao?.ToUniversalTime() ?? DateTimeOffset.UtcNow,
                 Observacoes = dto.Observacoes,
             };
 

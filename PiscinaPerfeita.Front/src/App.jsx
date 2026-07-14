@@ -17,7 +17,7 @@ import Locais from "./modules/locais/Locais.jsx";
 import Depositos from "./modules/depositos/Depositos.jsx";
 import Aplicacoes from "./modules/aplicacoes/Aplicacoes.jsx";
 import ContagemInventario from "./modules/inventario/ContagemInventario.jsx";
-import { PERFIS } from "./config/index.js";
+import { PERFIS, ROLES } from "./config/index.js";
 import { useState } from "react";
 
 const PAGES = {
@@ -51,7 +51,9 @@ function AuthenticatedApp() {
   // antes de usar o resto do sistema — todo o resto depende de um Local
   // ativo para funcionar.
   const precisaCriarPrimeiroLocal =
-    (user?.perfil ?? user?.Perfil) === PERFIS.ADMINISTRADOR && !user?.localId;
+    (user?.perfil ?? user?.Perfil) === PERFIS.ADMINISTRADOR &&
+    !user?.localId &&
+    (user?.role ?? user?.Role) === ROLES.User;
 
   if (precisaCriarPrimeiroLocal) return <PrimeiroLocal />;
 

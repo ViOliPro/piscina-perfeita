@@ -83,8 +83,13 @@ namespace PiscinaPerfeita.Api.Service.Locais
             // Um Administrador comum precisa ficar vinculado ao Local que
             // acabou de criar para poder de fato usá-lo (criar piscinas,
             // produtos, etc. dentro dele).
-            if (usuarioLogado.Role != Role.SuperAdmin && usuarioLogado.UserId.HasValue)
+
+            if (usuarioLogado.Role != Role.SuperAdmin && usuarioLogado.UserId.HasValue && local.Id != Guid.Empty)
+            {
                 await VincularCriadorAoNovoLocal(usuarioLogado.UserId.Value, local.Id);
+                Console.WriteLine($"Local Id{local.Id} e UsuarioId{usuarioLogado.UserId}");
+            }
+
 
             return new LocalResponseDto
             {
@@ -153,7 +158,7 @@ namespace PiscinaPerfeita.Api.Service.Locais
         private async Task GarantirSuperAdmin()
         {
             var usuarioLogado = await _user.GetCurrentUser();
-            if (usuarioLogado.Role != Role.SuperAdmin)
+            if (usuarioLogado.Role != Role.SuperAdmin && usuarioLogado.Perfil != Perfil.Administrador)
                 throw new UnauthorizedAccessException(
                     "Somente um SuperAdmin pode gerenciar Locais."
                 );
@@ -174,7 +179,9 @@ namespace PiscinaPerfeita.Api.Service.Locais
             var vinculos = await _usuarioLocalRepository.GetAllByUserId(usuarioLogado.UserId.Value);
             var podeCriar = vinculos.Any(v => v.Perfil == Perfil.Administrador);
 
-            if (podeCriar)
+            Console.WriteLine($"Pode{podeCriar}");
+
+            if (!podeCriar)
                 throw new UnauthorizedAccessException(
                     "Somente um SuperAdmin ou um usuário com Perfil Administrador pode criar Locais."
                 );
@@ -190,6 +197,8 @@ namespace PiscinaPerfeita.Api.Service.Locais
         {
             var vinculos = await _usuarioLocalRepository.GetAllByUserId(userId);
             var pendente = vinculos.FirstOrDefault(v => v.LocalId == null);
+
+            Console.WriteLine($"Vinculos {vinculos}, e pendente {pendente}");
 
             if (pendente != null)
             {
