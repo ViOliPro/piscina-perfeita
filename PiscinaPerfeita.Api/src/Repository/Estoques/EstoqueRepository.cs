@@ -22,6 +22,7 @@ public class EstoqueRepository : IEstoqueRepository
                 Id = a.Id,
                 QuantidadeAtual = a.QuantidadeAtual,
                 QuantidadeMinima = a.QuantidadeMinima,
+                EstoqueIdeal = a.EstoqueIdeal,
                 Produto =
                     a.Produto != null
                         ? new ProdutoEstoque
@@ -50,6 +51,7 @@ public class EstoqueRepository : IEstoqueRepository
                 Id = a.Id,
                 QuantidadeAtual = a.QuantidadeAtual,
                 QuantidadeMinima = a.QuantidadeMinima,
+                EstoqueIdeal = a.EstoqueIdeal,
                 Produto =
                     a.Produto != null
                         ? new ProdutoEstoque
@@ -83,6 +85,7 @@ public class EstoqueRepository : IEstoqueRepository
 
         estoqueToUpdate.QuantidadeAtual = estoque.QuantidadeAtual;
         estoqueToUpdate.QuantidadeMinima = estoque.QuantidadeMinima;
+        estoqueToUpdate.EstoqueIdeal = estoque.EstoqueIdeal;
         estoqueToUpdate.ProdutoId = estoque.ProdutoId;
 
         await _context.SaveChangesAsync();

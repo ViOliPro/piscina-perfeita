@@ -43,6 +43,27 @@ function isBaixoOuAtencao(e) {
   return (e.quantidadeAtual ?? 0) <= ESTOQUE_LIMITES.ATENCAO;
 }
 
+// Quantidade sugerida para o pedido de orçamento.
+// Regra nova: se o item já tem mínimo e ideal configurados, usa
+// EstoqueIdeal - QuantidadeAtual (nunca negativo).
+// Fallback: itens antigos, ainda sem esses campos preenchidos,
+// continuam usando a heurística fixa baseada em ESTOQUE_LIMITES.
+function calcularQtdSugerida(item) {
+  const atual = item.quantidadeAtual ?? 0;
+
+  if (item.quantidadeMinima != null && item.estoqueIdeal != null) {
+    return Math.max(0, item.estoqueIdeal - atual);
+  }
+
+  return Math.max(20, (ESTOQUE_LIMITES.ATENCAO - atual) * 3);
+}
+
+// Um item usa a heurística antiga (ainda não configurado) quando
+// não tem mínimo e ideal definidos.
+function usaEstimativaPadrao(item) {
+  return item.quantidadeMinima == null || item.estoqueIdeal == null;
+}
+
 // ----------------------------------------------------------
 // Formulário de entrada de estoque
 // ----------------------------------------------------------
@@ -61,12 +82,30 @@ function EstoqueForm({
     usuarioId: "",
     depositoId: "",
     quantidadeAtual: "",
+    quantidadeMinima: "",
+    estoqueIdeal: "",
   });
+  const [formError, setFormError] = useState(null);
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
   function handleSubmit(e) {
     e.preventDefault();
-    onSubmit({ ...form, quantidadeAtual: parseFloat(form.quantidadeAtual) });
+
+    const quantidadeMinima = parseFloat(form.quantidadeMinima);
+    const estoqueIdeal = parseFloat(form.estoqueIdeal);
+
+    if (estoqueIdeal <= quantidadeMinima) {
+      setFormError("O estoque ideal deve ser maior que o estoque mínimo.");
+      return;
+    }
+
+    setFormError(null);
+    onSubmit({
+      ...form,
+      quantidadeAtual: parseFloat(form.quantidadeAtual),
+      quantidadeMinima,
+      estoqueIdeal,
+    });
   }
 
   return (
@@ -130,7 +169,32 @@ function EstoqueForm({
             ))}
           </select>
         </FormField>
+        <FormField label="Estoque mínimo *">
+          <input
+            required
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="0.00"
+            style={inputStyle}
+            value={form.quantidadeMinima}
+            onChange={set("quantidadeMinima")}
+          />
+        </FormField>
+        <FormField label="Estoque ideal *">
+          <input
+            required
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="0.00"
+            style={inputStyle}
+            value={form.estoqueIdeal}
+            onChange={set("estoqueIdeal")}
+          />
+        </FormField>
       </FormGrid>
+      {formError && <ErrorMessage message={formError} />}
       <div
         style={{
           display: "flex",
@@ -161,10 +225,7 @@ function PedidoOrcamento({ itens }) {
       "#\tProduto\tUnidade\tQtd. solicitada\tUso\tValor unit. (R$)\tValor total (R$)\tPrazo entrega",
     ];
     itens.forEach((item, i) => {
-      const qtdSugerida = Math.max(
-        20,
-        (ESTOQUE_LIMITES.ATENCAO - (item.quantidadeAtual ?? 0)) * 3,
-      );
+      const qtdSugerida = calcularQtdSugerida(item);
       linhas.push(
         `${String(i + 1).padStart(2, "0")}\t${item.produto?.nome}\t${item.produto?.unidadeMedida}\t${qtdSugerida}\tTratamento piscinas\t___\t___\t___`,
       );
@@ -259,10 +320,8 @@ function PedidoOrcamento({ itens }) {
             </thead>
             <tbody>
               {itens.map((item, i) => {
-                const qtdSugerida = Math.max(
-                  20,
-                  (ESTOQUE_LIMITES.ATENCAO - (item.quantidadeAtual ?? 0)) * 3,
-                );
+                const qtdSugerida = calcularQtdSugerida(item);
+                const fallback = usaEstimativaPadrao(item);
                 return (
                   <tr
                     key={item.id}
@@ -277,7 +336,21 @@ function PedidoOrcamento({ itens }) {
                     <td style={{ padding: "7px 10px", color: "#6B8CAE" }}>
                       {item.produto?.unidadeMedida}
                     </td>
-                    <td style={{ padding: "7px 10px" }}>{qtdSugerida}</td>
+                    <td style={{ padding: "7px 10px" }}>
+                      {qtdSugerida}
+                      {fallback && (
+                        <span
+                          title="Estoque ideal não configurado — usando estimativa padrão"
+                          style={{
+                            marginLeft: 6,
+                            fontSize: 10,
+                            color: "#B7791F",
+                          }}
+                        >
+                          ⓘ estimativa
+                        </span>
+                      )}
+                    </td>
                     <td style={{ padding: "7px 10px", color: "#6B8CAE" }}>
                       Tratamento piscinas
                     </td>
