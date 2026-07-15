@@ -66,6 +66,8 @@ namespace PiscinaPerfeita.Api.Service.Estoques
                     $"Não foi encontrado um deposito com o id {dto.DepositoId}"
                 );
 
+            ValidarMinimoEIdeal(dto.QuantidadeMinima, dto.EstoqueIdeal);
+
             var estoque = new Estoque
             {
                 ProdutoId = dto.ProdutoId,
@@ -73,6 +75,7 @@ namespace PiscinaPerfeita.Api.Service.Estoques
                 DepositoId = dto.DepositoId,
                 QuantidadeAtual = dto.QuantidadeAtual,
                 QuantidadeMinima = dto.QuantidadeMinima ?? 5,
+                EstoqueIdeal = dto.EstoqueIdeal,
             };
 
             await _estoqueRepository.Create(estoque);
@@ -82,6 +85,7 @@ namespace PiscinaPerfeita.Api.Service.Estoques
                 Id = estoque.Id,
                 QuantidadeAtual = estoque.QuantidadeAtual,
                 QuantidadeMinima = estoque.QuantidadeMinima,
+                EstoqueIdeal = estoque.EstoqueIdeal,
                 Deposito = new NomeIdDto(dto.DepositoId, depositoDb.Nome),
 
                 Produto = new ProdutoEstoque
@@ -114,13 +118,22 @@ namespace PiscinaPerfeita.Api.Service.Estoques
                     $"Não foi encontrado um deposito com o id {dto.DepositoId}"
                 );
 
+            // Bug corrigido: antes, se o DTO não trouxesse QuantidadeMinima/EstoqueIdeal
+            // (ex.: front ainda não envia o campo), o valor existente era apagado
+            // com null. Agora, campo ausente no DTO preserva o valor já salvo.
+            var quantidadeMinima = dto.QuantidadeMinima ?? estoqueDb.QuantidadeMinima;
+            var estoqueIdeal = dto.EstoqueIdeal ?? estoqueDb.EstoqueIdeal;
+
+            ValidarMinimoEIdeal(quantidadeMinima, estoqueIdeal);
+
             var estoqueUpdated = new Estoque
             {
                 Id = id,
                 ProdutoId = dto.ProdutoId,
                 DepositoId = dto.DepositoId,
                 QuantidadeAtual = dto.QuantidadeAtual,
-                QuantidadeMinima = dto.QuantidadeMinima,
+                QuantidadeMinima = quantidadeMinima,
+                EstoqueIdeal = estoqueIdeal,
             };
 
             await _estoqueRepository.Update(id, estoqueUpdated);
@@ -129,7 +142,8 @@ namespace PiscinaPerfeita.Api.Service.Estoques
             {
                 Id = estoqueDb.Id,
                 QuantidadeAtual = estoqueDb.QuantidadeAtual,
-                QuantidadeMinima = estoqueDb.QuantidadeMinima,
+                QuantidadeMinima = quantidadeMinima,
+                EstoqueIdeal = estoqueIdeal,
                 Deposito = new NomeIdDto(dto.DepositoId, depositoDb.Nome),
 
                 Produto = new ProdutoEstoque
@@ -139,6 +153,20 @@ namespace PiscinaPerfeita.Api.Service.Estoques
                     UnidadeMedida = produtoDb.UnidadeMedida,
                 },
             };
+        }
+
+        // Regra de negócio: quando os dois valores estão preenchidos, o estoque ideal
+        // (quanto se quer ter após reabastecer) não pode ser menor ou igual ao
+        // estoque mínimo (o gatilho de reposição) — senão a fórmula de compra
+        // (EstoqueIdeal - QuantidadeAtual) perde o sentido.
+        private static void ValidarMinimoEIdeal(decimal? quantidadeMinima, decimal? estoqueIdeal)
+        {
+            if (quantidadeMinima.HasValue && estoqueIdeal.HasValue && estoqueIdeal <= quantidadeMinima)
+            {
+                throw new ArgumentException(
+                    "O estoque ideal deve ser maior que o estoque mínimo."
+                );
+            }
         }
 
         // O método Delete recebe um ID, verifica se o estoque existe e o exclui

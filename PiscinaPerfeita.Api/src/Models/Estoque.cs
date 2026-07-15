@@ -23,6 +23,8 @@ public partial class Estoque : IBelongsToLocal
 
     public decimal? QuantidadeMinima { get; set; }
 
+    public decimal? EstoqueIdeal { get; set; }
+
     [ForeignKey("ProdutoId")]
     public virtual Produto Produto { get; set; } = null!;
 
