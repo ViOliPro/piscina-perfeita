@@ -293,7 +293,7 @@ function Topbar({ activePage, onMenuToggle }) {
   const isAdmin   = (user?.role ?? user?.Role) === ROLES.ADMIN;
 
   return (
-    <header style={{
+    <header className="pp-topbar" style={{
       height: 56, background: "#fff",
       borderBottom: "0.5px solid rgba(30,58,95,.10)",
       display: "flex", alignItems: "center",
@@ -486,10 +486,10 @@ export function AppLayout({ children, activePage, onNavigate }) {
   };
 
   return (
-    <div style={{ display: "flex", height: "100dvh", overflow: "hidden" }}>
+    <div className="pp-app-shell" style={{ display: "flex", height: "100dvh", overflow: "hidden" }}>
       {/* Sidebar desktop */}
       {!isMobile && (
-        <div style={{ width: 200, background: "#0A1628", flexShrink: 0 }}>
+        <div className="pp-sidebar" style={{ width: 200, background: "#0A1628", flexShrink: 0 }}>
           <SidebarContent activePage={activePage} onNavigate={handleNavigate} />
         </div>
       )}
@@ -505,13 +505,13 @@ export function AppLayout({ children, activePage, onNavigate }) {
       )}
 
       {/* Conteúdo principal */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
+      <div className="pp-main-col" style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
         <Topbar
           activePage={activePage}
           onMenuToggle={() => setDrawerOpen((o) => !o)}
         />
 
-        <main style={{
+        <main className="pp-main" style={{
           flex: 1, overflowY: "auto", background: "#E8F4FD",
           // Espaço para a bottom nav em mobile
           paddingBottom: isMobile ? 68 : 0,

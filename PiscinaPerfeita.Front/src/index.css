@@ -108,8 +108,19 @@ input, select, textarea {
 
 /* Print */
 @media print {
-  nav, button:not(.print-include), .toolbar { display: none !important; }
-  .main { overflow: visible !important; }
+  /* Esconde a navegação do app (sidebar desktop, topbar e bottom nav mobile) */
+  .pp-sidebar, .pp-topbar, .pp-bottom-nav,
+  nav, button:not(.print-include), .toolbar {
+    display: none !important;
+  }
+
+  /* O shell trava altura em 100dvh e overflow:hidden pra funcionar como app;
+     na impressão isso corta o conteúdo que passa da altura da tela. */
+  .pp-app-shell, .pp-main-col, .pp-main {
+    height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+  }
 }
 
 /* Safe area para bottom nav (iPhone com notch) */
