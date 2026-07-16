@@ -8,9 +8,6 @@ namespace PiscinaPerfeita.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize] // Estava faltando: este controller ficava 100% público (lista, cria, edita e apaga
-                // usuário sem autenticação nenhuma). Todos os métodos do serviço já assumiam um
-                // usuário autenticado (via IAuthenticatedUser) — só faltava essa trava na entrada.
     public class UsuariosController : ControllerBase
     {
         private readonly IUsuarioService _usuariosService;
@@ -92,23 +89,12 @@ namespace PiscinaPerfeita.Api.Controllers
             {
                 return NotFound(new { message = ex.Message });
             }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
             catch (UnauthorizedAccessException ex)
             {
                 return Unauthorized(new { message = ex.Message });
             }
         }
 
-        // Restrito a SuperAdmin: o serviço ainda não valida se o usuário logado
-        // pertence ao mesmo Local do usuário sendo apagado, então liberar isso
-        // pra qualquer usuário autenticado permitiria um Administrador apagar
-        // usuários de outros Locais (IDOR). Enquanto esse escopo não é
-        // implementado no service, mantemos essa ação restrita ao papel mais
-        // privilegiado.
-        [Authorize(Roles = "SuperAdmin")]
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(Guid id)
         {

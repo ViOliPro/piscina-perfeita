@@ -48,11 +48,6 @@ services:
       db:
         condition: service_healthy
     environment:
-      # Production por padrão (deploy real). Localmente, se quiser testar com
-      # as travas de segurança mais relaxadas (CORS aberto, rate limit alto no
-      # login), defina ASPNETCORE_ENVIRONMENT=Development no seu .env — ver
-      # comentário em .env.example.
-      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       # O código lê "ConnectionStrings:DefaultConnection" — em variável de
       # ambiente isso vira "ConnectionStrings__DefaultConnection" (a
       # convenção de nesting do ASP.NET Core usa "__" para virar ":").
@@ -65,9 +60,7 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL:?defina ADMIN_EMAIL no .env}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?defina ADMIN_PASSWORD no .env}
       ADMIN_CPF: ${ADMIN_CPF:-}
-      # Vazio = libera qualquer origem, mas só funciona com
-      # ASPNETCORE_ENVIRONMENT=Development (ver acima). Em Production (padrão),
-      # a API recusa subir se isso estiver vazio — defina com o(s)
+      # Vazio = libera qualquer origem (comportamento atual). Defina com o(s)
       # domínio(s) do front quando for pra produção — ex.: https://app.piscinaperfeita.com.br
       Cors__AllowedOrigins: ${CORS_ALLOWED_ORIGINS:-}
     # Sem "ports": a API só é acessível de dentro da rede do Docker agora
