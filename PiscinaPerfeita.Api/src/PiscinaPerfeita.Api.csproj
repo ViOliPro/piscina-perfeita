@@ -13,6 +13,10 @@
     <PackageReference Include="EFCore.NamingConventions" Version="10.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.9" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
+    <!-- Pin explícito: Microsoft.AspNetCore.OpenApi 10.0.9 puxa transitivamente o
+         Microsoft.OpenApi 2.0.0, que tem uma vulnerabilidade conhecida (GHSA-v5pm-xwqc-g5wc,
+         DoS por stack overflow em schema circular), corrigida a partir da 2.7.5. -->
+    <PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.9">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
