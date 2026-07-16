@@ -38,7 +38,10 @@ builder
     })
     .AddJwtBearer(options =>
     {
-        options.RequireHttpsMetadata = false;
+        // Em produção, o token só deve trafegar sobre HTTPS. Em Development
+        // (rodando local sem certificado) mantemos false pra não travar os
+        // testes locais.
+        options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
         options.SaveToken = true;
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -59,7 +62,62 @@ builder.Services.AddControllers();
 
 if (Assembly.GetEntryAssembly()?.GetName().Name != "ef")
 {
-    builder.Services.AddOpenApi();
+    // Bearer no OpenAPI/Swagger, só pra facilitar testar os endpoints
+    // autenticados localmente (sem isso não tem como colar o token no
+    // "Authorize" da UI).
+    builder.Services.AddOpenApi(options =>
+    {
+        options.AddDocumentTransformer(
+            (document, context, cancellationToken) =>
+            {
+                document.Components ??= new();
+                document.Components.SecuritySchemes["Bearer"] = new()
+                {
+                    Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
+                    In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+                    Description = "Cole aqui o token retornado por POST /api/account/login",
+                };
+                return Task.CompletedTask;
+            }
+        );
+
+        // Marca com o cadeado (no Swagger UI) toda operação que não seja
+        // [AllowAnonymous] — só efeito cosmético/de teste local, não altera
+        // a autorização real (quem faz valer isso é o [Authorize] de cada
+        // controller/action).
+        options.AddOperationTransformer(
+            (operation, context, cancellationToken) =>
+            {
+                var allowsAnonymous = context.Description.ActionDescriptor.EndpointMetadata.Any(
+                    m => m is Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute
+                );
+
+                if (!allowsAnonymous)
+                {
+                    operation.Security =
+                    [
+                        new()
+                        {
+                            [
+                                new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                                {
+                                    Reference = new()
+                                    {
+                                        Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                                        Id = "Bearer",
+                                    },
+                                }
+                            ] = []
+                        },
+                    ];
+                }
+
+                return Task.CompletedTask;
+            }
+        );
+    });
 }
 
 // 1. Recupera a string de conexão já formatada do .env
@@ -94,12 +152,20 @@ builder.Services.ResolveDependencies();
 builder.Services.AddHttpContextAccessor();
 
 // CORS
-// Sem "Cors:AllowedOrigins" configurado, mantém o comportamento atual
-// (libera qualquer origem) — adequado enquanto o projeto está em fase de
-// testes com poucas pessoas. Quando o domínio de produção for definido,
-// basta configurar essa variável (ver docker-compose.yml/.env.example)
-// para restringir e não precisar tocar em código depois.
+// Em Development, sem "Cors:AllowedOrigins" configurado, mantém o
+// comportamento de liberar qualquer origem (facilita testar com o Vite dev
+// server em qualquer porta). Fora de Development, a variável passa a ser
+// obrigatória — preferimos falhar no startup a subir em produção liberando
+// qualquer origem silenciosamente.
 var allowedOrigins = builder.Configuration["Cors:AllowedOrigins"];
+
+if (string.IsNullOrWhiteSpace(allowedOrigins) && !builder.Environment.IsDevelopment())
+{
+    throw new InvalidOperationException(
+        "Cors:AllowedOrigins não configurado. Fora do ambiente de Development, "
+            + "é obrigatório definir os domínios permitidos (ver docker-compose.yml/.env.example)."
+    );
+}
 
 builder.Services.AddCors(options =>
 {
@@ -124,6 +190,28 @@ builder.Services.AddCors(options =>
     );
 });
 
+// Rate limiting — hoje o login não tinha nenhum limite de tentativas.
+// Em Development o limite é bem mais alto pra não travar os testes manuais.
+var loginPermitLimit = builder.Environment.IsDevelopment() ? 1000 : 5;
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddFixedWindowLimiter(
+        "login",
+        limiterOptions =>
+        {
+            limiterOptions.Window = TimeSpan.FromMinutes(1);
+            limiterOptions.PermitLimit = loginPermitLimit;
+            limiterOptions.QueueLimit = 0;
+        }
+    );
+});
+
+// Bearer no OpenAPI/Swagger já configurado acima, junto da declaração
+// original de AddOpenApi (evita registrar o serviço duas vezes).
+
 try
 {
     var app = builder.Build();
@@ -135,7 +223,42 @@ try
 
     app.UseRequestLocalization(localizationOptions);
     app.UseHttpsRedirection();
+
+    // Handler global só para exceções que escaparem dos try/catch de cada
+    // controller (ex: erro de banco inesperado). Os catches específicos que já
+    // existem em cada endpoint continuam devolvendo suas mensagens normalmente;
+    // isso aqui é a rede de segurança pra não vazar stack trace/detalhe interno
+    // em algo que ninguém previu.
+    app.UseExceptionHandler(errorApp =>
+    {
+        errorApp.Run(async context =>
+        {
+            var feature = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+            if (feature?.Error is not null)
+            {
+                var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogError(feature.Error, "Erro não tratado na requisição {Path}", context.Request.Path);
+            }
+
+            context.Response.ContentType = "application/json";
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            await context.Response.WriteAsJsonAsync(new { message = "Ocorreu um erro interno inesperado." });
+        });
+    });
+
+    // Headers de segurança básicos (sem precisar de pacote extra).
+    app.Use(
+        async (context, next) =>
+        {
+            context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+            context.Response.Headers["X-Frame-Options"] = "DENY";
+            context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+            await next();
+        }
+    );
+
     app.UseCors("AppCors");
+    app.UseRateLimiter();
     app.UseAuthentication();
     app.UseAuthorization();
 
