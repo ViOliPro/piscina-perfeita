@@ -104,6 +104,17 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
 
             var getPassword = await _usuariosRepository.GetPasswordById(id);
 
+            // Mesma regra do Create: sem essa checagem, qualquer usuário autenticado
+            // podia fazer PUT no próprio id com Role=SuperAdmin e se auto-promover.
+            var usuarioLogado = await _user.GetCurrentUser();
+            if (dto.Role.HasValue)
+            {
+                await ValidarPermissaoCadastro(
+                    usuarioLogado,
+                    new UsuarioRequestDto { Role = dto.Role.Value }
+                );
+            }
+
             var usuarioDb = new Usuario
             {
                 Id = id,

@@ -17,6 +17,9 @@ export default defineConfig({
     },
   },
 
+  //Avisa para procurar o .env o nivel acima ja que ele nao existe no mesmo nivel do package.json
+  envDir: path.resolve(__dirname, "../"),
+
   server: {
     port: 5173,
     proxy: {
