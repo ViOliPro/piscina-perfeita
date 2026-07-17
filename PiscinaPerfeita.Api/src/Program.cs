@@ -73,7 +73,8 @@ if (Assembly.GetEntryAssembly()?.GetName().Name != "ef")
             (document, context, cancellationToken) =>
             {
                 document.Components ??= new OpenApiComponents();
-                document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
+                document.Components.SecuritySchemes ??=
+                    new Dictionary<string, IOpenApiSecurityScheme>();
                 document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
                 {
                     Type = SecuritySchemeType.Http,
@@ -93,8 +94,8 @@ if (Assembly.GetEntryAssembly()?.GetName().Name != "ef")
         options.AddOperationTransformer(
             (operation, context, cancellationToken) =>
             {
-                var allowsAnonymous = context.Description.ActionDescriptor.EndpointMetadata.Any(
-                    m => m is Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute
+                var allowsAnonymous = context.Description.ActionDescriptor.EndpointMetadata.Any(m =>
+                    m is Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute
                 );
 
                 if (!allowsAnonymous)
@@ -227,16 +228,23 @@ try
     {
         errorApp.Run(async context =>
         {
-            var feature = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+            var feature =
+                context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
             if (feature?.Error is not null)
             {
                 var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-                logger.LogError(feature.Error, "Erro não tratado na requisição {Path}", context.Request.Path);
+                logger.LogError(
+                    feature.Error,
+                    "Erro não tratado na requisição {Path}",
+                    context.Request.Path
+                );
             }
 
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            await context.Response.WriteAsJsonAsync(new { message = "Ocorreu um erro interno inesperado." });
+            await context.Response.WriteAsJsonAsync(
+                new { message = "Ocorreu um erro interno inesperado." }
+            );
         });
     });
 
