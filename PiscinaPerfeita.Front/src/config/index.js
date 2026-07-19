@@ -220,7 +220,7 @@ export const THEME = {
 // Metadados da aplicação
 // ----------------------------------------------------------
 export const APP_META = {
-  name: "Piscina Perfeita",
-  version: "1.0.0",
+  name: import.meta.env.VITE_APP_META_NAME,
+  version: import.meta.env.VITE_APP_META_VERSION,
   contact: "compras@piscinaperfeita.com.br",
 };
