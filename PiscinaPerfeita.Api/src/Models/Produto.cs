@@ -5,7 +5,7 @@ using PiscinaPerfeita.Api.Models.Interfaces;
 namespace PiscinaPerfeita.Api.Models;
 
 [Table("Produtos", Schema = "piscina-perfeita")]
-public partial class Produto : IBelongsToLocal
+public class Produto : IBelongsToLocal
 {
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     [Key]
@@ -26,5 +26,5 @@ public partial class Produto : IBelongsToLocal
     public virtual ICollection<MovimentacaoEstoque> MovimentacoesEstoques { get; set; } = [];
 
     [ForeignKey(nameof(LocalId))]
-    public virtual Local Local { get; set; } = null!;
+    public virtual Local? Local { get; set; }
 }
