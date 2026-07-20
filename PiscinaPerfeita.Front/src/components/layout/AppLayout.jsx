@@ -381,10 +381,9 @@ function LocalSwitcher() {
     }
     setBusy(true);
     const ok = await switchLocal(localId);
-    console.log(ok);
     setBusy(false);
     setOpen(false);
-    if (ok) window.location.reload(); // garante que todas as telas recarreguem com o novo local
+    if (ok) window.location.reload();
   }
 
   return (
