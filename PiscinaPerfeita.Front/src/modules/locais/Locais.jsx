@@ -154,7 +154,7 @@ function LocalForm({ initial, onSubmit, onCancel, loading }) {
 // Módulo principal
 // ----------------------------------------------------------
 export default function Locais() {
-  const { user } = useAuth();
+  const { user, switchLocal } = useAuth();
   // Gestão (criar/editar/excluir) de Locais é restrita a SuperAdmin no
   // backend (LocalService.GarantirSuperAdmin) — o front só espelha isso na UI.
   const ehSuperAdmin = (user?.role ?? user?.Role) === ROLES.ADMIN;
@@ -192,6 +192,10 @@ export default function Locais() {
       } else {
         const novo = await localService.criar(dto);
         setLocais((prev) => [novo, ...prev]);
+        const ok = await switchLocal(novo.id);
+        console.log(ok);
+
+        if (ok) window.location.reload();
       }
       setModal({ open: false, editing: null });
     } catch (err) {

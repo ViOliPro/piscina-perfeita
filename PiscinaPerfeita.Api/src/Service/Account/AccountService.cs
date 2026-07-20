@@ -97,7 +97,7 @@ namespace PiscinaPerfeita.Api.Service.Account
 
             // 4. Gera o novo Token com o local e o perfil (referente a este local) alterados
             var stringToken = NewToken(usuarioUpdated, newLocalId.ToString(), vinculo.Perfil);
-
+            Console.WriteLine($"_______________________________________________________________________________________________{stringToken}");
             return new AccountResponseDto
             {
                 AccessToken = stringToken,
@@ -176,6 +176,7 @@ namespace PiscinaPerfeita.Api.Service.Account
         // Simplificado: removido o async desnecessário já que a criação do token é puramente síncrona em memória
         private string NewToken(Usuario usuario, string stringLocalId, Perfil perfil)
         {
+            Console.WriteLine("________________________________________Passou aqui no login");
             var tokenHandler = new JwtSecurityTokenHandler();
             var key =
                 _configuration["Jwt:Key"]

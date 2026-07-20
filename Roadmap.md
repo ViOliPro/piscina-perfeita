@@ -82,12 +82,12 @@
   - [ x ] Nova função de cálculo do pedido de orçamento usando `EstoqueIdeal - QuantidadeAtual`, com fallback pra heurística antiga em estoques ainda não configurados.
   - [ x ] Corrigido corte de conteúdo e vazamento da sidebar ao imprimir o pedido de orçamento.
 
-### Versão 1.4.2 — Base de Qualidade e Documentação
+### [EM ANDAMENTO] Versão 1.4.2 — Base de Qualidade e Documentação
 
 - **Objetivo:** Ter terreno firme (dados reais, documentação, bugs mapeados) antes de empilhar feature nova em cima.
 - **Tarefas:**
-  - [ ] Importar dados legados de planilhas (produtos/estoque) via script SQL.
-  - [ ] Documentação técnica completa + DER (diagrama de entidade-relacionamento).
+  - [ x ] Importar dados legados de planilhas (produtos/estoque) via script SQL.
+  - [ x ] Documentação técnica completa + DER (diagrama de entidade-relacionamento).
   - [ ] Teste caixa-preta completo da aplicação, com revisão de regras de negócio.
 
 ### Versão 1.4.3 — Mobile First
