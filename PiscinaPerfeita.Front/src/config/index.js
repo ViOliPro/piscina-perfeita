@@ -160,7 +160,16 @@ export const TIPOS_QUE_EXIGEM_PISCINA = [
 // Unidades de lançamento aceitas para conversão (mesma família de
 // UNIDADES_MEDIDA, mas incluindo submúltiplos como mg/mL que não fazem
 // sentido como unidade "base" de um produto, só como lançamento).
-export const UNIDADES_LANCAMENTO = ["kg", "g", "mg", "L", "mL", "un", "cx", "sc"];
+export const UNIDADES_LANCAMENTO = [
+  "kg",
+  "g",
+  "mg",
+  "L",
+  "mL",
+  "un",
+  "cx",
+  "sc",
+];
 
 // ----------------------------------------------------------
 // Unidades de medida disponíveis para Produto
@@ -171,7 +180,12 @@ export const UNIDADES_MEDIDA = ["kg", "g", "L", "mL", "un", "cx", "sc"];
 // na API (não um enum), então isso só alimenta um <datalist> de apoio,
 // sem travar o usuário a essas opções.
 export const CATEGORIAS_PRODUTO_SUGESTOES = [
-  "Químicos", "Equipamentos", "Acessórios", "Filtragem", "Limpeza", "Segurança",
+  "Químicos",
+  "Equipamentos",
+  "Acessórios",
+  "Filtragem",
+  "Limpeza",
+  "Segurança",
 ];
 
 // ----------------------------------------------------------
@@ -206,7 +220,7 @@ export const THEME = {
 // Metadados da aplicação
 // ----------------------------------------------------------
 export const APP_META = {
-  name: "Piscina Perfeita",
-  version: "1.0.0",
+  name: import.meta.env.VITE_APP_META_NAME,
+  version: import.meta.env.VITE_APP_META_VERSION,
   contact: "compras@piscinaperfeita.com.br",
 };

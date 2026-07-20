@@ -96,6 +96,22 @@ public class UsuarioRepository : IUsuarioRepository
         await _context.SaveChangesAsync();
     }
 
+    // Dedicado ao SwitchLocal: atualiza só o UltimoLocalId. Antes o SwitchLocal
+    // reaproveitava o Update() genérico acima (pensado pra edição de perfil),
+    // que (a) não toca em UltimoLocalId — então a escolha nunca era persistida
+    // de verdade — e (b) zera o SenhaHash toda vez, porque o objeto Usuario
+    // passado pra ele era montado do zero sem preencher esse campo.
+    public async Task UpdateUltimoLocal(Guid id, Guid localId)
+    {
+        var user = await _context.Usuarios.FindAsync(id);
+        if (user == null)
+            throw new KeyNotFoundException($"Usuário com ID {id} não encontrado.");
+
+        user.UltimoLocalId = localId;
+
+        await _context.SaveChangesAsync();
+    }
+
     public async Task Delete(Guid id)
     {
         var user = await _context.Usuarios.FirstOrDefaultAsync(m => m.Id == id);

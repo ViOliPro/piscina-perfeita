@@ -307,6 +307,8 @@ export function fromApiEstoque(raw) {
     usuarioId: field(raw, "usuarioId", "UsuarioId"),
     depositoId: field(raw, "depositoId", "DepositoId"),
     quantidadeAtual: field(raw, "quantidadeAtual", "QuantidadeAtual") ?? 0,
+    quantidadeMinima: field(raw, "quantidadeMinima", "QuantidadeMinima") ?? null,
+    estoqueIdeal: field(raw, "estoqueIdeal", "EstoqueIdeal") ?? null,
     // Relacionamentos
     piscina: raw?.piscina
       ? fromApiPiscina(raw.piscina)
@@ -343,6 +345,8 @@ export function toApiEstoque({
   usuarioId,
   depositoId,
   quantidadeAtual,
+  quantidadeMinima,
+  estoqueIdeal,
 }) {
   return {
     PiscinaId: piscinaId,
@@ -351,6 +355,9 @@ export function toApiEstoque({
     DepositoId: depositoId,
     QuantidadeAtual:
       quantidadeAtual != null ? parseFloat(quantidadeAtual) : null,
+    QuantidadeMinima:
+      quantidadeMinima != null ? parseFloat(quantidadeMinima) : null,
+    EstoqueIdeal: estoqueIdeal != null ? parseFloat(estoqueIdeal) : null,
   };
 }
 

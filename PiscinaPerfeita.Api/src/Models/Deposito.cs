@@ -15,6 +15,6 @@ namespace PiscinaPerfeita.Api.Models
         public Guid LocalId { get; set; }
 
         [ForeignKey(nameof(LocalId))]
-        public virtual Local Local { get; set; } = null!;
+        public virtual Local? Local { get; set; }
     }
 }

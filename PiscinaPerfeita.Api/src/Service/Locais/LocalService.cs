@@ -84,12 +84,15 @@ namespace PiscinaPerfeita.Api.Service.Locais
             // acabou de criar para poder de fato usá-lo (criar piscinas,
             // produtos, etc. dentro dele).
 
-            if (usuarioLogado.Role != Role.SuperAdmin && usuarioLogado.UserId.HasValue && local.Id != Guid.Empty)
+            /*if (usuarioLogado.Role != Role.SuperAdmin && usuarioLogado.UserId.HasValue && local.Id != Guid.Empty)
+            {
+            }
+            */
+            if (usuarioLogado.UserId != null)
             {
                 await VincularCriadorAoNovoLocal(usuarioLogado.UserId.Value, local.Id);
                 Console.WriteLine($"Local Id{local.Id} e UsuarioId{usuarioLogado.UserId}");
             }
-
 
             return new LocalResponseDto
             {

@@ -53,7 +53,7 @@
   - [ x ] Criar Migrations das alteracoes.
   - [ x ] Atualizar o Front para refletir as mudancas.
 
-### [EM ANDAMENTO] Versão 1.4.0 — Múltiplos Depósitos Físicos
+### [CONCLUÍDO] Versão 1.4.0 — Múltiplos Depósitos Físicos
 
 - **Objetivo:** Mapear a realidade logística de grandes condomínios.
 - **Funcionalidade:** Criação da entidade `Deposito` vinculada ao `Local`. O estoque passa a pertencer a depósitos específicos (ex: "Almoxarifado Central" vs. "Quarto de Máquinas").
@@ -63,6 +63,46 @@
 - [ x ] Vincular Deposito a tabela Estoque.
 - [ x ] Gerar MIgration.
 - [ x ] Atualizar o front.
+
+### [CONCLUÍDO] Versão 1.4.1 — Estoque Ideal e Hardening Reativo
+
+- **Objetivo:** Corrigir uma lacuna de segurança crítica encontrada em auditoria e refinar o cálculo de reposição de estoque. Trabalho reativo, fora da sequência original do roadmap.
+- **Banco de dados:**
+  - [ x ] Adicionar campo `EstoqueIdeal` (par level) à tabela `Estoque`, complementando o `QuantidadeMinima` já existente.
+  - [ x ] Gerar Migration.
+- **Backend:**
+  - [ x ] Validação: `EstoqueIdeal` deve ser maior que `QuantidadeMinima` quando ambos preenchidos.
+  - [ x ] `[Authorize]` no `UsuariosController` (estava 100% público — listar/criar/editar/apagar usuário sem autenticação).
+  - [ x ] Corrigido bug de escalação de privilégio no Update de usuário (usuário comum conseguia se autopromover a SuperAdmin).
+  - [ x ] CORS restrito fora de `Development` (antes liberava qualquer origem sempre).
+  - [ x ] Rate limiting no login (força bruta sem limite antes).
+  - [ x ] Handler global de exceção (evita vazar detalhe interno do banco pro cliente).
+- **Frontend:**
+  - [ x ] Campos "Estoque mínimo" e "Estoque ideal" obrigatórios no formulário de Estoque.
+  - [ x ] Nova função de cálculo do pedido de orçamento usando `EstoqueIdeal - QuantidadeAtual`, com fallback pra heurística antiga em estoques ainda não configurados.
+  - [ x ] Corrigido corte de conteúdo e vazamento da sidebar ao imprimir o pedido de orçamento.
+
+### [EM ANDAMENTO] Versão 1.4.2 — Base de Qualidade e Documentação
+
+- **Objetivo:** Ter terreno firme (dados reais, documentação, bugs mapeados) antes de empilhar feature nova em cima.
+- **Tarefas:**
+  - [ x ] Importar dados legados de planilhas (produtos/estoque) via script SQL.
+  - [ x ] Documentação técnica completa + DER (diagrama de entidade-relacionamento).
+  - [ ] Teste caixa-preta completo da aplicação, com revisão de regras de negócio.
+
+### Versão 1.4.3 — Mobile First
+
+- **Objetivo:** Garantir a experiência completa em celular antes de adicionar telas novas — maioria dos usuários acessa por mobile.
+- **Tarefas:**
+  - [ ] Revisão de layout em todas as telas no mobile (formulários grandes, navegação, listas).
+
+### Versão 1.4.4 — Conta e Autenticação
+
+- **Objetivo:** Fechar o ciclo de conta do usuário.
+- **Tarefas:**
+  - [ ] Reset de senha com verificação por e-mail.
+  - [ ] Login via Google (OAuth).
+  - [ ] Painel "Meu perfil" (dados do usuário, troca de senha).
 
 ### Versão 1.5.0 — Conciliação e Inventários Periódicos
 
@@ -78,6 +118,7 @@
 
 - **Objetivo:** Economia de água e segurança predial.
 - **Funcionalidade:** Módulo para registro de leituras de hidrômetros com geração de gráficos de consumo hídrico e disparo automático de alertas em caso de suspeita de vazamento.
+- **Observação:** esta versão cobre o lançamento de dados do hidrômetro da Copasa mencionado no backlog — confirmar formato de leitura (manual vs. API da concessionária) quando chegar a vez.
 
 ### Versão 2.0.0 — Virada de Chave SaaS (Multi-Condomínio)
 

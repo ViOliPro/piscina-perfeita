@@ -68,8 +68,13 @@ namespace PiscinaPerfeita.Api.Service.Account
         // NOVO ENDPOINT: Alternar Condomínio/Local Ativo
         public async Task<AccountResponseDto> SwitchLocal(Guid userId, Guid newLocalId)
         {
-            // 1. Busca o usuário para garantir que existe e obter as informações de Claims
-            var usuario = await _usuarioRepository.GetById(userId);
+            // 1. Busca o usuário para garantir que existe e obter as informações de Claims.
+            // Usa GetPasswordById (apesar do nome, retorna o Usuario completo/real) em vez
+            // de GetById (que retorna um UsuarioResponseDto — sem SenhaHash e incompatível
+            // com o tipo que NewToken exige). Era exatamente essa incompatibilidade de tipo
+            // que fazia o código antigo reconstruir um Usuario do zero mais abaixo, e
+            // reconstruir sem preencher SenhaHash é o que zerava a senha a cada troca de Local.
+            var usuario = await _usuarioRepository.GetPasswordById(userId);
             if (usuario == null)
                 throw new KeyNotFoundException("Usuário não encontrado.");
 
@@ -81,23 +86,16 @@ namespace PiscinaPerfeita.Api.Service.Account
                     "Você não tem permissão para acessar este condomínio/local."
                 );
 
-            // 3. Atualiza o UltimoLocalId no registro do usuário para persistir a escolha
-            usuario.UltimoLocalId = newLocalId;
-            var usuarioUpdated = new Usuario
-            {
-                Id = usuario.Id,
-                LocalId = usuario.LocalId,
-                UltimoLocalId = usuario.UltimoLocalId,
-                Nome = usuario.Nome,
-                Email = usuario.Email,
-                Cpf = usuario.Cpf,
-                Role = usuario.Role,
-            };
-            await _usuarioRepository.Update(userId, usuarioUpdated);
+            // 3. Persiste a escolha (só o UltimoLocalId — método dedicado, não
+            // mexe em mais nada do usuário, ver comentário no repositório).usuario.UltimoLocalId = newLocalId;
+            await _usuarioRepository.UpdateUltimoLocal(userId, newLocalId);
 
-            // 4. Gera o novo Token com o local e o perfil (referente a este local) alterados
-            var stringToken = NewToken(usuarioUpdated, newLocalId.ToString(), vinculo.Perfil);
 
+            // 4. Gera o novo Token com o local e o perfil (referente a este local) alterados.
+            // Usa o "usuario" já carregado no passo 1 (com SenhaHash intacto) — não
+            // precisa reconstruir o objeto, e reconstruir era exatamente a causa dovar stringToken = NewToken(usuarioUpdated, newLocalId.ToString(), vinculo.Perfil);
+            var stringToken = NewToken(usuario, newLocalId.ToString(), vinculo.Perfil);
+            Console.WriteLine($"_______________________________________________________________________________________________{stringToken}");
             return new AccountResponseDto
             {
                 AccessToken = stringToken,
@@ -176,6 +174,7 @@ namespace PiscinaPerfeita.Api.Service.Account
         // Simplificado: removido o async desnecessário já que a criação do token é puramente síncrona em memória
         private string NewToken(Usuario usuario, string stringLocalId, Perfil perfil)
         {
+            Console.WriteLine("________________________________________Passou aqui no login");
             var tokenHandler = new JwtSecurityTokenHandler();
             var key =
                 _configuration["Jwt:Key"]

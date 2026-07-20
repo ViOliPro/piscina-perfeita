@@ -14,4 +14,7 @@ public class EstoqueRequestDto
 
     [Range(0, 999999, ErrorMessage = "A quantidade não pode ser negativa.")]
     public decimal? QuantidadeMinima { get; set; }
+
+    [Range(0, 999999, ErrorMessage = "A quantidade não pode ser negativa.")]
+    public decimal? EstoqueIdeal { get; set; }
 }
