@@ -18,6 +18,8 @@ namespace PiscinaPerfeita.Api.Repository.Usuarios
 
         Task Update(Guid id, Usuario usuario);
 
+        Task UpdateUltimoLocal(Guid id, Guid localId);
+
         Task Delete(Guid id);
 
         Task<Usuario?> GetByEmail(string email);
