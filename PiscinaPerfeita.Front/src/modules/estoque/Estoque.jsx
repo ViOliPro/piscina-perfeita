@@ -75,19 +75,23 @@ function EstoqueForm({
   onSubmit,
   onCancel,
   loading,
+  initial,
 }) {
-  const [form, setForm] = useState({
-    piscinaId: "",
-    produtoId: "",
-    usuarioId: "",
-    depositoId: "",
-    quantidadeAtual: "",
-    quantidadeMinima: "",
-    estoqueIdeal: "",
-  });
+  const [form, setForm] = useState(
+    initial ?? {
+      piscinaId: "",
+      produtoId: "",
+      usuarioId: "",
+      depositoId: "",
+      quantidadeAtual: "",
+      quantidadeMinima: "",
+      estoqueIdeal: "",
+    },
+  );
+
   const [formError, setFormError] = useState(null);
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
-
+  console.log(form);
   function handleSubmit(e) {
     e.preventDefault();
 
@@ -102,9 +106,6 @@ function EstoqueForm({
     setFormError(null);
     onSubmit({
       ...form,
-      quantidadeAtual: parseFloat(form.quantidadeAtual),
-      quantidadeMinima,
-      estoqueIdeal,
     });
   }
 
@@ -115,7 +116,7 @@ function EstoqueForm({
           <select
             required
             style={inputStyle}
-            value={form.depositoId}
+            value={form?.depositoId ?? form?.deposito?.id}
             onChange={set("depositoId")}
           >
             <option value="">Selecione o depósito</option>
@@ -131,7 +132,7 @@ function EstoqueForm({
           <select
             required
             style={inputStyle}
-            value={form.produtoId}
+            value={form.produtoId ?? form?.produto?.id}
             onChange={set("produtoId")}
           >
             <option value="">Selecione o produto</option>
@@ -154,11 +155,10 @@ function EstoqueForm({
             onChange={set("quantidadeAtual")}
           />
         </FormField>
-        <FormField label="Responsável *">
+        <FormField label="Responsável">
           <select
-            required
             style={inputStyle}
-            value={form.usuarioId}
+            value={form.usuarioId ?? form?.usuario?.id}
             onChange={set("usuarioId")}
           >
             <option value="">Selecione o usuário</option>
@@ -177,7 +177,7 @@ function EstoqueForm({
             min="0"
             placeholder="0.00"
             style={inputStyle}
-            value={form.quantidadeMinima}
+            value={form.quantidadeMinima == null ? "" : form.quantidadeMinima}
             onChange={set("quantidadeMinima")}
           />
         </FormField>
@@ -189,7 +189,7 @@ function EstoqueForm({
             min="0"
             placeholder="0.00"
             style={inputStyle}
-            value={form.estoqueIdeal}
+            value={form.estoqueIdeal == null ? "" : form.estoqueIdeal}
             onChange={set("estoqueIdeal")}
           />
         </FormField>
@@ -207,7 +207,7 @@ function EstoqueForm({
           Cancelar
         </Button>
         <Button variant="primary" type="submit" disabled={loading}>
-          {loading ? "Salvando…" : "Registrar"}
+          {loading ? "Salvando…" : initial ? "Salvar alterações" : "Registrar"}
         </Button>
       </div>
     </form>
@@ -398,6 +398,7 @@ export default function Estoque() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [modal, setModal] = useState({ open: false, editing: null });
   const [tab, setTab] = useState("todos");
   const [search, setSearch] = useState("");
   const [filtroDeposito, setFiltroDeposito] = useState("");
@@ -430,9 +431,20 @@ export default function Estoque() {
   async function handleSave(dto) {
     try {
       setSaving(true);
-      const novo = await estoqueService.criar(dto);
-      setEstoques((prev) => [novo, ...prev]);
-      setModalOpen(false);
+      if (modal.editing) {
+        const atualizado = await estoqueService.atualizar(
+          modal.editing.id,
+          dto,
+        );
+        setEstoques((prev) =>
+          prev.map((l) => (l.id === atualizado.id ? atualizado : l)),
+        );
+      } else {
+        const novo = await estoqueService.criar(dto);
+        setEstoques((prev) => [novo, ...prev]);
+        setModalOpen(false);
+      }
+      setModal({ open: false, editing: null });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -480,7 +492,11 @@ export default function Estoque() {
       key: "_edit",
       label: "",
       render: (_, r) => (
-        <Button variant="ghost" size="sm">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setModal({ open: true, editing: r })}
+        >
           Editar
         </Button>
       ),
@@ -493,9 +509,12 @@ export default function Estoque() {
     <div>
       <PageHeader
         title="Estoque"
-        description="Controle de produtos por piscina"
+        description="Controle de produtos"
         action={
-          <Button variant="primary" onClick={() => setModalOpen(true)}>
+          <Button
+            variant="primary"
+            onClick={() => setModal({ open: true, editing: false })}
+          >
             + Registrar entrada
           </Button>
         }
@@ -546,17 +565,18 @@ export default function Estoque() {
       )}
 
       <Modal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title="Registrar entrada de estoque"
+        open={modal.open}
+        onClose={() => setModal({ open: false, editing: null })}
+        title={modal.editing ? "Registrar entrada de estoque" : "Novo estoque"}
       >
         <EstoqueForm
+          initial={modal.editing}
           piscinas={piscinas}
           produtos={produtos}
           usuarios={usuarios}
           depositos={depositos}
           onSubmit={handleSave}
-          onCancel={() => setModalOpen(false)}
+          onCancel={() => setModal({ open: false, editing: null })}
           loading={saving}
         />
       </Modal>

@@ -10,6 +10,7 @@ public partial class EstoqueResponseDto
     public decimal? QuantidadeMinima { get; set; }
     public decimal? EstoqueIdeal { get; set; }
     public NomeIdDto? Deposito { get; set; }
+    public NomeIdDto? Usuario { get; set; }
 }
 
 public class ProdutoEstoque
