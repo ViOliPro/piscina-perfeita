@@ -23,8 +23,10 @@ public partial class PiscinaPerfeitaContext : DbContext
     // Propriedade para acessar o LocalId do usuário autenticado
     private Guid CurrentLocalId => authenticatedUser.GetLocalId();
 
-    // Um SuperAdmin enxerga TODOS os registros, de qualquer Local — o filtro
-    // global de LocalId é ignorado para ele (ver OnModelCreating abaixo).
+    // Um SuperAdmin enxerga TODOS os registros, de qualquer Local, mas só
+    // quando está no modo "ver todos" (CurrentLocalId vazio) — ver
+    // OnModelCreating abaixo. Assim que ele seleciona um Local específico
+    // (via SwitchLocal), passa a ver só aquele Local, igual qualquer usuário.
     private bool IsSuperAdminUser => authenticatedUser.IsSuperAdmin();
 
     public virtual DbSet<Analise> Analises { get; set; }
@@ -59,15 +61,32 @@ public partial class PiscinaPerfeitaContext : DbContext
                     nameof(CurrentLocalId)
                 );
 
-                // this.IsSuperAdminUser — um SuperAdmin ignora o filtro de Local
+                // this.IsSuperAdminUser && this.CurrentLocalId == Guid.Empty
+                // — SuperAdmin só ignora o filtro de Local quando está no modo
+                // "ver todos" (nenhum Local selecionado no momento). Assim que
+                // ele escolhe um Local específico via SwitchLocal, o filtro
+                // passa a valer pra ele igual a qualquer usuário comum — sem
+                // isso, escolher um Local não tinha efeito nenhum na prática,
+                // porque o bypass abaixo era incondicional.
                 var isSuperAdminProperty = Expression.Property(
                     dbContectInstance,
                     nameof(IsSuperAdminUser)
                 );
+                var currentLocalIdEhVazio = Expression.Equal(
+                    localIdProperty,
+                    Expression.Constant(Guid.Empty)
+                );
+                var superAdminEmModoVerTodos = Expression.AndAlso(
+                    isSuperAdminProperty,
+                    currentLocalIdEhVazio
+                );
 
-                // Expressao final: e => e.LocalId == this.CurrentLocalId || this.IsSuperAdminUser
+                // Expressao final: e => e.LocalId == this.CurrentLocalId || (this.IsSuperAdminUser && this.CurrentLocalId == Guid.Empty)
                 var comparison = Expression.Equal(property, localIdProperty);
-                var comparisonOuSuperAdmin = Expression.OrElse(comparison, isSuperAdminProperty);
+                var comparisonOuSuperAdmin = Expression.OrElse(
+                    comparison,
+                    superAdminEmModoVerTodos
+                );
                 var lambda = Expression.Lambda(comparisonOuSuperAdmin, parameter);
 
                 modelBuilder.Entity(entityType.ClrType).HasQueryFilter(lambda);
