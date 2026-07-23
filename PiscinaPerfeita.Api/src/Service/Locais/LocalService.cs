@@ -79,19 +79,17 @@ namespace PiscinaPerfeita.Api.Service.Locais
             await _localRepository.Create(local);
 
             // SuperAdmin já enxerga/gerencia todos os Locais automaticamente
-            // (ver Show/GarantirAcessoAoLocal), então não precisa de vínculo.
+            // (ver Show/GarantirAcessoAoLocal e o filtro global em
+            // PiscinaPerfeitaContext), então NÃO deve ganhar um vínculo
+            // UsuarioLocal a cada Local que criar — antes isso acontecia
+            // incondicionalmente e um SuperAdmin acumulava um vínculo novo
+            // por Local criado, sem necessidade nenhuma.
             // Um Administrador comum precisa ficar vinculado ao Local que
             // acabou de criar para poder de fato usá-lo (criar piscinas,
             // produtos, etc. dentro dele).
-
-            /*if (usuarioLogado.Role != Role.SuperAdmin && usuarioLogado.UserId.HasValue && local.Id != Guid.Empty)
-            {
-            }
-            */
-            if (usuarioLogado.UserId != null)
+            if (usuarioLogado.Role != Role.SuperAdmin && usuarioLogado.UserId != null)
             {
                 await VincularCriadorAoNovoLocal(usuarioLogado.UserId.Value, local.Id);
-                Console.WriteLine($"Local Id{local.Id} e UsuarioId{usuarioLogado.UserId}");
             }
 
             return new LocalResponseDto
@@ -161,7 +159,10 @@ namespace PiscinaPerfeita.Api.Service.Locais
         private async Task GarantirSuperAdmin()
         {
             var usuarioLogado = await _user.GetCurrentUser();
-            if (usuarioLogado.Role != Role.SuperAdmin && usuarioLogado.Perfil != Perfil.Administrador)
+            if (
+                usuarioLogado.Role != Role.SuperAdmin
+                && usuarioLogado.Perfil != Perfil.Administrador
+            )
                 throw new UnauthorizedAccessException(
                     "Somente um SuperAdmin pode gerenciar Locais."
                 );
@@ -182,8 +183,6 @@ namespace PiscinaPerfeita.Api.Service.Locais
             var vinculos = await _usuarioLocalRepository.GetAllByUserId(usuarioLogado.UserId.Value);
             var podeCriar = vinculos.Any(v => v.Perfil == Perfil.Administrador);
 
-            Console.WriteLine($"Pode{podeCriar}");
-
             if (!podeCriar)
                 throw new UnauthorizedAccessException(
                     "Somente um SuperAdmin ou um usuário com Perfil Administrador pode criar Locais."
@@ -200,8 +199,6 @@ namespace PiscinaPerfeita.Api.Service.Locais
         {
             var vinculos = await _usuarioLocalRepository.GetAllByUserId(userId);
             var pendente = vinculos.FirstOrDefault(v => v.LocalId == null);
-
-            Console.WriteLine($"Vinculos {vinculos}, e pendente {pendente}");
 
             if (pendente != null)
             {

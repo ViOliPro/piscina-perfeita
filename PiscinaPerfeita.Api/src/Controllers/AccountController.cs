@@ -46,7 +46,7 @@ namespace PiscinaPerfeita.Api.Controllers
         // Novo JWT se o usuario mudar de local
         [HttpPost("SwitchLocal")]
         [Authorize]
-        public async Task<ActionResult<AccountResponseDto>> SwitchLocal(Guid newLocalId)
+        public async Task<ActionResult<AccountResponseDto>> SwitchLocal(Guid? newLocalId)
         {
             try
             {
