@@ -10,10 +10,10 @@
   ok.
   --Observação: Ao deletar a confirmacao é por meio de um Alert, sugestao de criar um modal.
 
-- Ao criar um novo local, automaticamente o usuario que criou é logado naquele novo local.
+- Ao criar um novo local, automaticamente o usuario que criou é logado naquele novo local, e o JWT é atualizado..
   ok.
 
-- Todas as páginas utilizam filtro de Local e local 1 não pode acessar os itens do local 2.
+- Ao trocar de local o Jwt é trocado e o front reflete.
 
 ### DEPOSITOS
 

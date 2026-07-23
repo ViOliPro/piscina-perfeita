@@ -193,8 +193,6 @@ export default function Locais() {
         const novo = await localService.criar(dto);
         setLocais((prev) => [novo, ...prev]);
         const ok = await switchLocal(novo.id);
-        console.log(ok);
-
         if (ok) window.location.reload();
       }
       setModal({ open: false, editing: null });

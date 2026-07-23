@@ -114,11 +114,20 @@ export function fromApiUsuarioList(rawList) {
  * (UsuarioRequestUpdateDto não os possui); enviá-los numa atualização é
  * inofensivo, pois o model binding do ASP.NET simplesmente os ignora.
  */
-export function toApiUsuario({ nome, email, senhaHash, role, cpf, perfil, localId }) {
+export function toApiUsuario({
+  nome,
+  email,
+  senhaHash,
+  role,
+  cpf,
+  perfil,
+  localId,
+}) {
   const dto = { Nome: nome, Email: email, Role: role ?? 1 };
   if (senhaHash) dto.senhaHash = senhaHash; // nome do campo no request dto
   if (cpf) dto.Cpf = cpf;
-  if (perfil !== undefined && perfil !== null && perfil !== "") dto.Perfil = parseInt(perfil);
+  if (perfil !== undefined && perfil !== null && perfil !== "")
+    dto.Perfil = parseInt(perfil);
   if (localId) dto.LocalId = localId;
   return dto;
 }
@@ -198,7 +207,14 @@ export function fromApiProdutoList(rawList) {
   return (rawList ?? []).map(fromApiProduto);
 }
 
-export function toApiProduto({ nome, unidadeMedida, fabricante, marca, observacoes, categoria }) {
+export function toApiProduto({
+  nome,
+  unidadeMedida,
+  fabricante,
+  marca,
+  observacoes,
+  categoria,
+}) {
   return {
     Nome: nome,
     UnidadeMedida: unidadeMedida,
@@ -307,7 +323,8 @@ export function fromApiEstoque(raw) {
     usuarioId: field(raw, "usuarioId", "UsuarioId"),
     depositoId: field(raw, "depositoId", "DepositoId"),
     quantidadeAtual: field(raw, "quantidadeAtual", "QuantidadeAtual") ?? 0,
-    quantidadeMinima: field(raw, "quantidadeMinima", "QuantidadeMinima") ?? null,
+    quantidadeMinima:
+      field(raw, "quantidadeMinima", "QuantidadeMinima") ?? null,
     estoqueIdeal: field(raw, "estoqueIdeal", "EstoqueIdeal") ?? null,
     // Relacionamentos
     piscina: raw?.piscina
@@ -340,19 +357,20 @@ export function fromApiEstoqueList(rawList) {
 }
 
 export function toApiEstoque({
-  piscinaId,
   produtoId,
+  produto,
   usuarioId,
+  usuario,
+  deposito,
   depositoId,
   quantidadeAtual,
   quantidadeMinima,
   estoqueIdeal,
 }) {
   return {
-    PiscinaId: piscinaId,
-    ProdutoId: produtoId,
-    UsuarioId: usuarioId,
-    DepositoId: depositoId,
+    ProdutoId: produtoId ?? produto?.id,
+    UsuarioId: usuarioId ?? usuario?.id,
+    DepositoId: depositoId ?? deposito?.id,
     QuantidadeAtual:
       quantidadeAtual != null ? parseFloat(quantidadeAtual) : null,
     QuantidadeMinima:
@@ -380,26 +398,35 @@ export function fromApiMovimentacao(raw) {
     depositoId: field(raw, "depositoId", "DepositoId"),
     tipoMovimentacao: field(raw, "tipoMovimentacao", "TipoMovimentacao") ?? 0,
     quantidade: field(raw, "quantidade", "Quantidade") ?? null,
-    unidadeLancamento: field(raw, "unidadeLancamento", "UnidadeLancamento") ?? "",
+    unidadeLancamento:
+      field(raw, "unidadeLancamento", "UnidadeLancamento") ?? "",
     valor: field(raw, "valor", "Valor") ?? null,
     dataMovimentacao: field(raw, "dataMovimentacao", "DataMovimentacao"),
     // Relacionamentos — a API retorna {Id, Nome} (NomeIdDto), não o objeto
     // completo; por isso extraímos direto em vez de usar fromApiPiscina/etc.
     piscina: (() => {
       const p = field(raw, "piscina", "Piscina");
-      return p ? { id: field(p, "id", "Id"), nome: field(p, "nome", "Nome") } : null;
+      return p
+        ? { id: field(p, "id", "Id"), nome: field(p, "nome", "Nome") }
+        : null;
     })(),
     produto: (() => {
       const p = field(raw, "produto", "Produto");
-      return p ? { id: field(p, "id", "Id"), nome: field(p, "nome", "Nome") } : null;
+      return p
+        ? { id: field(p, "id", "Id"), nome: field(p, "nome", "Nome") }
+        : null;
     })(),
     deposito: (() => {
       const d = field(raw, "deposito", "Deposito");
-      return d ? { id: field(d, "id", "Id"), nome: field(d, "nome", "Nome") } : null;
+      return d
+        ? { id: field(d, "id", "Id"), nome: field(d, "nome", "Nome") }
+        : null;
     })(),
     usuario: (() => {
       const u = field(raw, "usuario", "Usuario");
-      return u ? { id: field(u, "id", "Id"), nome: field(u, "nome", "Nome") } : null;
+      return u
+        ? { id: field(u, "id", "Id"), nome: field(u, "nome", "Nome") }
+        : null;
     })(),
   };
 }
@@ -460,7 +487,15 @@ export function fromApiLocalList(rawList) {
 }
 
 export function toApiLocal({
-  nome, descricao, telefone, observacoes, endereco, cidade, estado, pais, cep,
+  nome,
+  descricao,
+  telefone,
+  observacoes,
+  endereco,
+  cidade,
+  estado,
+  pais,
+  cep,
 }) {
   return {
     Nome: nome,
@@ -515,7 +550,9 @@ export function fromApiAplicacaoProduto(raw) {
   if (!raw) return null;
   const rel = (key1, key2) => {
     const r = field(raw, key1, key2);
-    return r ? { id: field(r, "id", "Id"), nome: field(r, "nome", "Nome") } : null;
+    return r
+      ? { id: field(r, "id", "Id"), nome: field(r, "nome", "Nome") }
+      : null;
   };
   return {
     id: field(raw, "id", "Id"),
@@ -524,9 +561,11 @@ export function fromApiAplicacaoProduto(raw) {
     deposito: rel("deposito", "Deposito"),
     usuario: rel("usuario", "Usuario"),
     analiseId: field(raw, "analiseId", "AnaliseId") ?? null,
-    movimentacaoEstoqueId: field(raw, "movimentacaoEstoqueId", "MovimentacaoEstoqueId") ?? null,
+    movimentacaoEstoqueId:
+      field(raw, "movimentacaoEstoqueId", "MovimentacaoEstoqueId") ?? null,
     quantidade: field(raw, "quantidade", "Quantidade") ?? 0,
-    unidadeLancamento: field(raw, "unidadeLancamento", "UnidadeLancamento") ?? "",
+    unidadeLancamento:
+      field(raw, "unidadeLancamento", "UnidadeLancamento") ?? "",
     dataAplicacao: field(raw, "dataAplicacao", "DataAplicacao"),
     observacoes: field(raw, "observacoes", "Observacoes") ?? "",
   };

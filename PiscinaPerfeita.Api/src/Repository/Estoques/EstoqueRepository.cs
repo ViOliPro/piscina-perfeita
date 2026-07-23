@@ -37,6 +37,8 @@ public class EstoqueRepository : IEstoqueRepository
                 // voltava com Deposito=null.
                 Deposito =
                     a.Deposito != null ? new NomeIdDto(a.DepositoId, a.Deposito.Nome) : null,
+                Usuario =
+                    a.Usuario != null ? new NomeIdDto(a.UsuarioId, a.Usuario.Nome) : null,
             })
             .ToListAsync();
     }
@@ -63,6 +65,8 @@ public class EstoqueRepository : IEstoqueRepository
                         : null,
                 Deposito =
                     a.Deposito != null ? new NomeIdDto(a.DepositoId, a.Deposito.Nome) : null,
+                Usuario =
+                    a.Usuario != null ? new NomeIdDto(a.UsuarioId, a.Usuario.Nome) : null,
             })
             .FirstOrDefaultAsync();
 
@@ -87,6 +91,7 @@ public class EstoqueRepository : IEstoqueRepository
         estoqueToUpdate.QuantidadeMinima = estoque.QuantidadeMinima;
         estoqueToUpdate.EstoqueIdeal = estoque.EstoqueIdeal;
         estoqueToUpdate.ProdutoId = estoque.ProdutoId;
+        estoqueToUpdate.UsuarioId = estoque.UsuarioId;
 
         await _context.SaveChangesAsync();
     }

@@ -3,9 +3,9 @@ using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Helpers.Authenticated;
 using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Repository.Estoques;
-using PiscinaPerfeita.Api.Repository.Piscinas;
 using PiscinaPerfeita.Api.Repository.Produtos;
 using PiscinaPerfeita.Api.Repository.Depositos;
+using PiscinaPerfeita.Api.Repository.Usuarios;
 
 
 namespace PiscinaPerfeita.Api.Service.Estoques
@@ -15,13 +15,15 @@ namespace PiscinaPerfeita.Api.Service.Estoques
         private readonly IEstoqueRepository _estoqueRepository;
         private readonly IProdutoRepository _produtoRepository;
         private readonly IDepositoRepository _depositoRepository;
+        private readonly IUsuarioRepository _usuarioRepository;
         private readonly IAuthenticatedUser _user;
 
         public EstoqueService(
             IEstoqueRepository estoqueRepository,
             IProdutoRepository produtoRepository,
             IDepositoRepository depositoRepository,
-            IAuthenticatedUser user
+            IUsuarioRepository usuarioRepository,
+        IAuthenticatedUser user
         )
         {
             _estoqueRepository =
@@ -30,6 +32,8 @@ namespace PiscinaPerfeita.Api.Service.Estoques
                 produtoRepository ?? throw new ArgumentNullException(nameof(produtoRepository));
             _depositoRepository =
                 depositoRepository ?? throw new ArgumentNullException(nameof(depositoRepository));
+            _usuarioRepository =
+                usuarioRepository ?? throw new ArgumentNullException(nameof(usuarioRepository));
             _user = user ?? throw new ArgumentNullException(nameof(user));
         }
 
@@ -71,7 +75,7 @@ namespace PiscinaPerfeita.Api.Service.Estoques
             var estoque = new Estoque
             {
                 ProdutoId = dto.ProdutoId,
-                UsuarioId = dto.UsuarioId ?? _user.GetUserId(),
+                UsuarioId = dto.UsuarioId != Guid.Empty ? dto.UsuarioId : _user.GetUserId(),
                 DepositoId = dto.DepositoId,
                 QuantidadeAtual = dto.QuantidadeAtual,
                 QuantidadeMinima = dto.QuantidadeMinima ?? 5,
@@ -118,6 +122,12 @@ namespace PiscinaPerfeita.Api.Service.Estoques
                     $"Não foi encontrado um deposito com o id {dto.DepositoId}"
                 );
 
+            var usuarioDb = await _usuarioRepository.GetById(dto.UsuarioId);
+            if (usuarioDb == null)
+                throw new KeyNotFoundException(
+                    $"Não foi encontrado um usuario com o id {dto?.UsuarioId}"
+                );
+
             // Bug corrigido: antes, se o DTO não trouxesse QuantidadeMinima/EstoqueIdeal
             // (ex.: front ainda não envia o campo), o valor existente era apagado
             // com null. Agora, campo ausente no DTO preserva o valor já salvo.
@@ -134,6 +144,7 @@ namespace PiscinaPerfeita.Api.Service.Estoques
                 QuantidadeAtual = dto.QuantidadeAtual,
                 QuantidadeMinima = quantidadeMinima,
                 EstoqueIdeal = estoqueIdeal,
+                UsuarioId = dto.UsuarioId != Guid.Empty ? dto.UsuarioId : _user.GetUserId(),
             };
 
             await _estoqueRepository.Update(id, estoqueUpdated);
@@ -145,6 +156,7 @@ namespace PiscinaPerfeita.Api.Service.Estoques
                 QuantidadeMinima = quantidadeMinima,
                 EstoqueIdeal = estoqueIdeal,
                 Deposito = new NomeIdDto(dto.DepositoId, depositoDb.Nome),
+                Usuario = new NomeIdDto(dto.UsuarioId, usuarioDb.Nome),
 
                 Produto = new ProdutoEstoque
                 {
