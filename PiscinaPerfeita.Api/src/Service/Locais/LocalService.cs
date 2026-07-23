@@ -159,7 +159,10 @@ namespace PiscinaPerfeita.Api.Service.Locais
         private async Task GarantirSuperAdmin()
         {
             var usuarioLogado = await _user.GetCurrentUser();
-            if (usuarioLogado.Role != Role.SuperAdmin && usuarioLogado.Perfil != Perfil.Administrador)
+            if (
+                usuarioLogado.Role != Role.SuperAdmin
+                && usuarioLogado.Perfil != Perfil.Administrador
+            )
                 throw new UnauthorizedAccessException(
                     "Somente um SuperAdmin pode gerenciar Locais."
                 );

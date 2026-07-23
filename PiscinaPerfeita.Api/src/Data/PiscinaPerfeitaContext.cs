@@ -195,7 +195,6 @@ public partial class PiscinaPerfeitaContext : DbContext
         {
             entity.ToTable("Depositos", "piscina-perfeita");
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()"); // Mudado para gerar automático
-
         });
 
         modelBuilder.Entity<AplicacaoProduto>(entity =>

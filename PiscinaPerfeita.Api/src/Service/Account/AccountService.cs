@@ -74,11 +74,6 @@ namespace PiscinaPerfeita.Api.Service.Account
         public async Task<AccountResponseDto> SwitchLocal(Guid userId, Guid? newLocalId)
         {
             // 1. Busca o usuário para garantir que existe e obter as informações de Claims.
-            // Usa GetPasswordById (apesar do nome, retorna o Usuario completo/real) em vez
-            // de GetById (que retorna um UsuarioResponseDto — sem SenhaHash e incompatível
-            // com o tipo que NewToken exige). Era exatamente essa incompatibilidade de tipo
-            // que fazia o código antigo reconstruir um Usuario do zero mais abaixo, e
-            // reconstruir sem preencher SenhaHash é o que zerava a senha a cada troca de Local.
             var usuario = await _usuarioRepository.GetPasswordById(userId);
             if (usuario == null)
                 throw new KeyNotFoundException("Usuário não encontrado.");
@@ -112,8 +107,7 @@ namespace PiscinaPerfeita.Api.Service.Account
             }
 
             // 2. Valida o acesso ao Local. SuperAdmin não depende de um vínculo em
-            // UsuariosLocal (ver LocalService.Create, que propositalmente não cria
-            // vínculo pra ele) — só confirmamos que o Local existe de verdade. Um
+            // UsuariosLocal — só confirmamos que o Local existe de verdade. Um
             // usuário comum precisa mesmo do vínculo ativo.
             Perfil perfilAtivo;
             if (usuario.Role == Role.SuperAdmin)
@@ -135,13 +129,10 @@ namespace PiscinaPerfeita.Api.Service.Account
                 perfilAtivo = vinculo.Perfil;
             }
 
-            // 3. Persiste a escolha (só o UltimoLocalId — método dedicado, não
-            // mexe em mais nada do usuário, ver comentário no repositório).
+            // 3. Persiste a escolha (só o UltimoLocalId).
             await _usuarioRepository.UpdateUltimoLocal(userId, newLocalId.Value);
 
-            // 4. Gera o novo Token com o local e o perfil (referente a este local) alterados.
-            // Usa o "usuario" já carregado no passo 1 (com SenhaHash intacto) — não
-            // precisa reconstruir o objeto.
+            // 4. Gera o novo Token com o local e o perfil alterados.
             var stringToken = NewToken(usuario, newLocalId.Value.ToString(), perfilAtivo);
 
             return new AccountResponseDto
@@ -189,11 +180,7 @@ namespace PiscinaPerfeita.Api.Service.Account
             return true;
         }
 
-        // Validação e lógica do Usuario Local — retorna o Local que ficará
-        // ativo na sessão e o Perfil do usuário NESSE local (ou do vínculo
-        // pendente, quando o usuário ainda não está ligado a nenhum Local —
-        // ex.: um Administrador recém-criado, que precisa criar seu primeiro
-        // Local antes de usar o resto do sistema).
+        // Validação e lógica do Usuario Local
         private async Task<(Guid? LocalId, Perfil Perfil)> ValidacaoUsuarioLocal(
             Guid userId,
             Usuario usuario
@@ -210,8 +197,6 @@ namespace PiscinaPerfeita.Api.Service.Account
             else
                 localIdAtivo = vinculos[0].LocalId;
 
-            // Perfil referente ao Local que efetivamente ficou ativo — pode
-            // divergir do primeiro vínculo da lista quando há mais de um.
             var perfilAtivo =
                 vinculos.FirstOrDefault(v => v.LocalId == localIdAtivo)?.Perfil
                 ?? vinculos[0].Perfil;
@@ -219,7 +204,7 @@ namespace PiscinaPerfeita.Api.Service.Account
             return (localIdAtivo, perfilAtivo);
         }
 
-        // Simplificado: removido o async desnecessário já que a criação do token é puramente síncrona em memória
+        // Simplificado: criação síncrona do token em memória
         private string NewToken(Usuario usuario, string stringLocalId, Perfil perfil)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
