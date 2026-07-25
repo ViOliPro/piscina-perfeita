@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PiscinaPerfeita.Api.Authorization;
 using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Service.Locais;
@@ -8,7 +9,7 @@ namespace PiscinaPerfeita.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(Policy = Policies.UserOrSuper)]
     public class LocaisController : ControllerBase
     {
         private readonly ILocalService _locaisService;
@@ -22,6 +23,7 @@ namespace PiscinaPerfeita.Api.Controllers
         // GET: api/locais
         // SuperAdmin vê todos os Locais; demais usuários veem só os que estão vinculados.
         [HttpGet]
+        [Authorize(Policy = Policies.GerenciarLocal)]
         public async Task<ActionResult<IEnumerable<LocalResponseDto>>> Get()
         {
             try
@@ -41,6 +43,7 @@ namespace PiscinaPerfeita.Api.Controllers
 
         // GET: api/locais/{id}
         [HttpGet("{id}")]
+        [Authorize(Policy = Policies.GerenciarLocal)]
         public async Task<ActionResult<LocalResponseDto>> GetById(Guid id)
         {
             try
@@ -60,6 +63,7 @@ namespace PiscinaPerfeita.Api.Controllers
 
         // POST: api/locais  (somente SuperAdmin)
         [HttpPost]
+        [Authorize(Policy = Policies.GerenciarLocal)]
         public async Task<ActionResult<LocalResponseDto>> Create(LocalRequestDto dto)
         {
             try
@@ -79,6 +83,7 @@ namespace PiscinaPerfeita.Api.Controllers
 
         // PUT: api/locais/{id}  (somente SuperAdmin)
         [HttpPut("{id}")]
+        [Authorize(Policy = Policies.GerenciarLocal)]
         public async Task<ActionResult<LocalResponseDto>> Update(Guid id, LocalRequestDto dto)
         {
             try
@@ -98,6 +103,7 @@ namespace PiscinaPerfeita.Api.Controllers
 
         // DELETE: api/locais/{id}  (somente SuperAdmin)
         [HttpDelete("{id}")]
+        [Authorize(Policy = Policies.GerenciarLocal)]
         public async Task<ActionResult> Delete(Guid id)
         {
             try

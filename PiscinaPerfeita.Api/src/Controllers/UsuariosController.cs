@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PiscinaPerfeita.Api.Authorization;
 using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Service.Usuarios;
@@ -8,9 +9,7 @@ namespace PiscinaPerfeita.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize] // Estava faltando: este controller ficava 100% público (lista, cria, edita e apaga
-                // usuário sem autenticação nenhuma). Todos os métodos do serviço já assumiam um
-                // usuário autenticado (via IAuthenticatedUser) — só faltava essa trava na entrada.
+    [Authorize(Policy = Policies.UserOrSuper)]
     public class UsuariosController : ControllerBase
     {
         private readonly IUsuarioService _usuariosService;
@@ -23,6 +22,7 @@ namespace PiscinaPerfeita.Api.Controllers
 
         // 1. GET: api/clientes (Retorna todos os registros do banco)
         [HttpGet]
+        [Authorize(Policy = Policies.GerenciarUsuario)]
         public async Task<ActionResult<IEnumerable<UsuarioResponseDto>>> Get()
         {
             try
@@ -38,6 +38,7 @@ namespace PiscinaPerfeita.Api.Controllers
 
         // 2. GET: api/clientes/id (Retorna o registro com id)
         [HttpGet("{id}")]
+        [Authorize(Policy = Policies.GerenciarUsuario)]
         public async Task<ActionResult<UsuarioResponseDto>> GetById(Guid id)
         {
             try
@@ -57,6 +58,7 @@ namespace PiscinaPerfeita.Api.Controllers
 
         // 3. POST: api/clientes (Insere um dado novo que aparecerá no pgAdmin)
         [HttpPost]
+        [Authorize(Policy = Policies.GerenciarUsuario)]
         public async Task<ActionResult<UsuarioResponseDto>> Create(UsuarioRequestDto dto)
         {
             try
@@ -80,6 +82,7 @@ namespace PiscinaPerfeita.Api.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Policy = Policies.GerenciarUsuario)]
         public async Task<ActionResult> Update(Guid id, UsuarioRequestUpdateDto dto)
         {
             try
@@ -108,7 +111,7 @@ namespace PiscinaPerfeita.Api.Controllers
         // usuários de outros Locais (IDOR). Enquanto esse escopo não é
         // implementado no service, mantemos essa ação restrita ao papel mais
         // privilegiado.
-        [Authorize(Roles = "SuperAdmin")]
+        [Authorize(Policy = Policies.GerenciarUsuario)]
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(Guid id)
         {

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PiscinaPerfeita.Api.Authorization;
 using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Service.AplicacoesProduto;
@@ -8,7 +9,7 @@ namespace PiscinaPerfeita.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(Policy = Policies.UserOrSuper)]
     public class AplicacoesProdutoController : ControllerBase
     {
         private readonly IAplicacaoProdutoService _aplicacaoService;
@@ -21,6 +22,7 @@ namespace PiscinaPerfeita.Api.Controllers
 
         // GET: api/aplicacoesproduto
         [HttpGet]
+        [Authorize(Policy = Policies.Listar)]
         public async Task<ActionResult<IEnumerable<AplicacaoProdutoResponseDto>>> Get()
         {
             var aplicacoes = await _aplicacaoService.Show();
@@ -29,6 +31,7 @@ namespace PiscinaPerfeita.Api.Controllers
 
         // GET: api/aplicacoesproduto/{id}
         [HttpGet("{id}")]
+        [Authorize(Policy = Policies.Listar)]
         public async Task<ActionResult<AplicacaoProdutoResponseDto>> GetById(Guid id)
         {
             try
@@ -51,6 +54,7 @@ namespace PiscinaPerfeita.Api.Controllers
         // diferente da unidade base do produto (ex.: produto em L,
         // aplicação em mL).
         [HttpPost]
+        [Authorize(Policy = Policies.Cadastrar)]
         public async Task<ActionResult<AplicacaoProdutoResponseDto>> Create(
             AplicacaoProdutoRequestDto dto
         )

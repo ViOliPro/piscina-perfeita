@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PiscinaPerfeita.Api.Authorization;
 using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Service.UsuariosLocal;
@@ -8,7 +9,7 @@ namespace PiscinaPerfeita.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(Policy = Policies.UserOrSuper)]
     public class UsuariosLocaisController : ControllerBase
     {
         private readonly IUsuarioLocalService _usuariosLocaisService;
@@ -22,6 +23,7 @@ namespace PiscinaPerfeita.Api.Controllers
 
         // GET: api/usuarioslocais  (somente SuperAdmin)
         [HttpGet]
+        [Authorize(Policy = Policies.GerenciarUsuarioLocal)]
         public async Task<ActionResult<IEnumerable<UsuarioLocalResponseDto>>> Get()
         {
             try
@@ -38,6 +40,7 @@ namespace PiscinaPerfeita.Api.Controllers
         // GET: api/usuarioslocais/meus
         // Locais vinculados ao usuário autenticado — alimenta o seletor "Trocar Local".
         [HttpGet("meus")]
+        [Authorize(Policy = Policies.GerenciarUsuarioLocal)]
         public async Task<ActionResult<IEnumerable<UsuarioLocalResponseDto>>> GetMeus()
         {
             try
@@ -54,6 +57,7 @@ namespace PiscinaPerfeita.Api.Controllers
         // GET: api/usuarioslocais/usuario/{usuarioId}
         // Locais vinculados a um usuário específico — usado na tela de administração.
         [HttpGet("usuario/{usuarioId}")]
+        [Authorize(Policy = Policies.GerenciarUsuarioLocal)]
         public async Task<ActionResult<IEnumerable<UsuarioLocalResponseDto>>> GetByUsuario(
             Guid usuarioId
         )
@@ -71,6 +75,7 @@ namespace PiscinaPerfeita.Api.Controllers
 
         // GET: api/usuarioslocais/{id}  (somente SuperAdmin)
         [HttpGet("{id}")]
+        [Authorize(Policy = Policies.GerenciarUsuarioLocal)]
         public async Task<ActionResult<UsuarioLocalResponseDto>> GetById(Guid id)
         {
             try
@@ -91,6 +96,7 @@ namespace PiscinaPerfeita.Api.Controllers
         // POST: api/usuarioslocais  (somente SuperAdmin)
         // É o passo de "vincular": liga um usuário (já criado) a um Local (já criado).
         [HttpPost]
+        [Authorize(Policy = Policies.GerenciarUsuarioLocal)]
         public async Task<ActionResult<UsuarioLocalResponseDto>> Create(UsuarioLocalRequestDto dto)
         {
             try
@@ -116,6 +122,7 @@ namespace PiscinaPerfeita.Api.Controllers
         // Também usado para oficializar o vínculo pendente (LocalId nulo)
         // criado automaticamente junto do usuário.
         [HttpPut("{id}")]
+        [Authorize(Policy = Policies.GerenciarUsuarioLocal)]
         public async Task<ActionResult<UsuarioLocalResponseDto>> Update(
             Guid id,
             UsuarioLocalRequestDto dto
@@ -138,6 +145,7 @@ namespace PiscinaPerfeita.Api.Controllers
 
         // DELETE: api/usuarioslocais/{id}  (somente SuperAdmin)
         [HttpDelete("{id}")]
+        [Authorize(Policy = Policies.GerenciarUsuarioLocal)]
         public async Task<ActionResult> Delete(Guid id)
         {
             try

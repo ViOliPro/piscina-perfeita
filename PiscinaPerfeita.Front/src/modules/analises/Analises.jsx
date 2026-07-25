@@ -25,6 +25,7 @@ import {
   usuarioService,
 } from "../../config/services.js";
 import { ANALISE_FAIXAS } from "../../config/index.js";
+import { getLocalDateTimeInput } from "../../utils/getLocalDateTimeInput.js";
 
 // ----------------------------------------------------------
 // Helpers
@@ -55,7 +56,7 @@ function AnaliseForm({ piscinas, usuarios, onSubmit, onCancel, loading }) {
   const [form, setForm] = useState({
     piscinaId: "",
     usuarioId: "",
-    dataAnalise: new Date().toISOString().slice(0, 16),
+    dataAnalise: getLocalDateTimeInput(),
     ph: "",
     cloroLivre: "",
     alcalinidade: "",

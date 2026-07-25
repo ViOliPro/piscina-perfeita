@@ -91,7 +91,7 @@ function EstoqueForm({
 
   const [formError, setFormError] = useState(null);
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
-  console.log(form);
+
   function handleSubmit(e) {
     e.preventDefault();
 

@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using PiscinaPerfeita.Api.Authorization;
 using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Service.Analises;
@@ -9,18 +9,20 @@ namespace PiscinaPerfeita.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(Policy = Policies.UserOrSuper)]
     public class AnalisesController : ControllerBase
     {
         private readonly IAnaliseService _analisesService;
 
         public AnalisesController(IAnaliseService analisesService)
         {
-            _analisesService = analisesService ?? throw new ArgumentNullException(nameof(analisesService));
+            _analisesService =
+                analisesService ?? throw new ArgumentNullException(nameof(analisesService));
         }
 
         // 1. GET: api/clientes (Retorna todos os registros do banco)
         [HttpGet]
+        [Authorize(Policy = Policies.Listar)]
         public async Task<ActionResult<IEnumerable<AnaliseResponseDto>>> Get()
         {
             try
@@ -36,6 +38,7 @@ namespace PiscinaPerfeita.Api.Controllers
 
         // 2. GET: api/clientes/id (Retorna o registro com id)
         [HttpGet("{id}")]
+        [Authorize(Policy = Policies.Listar)]
         public async Task<ActionResult<AnaliseResponseDto>> GetById(Guid id)
         {
             try
@@ -51,6 +54,7 @@ namespace PiscinaPerfeita.Api.Controllers
 
         // 3. POST: api/analises
         [HttpPost]
+        [Authorize(Policy = Policies.Cadastrar)]
         public async Task<ActionResult<AnaliseResponseDto>> Create(AnaliseRequestDto dto)
         {
             try
@@ -59,7 +63,7 @@ namespace PiscinaPerfeita.Api.Controllers
 
                 return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
             }
-            catch (KeyNotFoundException ex )
+            catch (KeyNotFoundException ex)
             {
                 return BadRequest(new { message = ex.Message });
             }
@@ -70,21 +74,23 @@ namespace PiscinaPerfeita.Api.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Policy = Policies.Editar)]
         public async Task<ActionResult> Update(Guid id, AnaliseRequestDto dto)
         {
             try
             {
                 var analises = await _analisesService.Update(id, dto);
-                return CreatedAtAction(nameof(GetById), new { id = analises.Id }, analises); ;
+                return CreatedAtAction(nameof(GetById), new { id = analises.Id }, analises);
+                ;
             }
             catch (KeyNotFoundException ex)
             {
                 return NotFound(new { message = ex.Message });
             }
-
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Policy = Policies.Deletar)]
         public async Task<ActionResult> Delete(Guid id)
         {
             try
@@ -96,7 +102,6 @@ namespace PiscinaPerfeita.Api.Controllers
             {
                 return NotFound(new { message = ex.Message });
             }
-
         }
     }
 }

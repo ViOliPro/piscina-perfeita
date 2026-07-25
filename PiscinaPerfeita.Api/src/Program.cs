@@ -2,11 +2,13 @@ using System.Globalization;
 using System.Reflection;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using PiscinaPerfeita.Api.Authorization;
 using PiscinaPerfeita.Api.Data;
 using PiscinaPerfeita.Api.Extension;
 
@@ -24,7 +26,7 @@ var localizationOptions = new RequestLocalizationOptions
     SupportedUICultures = new List<CultureInfo> { defaultCulture },
 };
 
-// 3. JWT Authentication (Agora sim, depois do Env.Load())
+// 3. JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"];
 
 if (string.IsNullOrWhiteSpace(jwtKey))
@@ -57,9 +59,21 @@ builder
     });
 
 // Authorization
-builder.Services.AddAuthorization();
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, PerfilPolicyProvider>();
+builder.Services.AddScoped<IAuthorizationHandler, PerfilHandler>();
 
-// Add services to the container.
+builder.Services.AddAuthorization(options =>
+{
+    // Define que por padrão TODAS as rotas precisam estar autenticadas
+    options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+
+    // Define políticas específicas para reuso
+    options.AddPolicy("SuperAdminOnly", policy => policy.RequireRole("SuperAdmin"));
+    options.AddPolicy("User", policy => policy.RequireRole("Usuario"));
+    options.AddPolicy("UserOrSuper", policy => policy.RequireRole("SuperAdmin", "Usuario"));
+});
+
+// Add services to the container
 builder.Services.AddControllers();
 
 if (Assembly.GetEntryAssembly()?.GetName().Name != "ef")
