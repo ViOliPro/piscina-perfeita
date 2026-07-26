@@ -1,0 +1,22 @@
+name: Deploy - PiscinaPerfeita API
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'PiscinaPerfeita.Api/**' # Executa apenas quando a pasta da API mudar
+
+jobs:
+  build-and-deploy-api:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Validar Build da imagem Docker
+        run: |
+          docker build -f ./PiscinaPerfeita.Api/src/Dockerfile -t piscina-api:test .
+
+      - name: Disparar Deploy no Render (API)
+        run: |
+          curl -X POST "${{ secrets.RENDER_API_DEPLOY_HOOK }}"
