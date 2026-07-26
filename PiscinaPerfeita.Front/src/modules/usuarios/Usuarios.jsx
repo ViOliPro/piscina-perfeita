@@ -47,7 +47,7 @@ function UsuarioForm({ initial, onSubmit, onCancel, loading }) {
       ? {
           nome: initial.nome,
           email: initial.email ?? "",
-          role: String(initial.role),
+          perfil: String(initial.perfil),
           senha: "",
         }
       : {

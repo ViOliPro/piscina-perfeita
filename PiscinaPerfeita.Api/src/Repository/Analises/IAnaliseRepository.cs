@@ -6,7 +6,7 @@ namespace PiscinaPerfeita.Api.Repository.Analises
     public interface IAnaliseRepository
     {
 
-        Task<List<AnaliseResponseDto>> Show();
+        Task<List<AnaliseResponseDto>> Show(DateTimeOffset? dataInicio = null, DateTimeOffset? dataFim = null, Guid? piscinaId = null);
 
         Task<AnaliseResponseDto?> GetById(Guid id);
 

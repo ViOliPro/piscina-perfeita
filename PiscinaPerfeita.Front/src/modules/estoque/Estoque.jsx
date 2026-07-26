@@ -79,17 +79,16 @@ function EstoqueForm({
   loading,
   initial,
 }) {
-  const [form, setForm] = useState(
-    initial ?? {
-      piscinaId: "",
-      produtoId: "",
-      usuarioId: "",
-      depositoId: "",
-      quantidadeAtual: "",
-      quantidadeMinima: "",
-      estoqueIdeal: "",
-    },
-  );
+  // Inicialização segura utilizando os dados de 'initial' (quando for edição)
+  const [form, setForm] = useState(() => ({
+    piscinaId: initial?.piscinaId ?? initial?.piscina?.id ?? "",
+    produtoId: initial?.produtoId ?? initial?.produto?.id ?? "",
+    usuarioId: initial?.usuarioId ?? initial?.usuario?.id ?? null,
+    depositoId: initial?.depositoId ?? initial?.deposito?.id ?? "",
+    quantidadeAtual: initial?.quantidadeAtual ?? "",
+    quantidadeMinima: initial?.quantidadeMinima ?? "",
+    estoqueIdeal: initial?.estoqueIdeal ?? "",
+  }));
 
   const [formError, setFormError] = useState(null);
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
@@ -108,6 +107,9 @@ function EstoqueForm({
     setFormError(null);
     onSubmit({
       ...form,
+      quantidadeAtual: parseFloat(form.quantidadeAtual) || 0,
+      quantidadeMinima,
+      estoqueIdeal,
     });
   }
 
@@ -474,6 +476,16 @@ export default function Estoque() {
     }
   }
 
+  async function handleDelete(id) {
+    if (!confirm("Excluir este estoque?")) return;
+    try {
+      await estoqueService.excluir(id);
+      setEstoques((prev) => prev.filter((d) => d.id !== id));
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   const filtered = estoques.filter((e) => {
     const txt = `${e.produto?.nome} ${e.deposito?.nome}`.toLowerCase();
     const matchSearch = txt.includes(search.toLowerCase());
@@ -511,103 +523,116 @@ export default function Estoque() {
       },
     },
     {
-      key: "_edit",
+      key: "_acoes",
       label: "",
       render: (_, r) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setModal({ open: true, editing: r })}
-          permission={PERMISSIONS.ESTOQUES.CREATE}
-        >
-          Editar
-        </Button>
+        <div style={{ display: "flex", gap: 6 }}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setModal({ open: true, editing: r })}
+            permission={PERMISSIONS.ESTOQUES.CREATE}
+          >
+            Editar
+          </Button>
+
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => handleDelete(r.id)}
+            permission={PERMISSIONS.ESTOQUES.DELETE}
+          >
+            Excluir
+          </Button>
+        </div>
       ),
     },
   ];
 
-  if (loading) return <LoadingSpinner />;
-
   return (
     <ProtecaoDeRota permissao={PERMISSIONS.ESTOQUES.VIEW}>
-      <div>
-        <PageHeader
-          title="Estoque"
-          description="Controle de produtos"
-          action={
-            <Button
-              variant="primary"
-              onClick={() => setModal({ open: true, editing: false })}
-              permissao={PERMISSIONS.ESTOQUES.CREATE}
-            >
-              + Registrar entrada
-            </Button>
-          }
-        />
-
-        {error && <ErrorMessage message={error} />}
-
-        <Tabs
-          active={tab}
-          onChange={setTab}
-          tabs={[
-            { id: "todos", label: "Todos" },
-            { id: "baixo", label: `⚠️ Estoque baixo (${baixoItens.length})` },
-            { id: "orcamento", label: "📄 Pedido de orçamento" },
-          ]}
-        />
-
-        {tab !== "orcamento" && (
-          <Toolbar>
-            <SearchInput
-              value={search}
-              onChange={setSearch}
-              placeholder="Buscar produto ou depósito…"
-            />
-            <FilterSelect
-              value={filtroDeposito}
-              onChange={setFiltroDeposito}
-              placeholder="Todos os depósitos"
-              options={depositos.map((d) => ({ value: d.id, label: d.nome }))}
-            />
-          </Toolbar>
-        )}
-
-        {tab === "orcamento" ? (
-          <PedidoOrcamento itens={baixoItens} />
-        ) : (
-          <Card noPadding>
-            <DataTable
-              columns={columns}
-              data={filtered}
-              emptyMessage={
-                tab === "baixo"
-                  ? "Nenhum item com estoque baixo. Tudo em ordem!"
-                  : "Nenhum item encontrado."
-              }
-            />
-          </Card>
-        )}
-
-        <Modal
-          open={modal.open}
-          onClose={() => setModal({ open: false, editing: null })}
-          title={
-            modal.editing ? "Registrar entrada de estoque" : "Novo estoque"
-          }
-        >
-          <EstoqueForm
-            initial={modal.editing}
-            piscinas={piscinas}
-            produtos={produtos}
-            usuarios={usuarios}
-            depositos={depositos}
-            onSubmit={handleSave}
-            onCancel={() => setModal({ open: false, editing: null })}
-            loading={saving}
+      {loading ? (
+        <LoadingSpinner />
+      ) : (
+        <div>
+          <PageHeader
+            title="Estoque"
+            description="Controle de produtos"
+            action={
+              <Button
+                variant="primary"
+                onClick={() => setModal({ open: true, editing: false })}
+                permissao={PERMISSIONS.ESTOQUES.CREATE}
+              >
+                + Registrar entrada
+              </Button>
+            }
           />
-        </Modal>
-      </div>
+
+          {error && <ErrorMessage message={error} />}
+
+          <Tabs
+            active={tab}
+            onChange={setTab}
+            tabs={[
+              { id: "todos", label: "Todos" },
+              { id: "baixo", label: `⚠️ Estoque baixo (${baixoItens.length})` },
+              { id: "orcamento", label: "📄 Pedido de orçamento" },
+            ]}
+          />
+
+          {tab !== "orcamento" && (
+            <Toolbar>
+              <SearchInput
+                value={search}
+                onChange={setSearch}
+                placeholder="Buscar produto ou depósito…"
+              />
+              <FilterSelect
+                value={filtroDeposito}
+                onChange={setFiltroDeposito}
+                placeholder="Todos os depósitos"
+                options={depositos.map((d) => ({ value: d.id, label: d.nome }))}
+              />
+            </Toolbar>
+          )}
+
+          {tab === "orcamento" ? (
+            <PedidoOrcamento itens={baixoItens} />
+          ) : (
+            <Card noPadding>
+              <DataTable
+                columns={columns}
+                data={filtered}
+                emptyMessage={
+                  tab === "baixo"
+                    ? "Nenhum item com estoque baixo. Tudo em ordem!"
+                    : "Nenhum item encontrado."
+                }
+              />
+            </Card>
+          )}
+
+          <Modal
+            open={modal.open}
+            onClose={() => setModal({ open: false, editing: null })}
+            title={
+              modal.editing ? "Registrar entrada de estoque" : "Novo estoque"
+            }
+          >
+            <EstoqueForm
+              initial={modal.editing}
+              piscinas={piscinas}
+              produtos={produtos}
+              usuarios={usuarios}
+              depositos={depositos}
+              onSubmit={handleSave}
+              onCancel={() => setModal({ open: false, editing: null })}
+              loading={saving}
+            />
+          </Modal>
+        </div>
+      )}
     </ProtecaoDeRota>
   );
 }

@@ -88,7 +88,7 @@
 - **Tarefas:**
   - [ x ] Importar dados legados de planilhas (produtos/estoque) via script SQL.
   - [ x ] Documentação técnica completa + DER (diagrama de entidade-relacionamento).
-  - [ ] Teste caixa-preta completo da aplicação, com revisão de regras de negócio.
+  - [ x ] Teste caixa-preta completo da aplicação, com revisão de regras de negócio.
 
 ### Versão 1.4.3 — Mobile First
 

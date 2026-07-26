@@ -13,10 +13,32 @@ public class AnaliseRepository : IAnaliseRepository
         _context = context ?? throw new ArgumentNullException(nameof(context));
     }
 
-    public async Task<List<AnaliseResponseDto>> Show()
+    public async Task<List<AnaliseResponseDto>> Show(DateTimeOffset? dataInicio = null, DateTimeOffset? dataFim = null, Guid? piscinaId = null)
     {
-        return await _context
-            .Analises.Select(a => new AnaliseResponseDto
+        var query = _context.Analises.AsNoTracking().AsQueryable();
+
+        // Início do mês atual como padrão caso não receba parâmetro
+        if (!dataInicio.HasValue)
+        {
+            var agora = DateTimeOffset.UtcNow;
+            dataInicio = new DateTimeOffset(agora.Year, agora.Month, 1, 0, 0, 0, agora.Offset);
+        }
+
+        query = query.Where(a => a.DataAnalise >= dataInicio.Value);
+
+        if (dataFim.HasValue)
+        {
+            query = query.Where(a => a.DataAnalise <= dataFim.Value);
+        }
+
+        if (piscinaId.HasValue)
+        {
+            query = query.Where(a => a.PiscinaId == piscinaId.Value);
+        }
+
+        return await query
+            .OrderByDescending(a => a.DataAnalise)
+            .Select(a => new AnaliseResponseDto
             {
                 Id = a.Id,
                 DataAnalise = a.DataAnalise,

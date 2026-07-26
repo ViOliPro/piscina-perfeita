@@ -68,8 +68,8 @@ export const API_ENDPOINTS = {
 // Estoque — limites para classificação de status
 // ----------------------------------------------------------
 export const ESTOQUE_LIMITES = {
-  BAIXO: 5, // qtd ≤ este valor  → badge "Baixo"   (vermelho)
-  ATENCAO: 15, // qtd ≤ este valor  → badge "Atenção"  (amarelo)
+  BAIXO: 1, // qtd ≤ este valor  → badge "Baixo"   (vermelho)
+  ATENCAO: 2, // qtd ≤ este valor  → badge "Atenção"  (amarelo)
   // qtd > ATENCAO     → badge "Normal"   (verde)
 };
 
@@ -220,7 +220,7 @@ export const THEME = {
 // Metadados da aplicação
 // ----------------------------------------------------------
 export const APP_META = {
-  name: import.meta.env.VITE_APP_META_NAME,
-  version: import.meta.env.VITE_APP_META_VERSION,
+  name: import.meta.env.VITE_APP_META_NAME ?? "Piscina Perfeita",
+  version: import.meta.env.VITE_APP_META_VERSION ?? "1.4.3",
   contact: "compras@piscinaperfeita.com.br",
 };
