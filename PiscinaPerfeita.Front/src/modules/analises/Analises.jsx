@@ -195,10 +195,20 @@ function AnaliseForm({ piscinas, usuarios, onSubmit, onCancel, loading }) {
           marginTop: 16,
         }}
       >
-        <Button variant="ghost" onClick={onCancel} type="button">
+        <Button
+          variant="ghost"
+          onClick={onCancel}
+          type="button"
+          permission={PERMISSIONS.ANALISES.CREATE}
+        >
           Cancelar
         </Button>
-        <Button variant="primary" type="submit" disabled={loading}>
+        <Button
+          variant="primary"
+          type="submit"
+          disabled={loading}
+          permission={PERMISSIONS.ANALISES.CREATE}
+        >
           {loading ? "Salvando…" : "Salvar análise"}
         </Button>
       </div>
@@ -321,10 +331,16 @@ export default function Analises({ onRegistrarAplicacao }) {
             size="sm"
             onClick={() => onRegistrarAplicacao?.(r.piscinaId, r.id)}
             title="Registrar a aplicação de um produto motivada por esta análise"
+            permission={PERMISSIONS.ANALISES.CREATE}
           >
             Registrar aplicação
           </Button>
-          <Button variant="danger" size="sm" onClick={() => handleDelete(r.id)}>
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => handleDelete(r.id)}
+            permission={PERMISSIONS.ANALISES.CREATE}
+          >
             Excluir
           </Button>
         </div>
@@ -341,7 +357,11 @@ export default function Analises({ onRegistrarAplicacao }) {
           title="Análises"
           description="Registro de qualidade da água por piscina"
           action={
-            <Button variant="primary" onClick={() => setModalOpen(true)}>
+            <Button
+              variant="primary"
+              onClick={() => setModalOpen(true)}
+              permission={PERMISSIONS.ANALISES.CREATE}
+            >
               + Nova análise
             </Button>
           }

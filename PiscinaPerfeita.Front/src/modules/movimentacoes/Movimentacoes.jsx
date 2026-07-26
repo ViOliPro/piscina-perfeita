@@ -34,6 +34,7 @@ import {
 } from "../../config/index.js";
 import { getLocalDateTimeInput } from "../../utils/getLocalDateTimeInput.js";
 import { can, PERMISSIONS } from "../../helpers/Permissions.js";
+import ProtecaoDeRota from "../../helpers/ProtecaoDeRota.jsx";
 
 // Cor do badge por tipo — entradas em azul, saídas em roxo/vermelho,
 // ajuste em amarelo (é sempre gerado automaticamente, nunca manual).
@@ -208,10 +209,20 @@ function MovimentacaoForm({
           marginTop: 16,
         }}
       >
-        <Button variant="ghost" onClick={onCancel} type="button">
+        <Button
+          variant="ghost"
+          onClick={onCancel}
+          type="button"
+          permission={PERMISSIONS.MOVIMENTACOES.CREATE}
+        >
           Cancelar
         </Button>
-        <Button variant="primary" type="submit" disabled={loading}>
+        <Button
+          variant="primary"
+          type="submit"
+          disabled={loading}
+          permission={PERMISSIONS.MOVIMENTACOES.CREATE}
+        >
           {loading ? "Salvando…" : "Salvar"}
         </Button>
       </div>
@@ -326,59 +337,65 @@ export default function Movimentacoes() {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div>
-      <PageHeader
-        title="Movimentações de estoque"
-        description="Entradas, saídas, aplicações e ajustes por depósito e produto"
-        action={
-          <Button variant="primary" onClick={() => setModalOpen(true)}>
-            + Registrar movimentação
-          </Button>
-        }
-      />
-
-      {error && <ErrorMessage message={error} />}
-
-      <Toolbar>
-        <SearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder="Buscar produto, piscina ou depósito…"
+    <ProtecaoDeRota permissao={PERMISSIONS.MOVIMENTACOES.VIEW}>
+      <div>
+        <PageHeader
+          title="Movimentações de estoque"
+          description="Entradas, saídas, aplicações e ajustes por depósito e produto"
+          action={
+            <Button
+              variant="primary"
+              onClick={() => setModalOpen(true)}
+              permission={PERMISSIONS.MOVIMENTACOES.CREATE}
+            >
+              + Registrar movimentação
+            </Button>
+          }
         />
-        <FilterSelect
-          value={filtroTipo}
-          onChange={setFiltroTipo}
-          placeholder="Todos os tipos"
-          options={Object.entries(TIPO_LABELS).map(([value, label]) => ({
-            value,
-            label,
-          }))}
-        />
-      </Toolbar>
 
-      <Card noPadding>
-        <DataTable
-          columns={columns}
-          data={filtered}
-          emptyMessage="Nenhuma movimentação encontrada."
-        />
-      </Card>
+        {error && <ErrorMessage message={error} />}
 
-      <Modal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title="Registrar movimentação"
-      >
-        <MovimentacaoForm
-          piscinas={piscinas}
-          produtos={produtos}
-          usuarios={usuarios}
-          depositos={depositos}
-          onSubmit={handleSave}
-          onCancel={() => setModalOpen(false)}
-          loading={saving}
-        />
-      </Modal>
-    </div>
+        <Toolbar>
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Buscar produto, piscina ou depósito…"
+          />
+          <FilterSelect
+            value={filtroTipo}
+            onChange={setFiltroTipo}
+            placeholder="Todos os tipos"
+            options={Object.entries(TIPO_LABELS).map(([value, label]) => ({
+              value,
+              label,
+            }))}
+          />
+        </Toolbar>
+
+        <Card noPadding>
+          <DataTable
+            columns={columns}
+            data={filtered}
+            emptyMessage="Nenhuma movimentação encontrada."
+          />
+        </Card>
+
+        <Modal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          title="Registrar movimentação"
+        >
+          <MovimentacaoForm
+            piscinas={piscinas}
+            produtos={produtos}
+            usuarios={usuarios}
+            depositos={depositos}
+            onSubmit={handleSave}
+            onCancel={() => setModalOpen(false)}
+            loading={saving}
+          />
+        </Modal>
+      </div>
+    </ProtecaoDeRota>
   );
 }

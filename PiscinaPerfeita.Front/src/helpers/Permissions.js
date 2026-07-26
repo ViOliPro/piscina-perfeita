@@ -24,6 +24,7 @@ export const PERMISSIONS = {
     CREATE: "usuarios.create",
     EDIT: "usuarios.edit",
     DELETE: "usuarios.delete",
+    VINCULO: "usuarios.vinculo",
   },
   ANALISES: {
     VIEW: "analises.view",
@@ -61,8 +62,8 @@ export const PERMISSIONS = {
     CREATE: "estoques.create",
     EDIT: "estoques.edit",
     DELETE: "estoques.delete",
-    MOVIMENTAR: "estoque.movimentar",
-    INVENTARIO: "estoque.inventario",
+    MOVIMENTAR: "estoques.movimentar",
+    INVENTARIO: "estoques.inventario",
   },
   MOVIMENTACOES: {
     VIEW: "movimentacoes.view",

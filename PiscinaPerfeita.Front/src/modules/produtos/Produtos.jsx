@@ -125,11 +125,21 @@ function ProdutoForm({ initial, onSubmit, onCancel, loading }) {
           marginTop: 16,
         }}
       >
-        <Button variant="ghost" onClick={onCancel} type="button">
+        <Button
+          variant="ghost"
+          onClick={onCancel}
+          type="button"
+          permission={PERMISSIONS.PRODUTOS.CREATE}
+        >
           Cancelar
         </Button>
 
-        <Button variant="primary" type="submit" disabled={loading}>
+        <Button
+          variant="primary"
+          type="submit"
+          disabled={loading}
+          permission={PERMISSIONS.PRODUTOS.CREATE}
+        >
           {loading
             ? "Salvando…"
             : initial
@@ -218,24 +228,23 @@ export default function Produtos() {
       label: "",
       render: (_, r) => (
         <div style={{ display: "flex", gap: 6 }}>
-          {can(PERMISSIONS.PRODUTOS.EDIT) && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setModal({ open: true, editing: r })}
-            >
-              Editar
-            </Button>
-          )}
-          {can(PERMISSIONS.PRODUTOS.DELETE) && (
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={() => handleDelete(r.id)}
-            >
-              Excluir
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setModal({ open: true, editing: r })}
+            permission={PERMISSIONS.PRODUTOS.EDIT}
+          >
+            Editar
+          </Button>
+
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => handleDelete(r.id)}
+            permission={PERMISSIONS.PRODUTOS.DELETE}
+          >
+            Excluir
+          </Button>
         </div>
       ),
     },
@@ -244,7 +253,7 @@ export default function Produtos() {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <ProtecaoDeRota permissao={"produtos.views"}>
+    <ProtecaoDeRota permissao={PERMISSIONS.PRODUTOS.VIEW}>
       <div>
         <PageHeader
           title="Produtos"
@@ -253,6 +262,7 @@ export default function Produtos() {
             <Button
               variant="primary"
               onClick={() => setModal({ open: true, editing: null })}
+              permission={PERMISSIONS.PRODUTOS.CREATE}
             >
               + Novo produto
             </Button>

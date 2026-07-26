@@ -193,10 +193,20 @@ function UsuarioForm({ initial, onSubmit, onCancel, loading }) {
           marginTop: 16,
         }}
       >
-        <Button variant="ghost" onClick={onCancel} type="button">
+        <Button
+          variant="ghost"
+          onClick={onCancel}
+          type="button"
+          permission={PERMISSIONS.USUARIOS.CREATE}
+        >
           Cancelar
         </Button>
-        <Button variant="primary" type="submit" disabled={loading}>
+        <Button
+          variant="primary"
+          type="submit"
+          disabled={loading}
+          permission={PERMISSIONS.USUARIOS.CREATE}
+        >
           {loading
             ? "Salvando…"
             : isEdit
@@ -248,6 +258,7 @@ function VinculoPendente({ vinculo, locaisDisponiveis, onVincular, saving }) {
         size="sm"
         disabled={!localId || saving}
         onClick={() => onVincular(vinculo, localId)}
+        permission={PERMISSIONS.USUARIOS.VINCULO}
       >
         Vincular
       </Button>
@@ -401,6 +412,7 @@ function VinculosLocaisModal({ usuario, open, onClose }) {
                   variant="danger"
                   size="sm"
                   onClick={() => handleRemove(v.id)}
+                  permission={PERMISSIONS.USUARIOS.DELETE}
                 >
                   Remover
                 </Button>
@@ -459,6 +471,7 @@ function VinculosLocaisModal({ usuario, open, onClose }) {
                 variant="primary"
                 type="submit"
                 disabled={saving || !novo.localId}
+                permission={PERMISSIONS.USUARIOS.VINCULo}
               >
                 {saving ? "Vinculando…" : "+ Vincular local"}
               </Button>
@@ -586,6 +599,7 @@ export default function Usuarios() {
             variant="ghost"
             size="sm"
             onClick={() => setVinculosModal({ open: true, usuario: r })}
+            permission={PERMISSIONS.USUARIOS.VINCULO}
             disabled={buttonDisabled}
             title={
               !logadoEhSuperAdmin || !logadoEhAdministrador
@@ -599,10 +613,16 @@ export default function Usuarios() {
             variant="ghost"
             size="sm"
             onClick={() => setModal({ open: true, editing: r })}
+            permission={PERMISSIONS.USUARIOS.EDIT}
           >
             Editar
           </Button>
-          <Button variant="danger" size="sm" onClick={() => handleDelete(r.id)}>
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => handleDelete(r.id)}
+            permission={PERMISSIONS.USUARIOS.DELETE}
+          >
             Excluir
           </Button>
         </div>
@@ -622,6 +642,7 @@ export default function Usuarios() {
             <Button
               variant="primary"
               onClick={() => setModal({ open: true, editing: null })}
+              permission={PERMISSIONS.USUARIOS.CREATE}
             >
               + Novo usuário
             </Button>

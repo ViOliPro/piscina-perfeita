@@ -194,10 +194,20 @@ function AplicacaoForm({
           marginTop: 16,
         }}
       >
-        <Button variant="ghost" onClick={onCancel} type="button">
+        <Button
+          variant="ghost"
+          onClick={onCancel}
+          type="button"
+          permission={PERMISSIONS.APLICACOES.CREATE}
+        >
           Cancelar
         </Button>
-        <Button variant="primary" type="submit" disabled={loading}>
+        <Button
+          variant="primary"
+          type="submit"
+          disabled={loading}
+          permission={PERMISSIONS.APLICACOES.CREATE}
+        >
           {loading ? "Salvando…" : "Registrar aplicação"}
         </Button>
       </div>
@@ -335,6 +345,7 @@ export default function Aplicacoes({ prefill, onPrefillConsumed }) {
             <Button
               variant="primary"
               onClick={() => setModal({ open: true, initial: null })}
+              permission={PERMISSIONS.APLICACOES.CREATE}
             >
               + Registrar aplicação
             </Button>

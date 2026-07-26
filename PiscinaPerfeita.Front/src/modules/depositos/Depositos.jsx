@@ -63,10 +63,20 @@ function DepositoForm({ initial, onSubmit, onCancel, loading }) {
           marginTop: 16,
         }}
       >
-        <Button variant="ghost" onClick={onCancel} type="button">
+        <Button
+          variant="ghost"
+          onClick={onCancel}
+          type="button"
+          permission={PERMISSIONS.DEPOSITOS.CREATE}
+        >
           Cancelar
         </Button>
-        <Button variant="primary" type="submit" disabled={loading}>
+        <Button
+          variant="primary"
+          type="submit"
+          disabled={loading}
+          permission={PERMISSIONS.DEPOSITOS.CREATE}
+        >
           {loading
             ? "Salvando…"
             : initial
@@ -148,25 +158,23 @@ export default function Depositos() {
       label: "",
       render: (_, r) => (
         <div style={{ display: "flex", gap: 6 }}>
-          {can(PERMISSIONS.DEPOSITOS.EDIT) && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setModal({ open: true, editing: r })}
-            >
-              Editar
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setModal({ open: true, editing: r })}
+            permission={PERMISSIONS.DEPOSITOS.EDIT}
+          >
+            Editar
+          </Button>
 
-          {can(PERMISSIONS.DEPOSITOS.DELETE) && (
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={() => handleDelete(r.id)}
-            >
-              Excluir
-            </Button>
-          )}
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => handleDelete(r.id)}
+            permission={PERMISSIONS.DEPOSITOS.DELETE}
+          >
+            Excluir
+          </Button>
         </div>
       ),
     },
@@ -184,6 +192,7 @@ export default function Depositos() {
             <Button
               variant="primary"
               onClick={() => setModal({ open: true, editing: null })}
+              permission={PERMISSIONS.DEPOSITOS.CREATE}
             >
               + Novo depósito
             </Button>

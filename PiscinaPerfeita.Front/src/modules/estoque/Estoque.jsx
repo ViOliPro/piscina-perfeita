@@ -27,6 +27,8 @@ import {
   depositoService,
 } from "../../config/services.js";
 import { ESTOQUE_LIMITES, APP_META } from "../../config/index.js";
+import { can, PERMISSIONS } from "../../helpers/Permissions.js";
+import ProtecaoDeRota from "../../helpers/ProtecaoDeRota.jsx";
 
 // ----------------------------------------------------------
 // Helpers
@@ -203,10 +205,20 @@ function EstoqueForm({
           marginTop: 16,
         }}
       >
-        <Button variant="ghost" onClick={onCancel} type="button">
+        <Button
+          variant="ghost"
+          onClick={onCancel}
+          type="button"
+          permission={PERMISSIONS.ESTOQUES.CREATE}
+        >
           Cancelar
         </Button>
-        <Button variant="primary" type="submit" disabled={loading}>
+        <Button
+          variant="primary"
+          type="submit"
+          disabled={loading}
+          permission={PERMISSIONS.ESTOQUES.CREATE}
+        >
           {loading ? "Salvando…" : initial ? "Salvar alterações" : "Registrar"}
         </Button>
       </div>
@@ -258,10 +270,20 @@ function PedidoOrcamento({ itens }) {
           </div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <Button variant="ghost" size="sm" onClick={copiar}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={copiar}
+            permission={PERMISSIONS.ESTOQUES.INVENTARIO}
+          >
             📋 Copiar
           </Button>
-          <Button variant="primary" size="sm" onClick={imprimir}>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={imprimir}
+            permission={PERMISSIONS.ESTOQUES.INVENTARIO}
+          >
             🖨️ Imprimir / PDF
           </Button>
         </div>
@@ -496,6 +518,7 @@ export default function Estoque() {
           variant="ghost"
           size="sm"
           onClick={() => setModal({ open: true, editing: r })}
+          permission={PERMISSIONS.ESTOQUES.CREATE}
         >
           Editar
         </Button>
@@ -506,80 +529,85 @@ export default function Estoque() {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div>
-      <PageHeader
-        title="Estoque"
-        description="Controle de produtos"
-        action={
-          <Button
-            variant="primary"
-            onClick={() => setModal({ open: true, editing: false })}
-          >
-            + Registrar entrada
-          </Button>
-        }
-      />
-
-      {error && <ErrorMessage message={error} />}
-
-      <Tabs
-        active={tab}
-        onChange={setTab}
-        tabs={[
-          { id: "todos", label: "Todos" },
-          { id: "baixo", label: `⚠️ Estoque baixo (${baixoItens.length})` },
-          { id: "orcamento", label: "📄 Pedido de orçamento" },
-        ]}
-      />
-
-      {tab !== "orcamento" && (
-        <Toolbar>
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Buscar produto ou depósito…"
-          />
-          <FilterSelect
-            value={filtroDeposito}
-            onChange={setFiltroDeposito}
-            placeholder="Todos os depósitos"
-            options={depositos.map((d) => ({ value: d.id, label: d.nome }))}
-          />
-        </Toolbar>
-      )}
-
-      {tab === "orcamento" ? (
-        <PedidoOrcamento itens={baixoItens} />
-      ) : (
-        <Card noPadding>
-          <DataTable
-            columns={columns}
-            data={filtered}
-            emptyMessage={
-              tab === "baixo"
-                ? "Nenhum item com estoque baixo. Tudo em ordem!"
-                : "Nenhum item encontrado."
-            }
-          />
-        </Card>
-      )}
-
-      <Modal
-        open={modal.open}
-        onClose={() => setModal({ open: false, editing: null })}
-        title={modal.editing ? "Registrar entrada de estoque" : "Novo estoque"}
-      >
-        <EstoqueForm
-          initial={modal.editing}
-          piscinas={piscinas}
-          produtos={produtos}
-          usuarios={usuarios}
-          depositos={depositos}
-          onSubmit={handleSave}
-          onCancel={() => setModal({ open: false, editing: null })}
-          loading={saving}
+    <ProtecaoDeRota permissao={PERMISSIONS.ESTOQUES.VIEW}>
+      <div>
+        <PageHeader
+          title="Estoque"
+          description="Controle de produtos"
+          action={
+            <Button
+              variant="primary"
+              onClick={() => setModal({ open: true, editing: false })}
+              permissao={PERMISSIONS.ESTOQUES.CREATE}
+            >
+              + Registrar entrada
+            </Button>
+          }
         />
-      </Modal>
-    </div>
+
+        {error && <ErrorMessage message={error} />}
+
+        <Tabs
+          active={tab}
+          onChange={setTab}
+          tabs={[
+            { id: "todos", label: "Todos" },
+            { id: "baixo", label: `⚠️ Estoque baixo (${baixoItens.length})` },
+            { id: "orcamento", label: "📄 Pedido de orçamento" },
+          ]}
+        />
+
+        {tab !== "orcamento" && (
+          <Toolbar>
+            <SearchInput
+              value={search}
+              onChange={setSearch}
+              placeholder="Buscar produto ou depósito…"
+            />
+            <FilterSelect
+              value={filtroDeposito}
+              onChange={setFiltroDeposito}
+              placeholder="Todos os depósitos"
+              options={depositos.map((d) => ({ value: d.id, label: d.nome }))}
+            />
+          </Toolbar>
+        )}
+
+        {tab === "orcamento" ? (
+          <PedidoOrcamento itens={baixoItens} />
+        ) : (
+          <Card noPadding>
+            <DataTable
+              columns={columns}
+              data={filtered}
+              emptyMessage={
+                tab === "baixo"
+                  ? "Nenhum item com estoque baixo. Tudo em ordem!"
+                  : "Nenhum item encontrado."
+              }
+            />
+          </Card>
+        )}
+
+        <Modal
+          open={modal.open}
+          onClose={() => setModal({ open: false, editing: null })}
+          title={
+            modal.editing ? "Registrar entrada de estoque" : "Novo estoque"
+          }
+        >
+          <EstoqueForm
+            initial={modal.editing}
+            piscinas={piscinas}
+            produtos={produtos}
+            usuarios={usuarios}
+            depositos={depositos}
+            onSubmit={handleSave}
+            onCancel={() => setModal({ open: false, editing: null })}
+            loading={saving}
+          />
+        </Modal>
+      </div>
+    </ProtecaoDeRota>
   );
 }
