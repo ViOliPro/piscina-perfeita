@@ -15,10 +15,10 @@ import {
   DataTable,
   FormGrid,
   FormField,
-  inputStyle,
   LoadingSpinner,
   ErrorMessage,
 } from "../../components/ui/index.jsx";
+import { inputStyle } from "../../components/ui/styles.js";
 import {
   estoqueService,
   piscinaService,

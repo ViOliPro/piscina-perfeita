@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useIsMobile } from "../../hooks/useIsMobile.js";
 import { can } from "../../helpers/Permissions.js";
 import { useCan } from "../../context/AuthContext.jsx";
+import { inputStyle } from "./styles.js";
 
 // ----------------------------------------------------------
 // Badge
@@ -48,8 +49,6 @@ export function Button({
   fullWidth,
   permission,
 }) {
-  const permitido = useCan(permission);
-
   const isMobile = useIsMobile();
   const base = {
     display: "inline-flex",
@@ -90,18 +89,20 @@ export function Button({
       borderColor: "#E74C3C",
     },
   };
-  return;
-  permitido ? (
-    <button
-      type={type}
-      onClick={onClick}
-      disabled={disabled}
-      style={{ ...base, ...sizes[size], ...variants[variant] }}
-    >
-      {children}
-    </button>
-  ) : (
-    ""
+
+  const permitido = useCan(permission);
+
+  return (
+    permitido && (
+      <button
+        type={type}
+        onClick={onClick}
+        disabled={disabled}
+        style={{ ...base, ...sizes[size], ...variants[variant] }}
+      >
+        {children}
+      </button>
+    )
   );
 }
 
@@ -265,21 +266,6 @@ export function FormField({ label, fullWidth, children }) {
     </div>
   );
 }
-
-// inputStyle — padding maior em mobile via CSS clamp
-export const inputStyle = {
-  border: "1px solid #c8dce8",
-  borderRadius: 8,
-  padding: "10px 12px",
-  fontSize: 14,
-  background: "var(--surface-2,#fff)",
-  color: "var(--text-primary,#111)",
-  fontFamily: "inherit",
-  outline: "none",
-  width: "100%",
-  WebkitAppearance: "none", // remove seta dupla iOS nos selects
-  transition: "border-color .15s, box-shadow .15s",
-};
 
 // ----------------------------------------------------------
 // FormGrid — 2 colunas desktop, 1 coluna mobile

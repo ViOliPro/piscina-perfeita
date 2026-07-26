@@ -15,10 +15,10 @@ import {
   FormGrid,
   FormField,
   FormSection,
-  inputStyle,
   LoadingSpinner,
   ErrorMessage,
 } from "../../components/ui/index.jsx";
+import { inputStyle } from "../../components/ui/styles.js";
 import {
   analiseService,
   piscinaService,

@@ -14,12 +14,12 @@ import {
   Card,
   Button,
   FormField,
-  inputStyle,
   LoadingSpinner,
   ErrorMessage,
   DataTable,
   Badge,
 } from "../../components/ui/index.jsx";
+import { inputStyle } from "../../components/ui/styles.js";
 import {
   estoqueService,
   depositoService,

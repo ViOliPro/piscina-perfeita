@@ -13,10 +13,10 @@ import {
   DataTable,
   FormGrid,
   FormField,
-  inputStyle,
   LoadingSpinner,
   ErrorMessage,
 } from "../../components/ui/index.jsx";
+import { inputStyle } from "../../components/ui/styles.js";
 import { piscinaService, usuarioService } from "../../config/services.js";
 import { PERMISSIONS } from "../../helpers/Permissions.js";
 import ProtecaoDeRota from "../../helpers/ProtecaoDeRota.jsx";

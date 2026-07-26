@@ -12,10 +12,10 @@ import {
   DataTable,
   FormGrid,
   FormField,
-  inputStyle,
   LoadingSpinner,
   ErrorMessage,
 } from "../../components/ui/index.jsx";
+import { inputStyle } from "../../components/ui/styles.js";
 import { produtoService } from "../../config/services.js";
 import {
   UNIDADES_MEDIDA,
