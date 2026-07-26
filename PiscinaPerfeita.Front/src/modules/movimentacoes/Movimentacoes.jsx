@@ -32,6 +32,8 @@ import {
   TIPOS_QUE_EXIGEM_PISCINA,
   UNIDADES_LANCAMENTO,
 } from "../../config/index.js";
+import { getLocalDateTimeInput } from "../../utils/getLocalDateTimeInput.js";
+import { can, PERMISSIONS } from "../../helpers/Permissions.js";
 
 // Cor do badge por tipo — entradas em azul, saídas em roxo/vermelho,
 // ajuste em amarelo (é sempre gerado automaticamente, nunca manual).
@@ -62,7 +64,7 @@ function MovimentacaoForm({
     tipoMovimentacao: String(TIPO_MOVIMENTACAO.ENTRADA),
     quantidade: "",
     unidadeLancamento: "",
-    dataMovimentacao: new Date().toISOString().slice(0, 16),
+    dataMovimentacao: getLocalDateTimeInput(),
   });
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
@@ -171,21 +173,23 @@ function MovimentacaoForm({
             ))}
           </select>
         </FormField>
-        <FormField label="Responsável *">
-          <select
-            required
-            style={inputStyle}
-            value={form.usuarioId}
-            onChange={set("usuarioId")}
-          >
-            <option value="">Selecione o usuário</option>
-            {usuarios.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.nome}
-              </option>
-            ))}
-          </select>
-        </FormField>
+
+        {can(PERMISSIONS.MOVIMENTACOES.VIEW_INPUT_USUARIOS) && (
+          <FormField label="Responsável">
+            <select
+              style={inputStyle}
+              value={form.usuarioId}
+              onChange={set("usuarioId")}
+            >
+              <option value="">Selecione o usuário</option>
+              {usuarios.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.nome}
+                </option>
+              ))}
+            </select>
+          </FormField>
+        )}
         <FormField label="Data e hora *">
           <input
             required

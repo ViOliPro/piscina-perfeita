@@ -40,7 +40,7 @@ namespace PiscinaPerfeita.Api.Controllers
         // GET: api/usuarioslocais/meus
         // Locais vinculados ao usuário autenticado — alimenta o seletor "Trocar Local".
         [HttpGet("meus")]
-        [Authorize(Policy = Policies.GerenciarUsuarioLocal)]
+        [Authorize(Policy = Policies.Listar)]
         public async Task<ActionResult<IEnumerable<UsuarioLocalResponseDto>>> GetMeus()
         {
             try

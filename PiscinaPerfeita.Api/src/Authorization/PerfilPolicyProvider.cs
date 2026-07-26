@@ -23,6 +23,7 @@ namespace PiscinaPerfeita.Api.Authorization
 
             //POLICY DEPOSITO
             [Policies.GerenciarDeposito] = [Perfil.Administrador],
+            [Policies.GerenciarDepositoUpdate] = [Perfil.Administrador, Perfil.Operador],
 
             //POLICY LOCAL
             [Policies.GerenciarLocal] = [Perfil.Administrador],

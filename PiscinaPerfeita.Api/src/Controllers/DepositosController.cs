@@ -74,7 +74,7 @@ namespace PiscinaPerfeita.Api.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Policy = Policies.GerenciarDeposito)]
+        [Authorize(Policy = Policies.GerenciarDepositoUpdate)]
         public async Task<ActionResult> Update(Guid id, DepositoRequestDto dto)
         {
             try

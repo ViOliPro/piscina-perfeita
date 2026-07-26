@@ -30,6 +30,8 @@ import {
   PERFIL_LABELS,
 } from "../../config/index.js";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { PERMISSIONS } from "../../helpers/Permissions.js";
+import ProtecaoDeRota from "../../helpers/ProtecaoDeRota.jsx";
 
 // ----------------------------------------------------------
 // Formulário
@@ -611,65 +613,67 @@ export default function Usuarios() {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div>
-      <PageHeader
-        title="Usuários"
-        description="Controle de acesso ao sistema"
-        action={
-          <Button
-            variant="primary"
-            onClick={() => setModal({ open: true, editing: null })}
-          >
-            + Novo usuário
-          </Button>
-        }
-      />
-
-      {error && <ErrorMessage message={error} />}
-
-      <Toolbar>
-        <SearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder="Buscar nome ou e-mail…"
+    <ProtecaoDeRota permissao={PERMISSIONS.USUARIOS.VIEW}>
+      <div>
+        <PageHeader
+          title="Usuários"
+          description="Controle de acesso ao sistema"
+          action={
+            <Button
+              variant="primary"
+              onClick={() => setModal({ open: true, editing: null })}
+            >
+              + Novo usuário
+            </Button>
+          }
         />
-        <FilterSelect
-          value={filtroRole}
-          onChange={setFiltroRole}
-          placeholder="Todos os papéis"
-          options={[
-            { value: String(ROLES.ADMIN), label: ROLE_LABELS[ROLES.ADMIN] },
-            { value: String(ROLES.USER), label: ROLE_LABELS[ROLES.USER] },
-          ]}
-        />
-      </Toolbar>
 
-      <Card noPadding>
-        <DataTable
-          columns={columns}
-          data={filtered}
-          emptyMessage="Nenhum usuário encontrado."
-        />
-      </Card>
+        {error && <ErrorMessage message={error} />}
 
-      <Modal
-        open={modal.open}
-        onClose={() => setModal({ open: false, editing: null })}
-        title={modal.editing ? "Editar usuário" : "Novo usuário"}
-      >
-        <UsuarioForm
-          initial={modal.editing}
-          onSubmit={handleSave}
-          onCancel={() => setModal({ open: false, editing: null })}
-          loading={saving}
-        />
-      </Modal>
+        <Toolbar>
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Buscar nome ou e-mail…"
+          />
+          <FilterSelect
+            value={filtroRole}
+            onChange={setFiltroRole}
+            placeholder="Todos os papéis"
+            options={[
+              { value: String(ROLES.ADMIN), label: ROLE_LABELS[ROLES.ADMIN] },
+              { value: String(ROLES.USER), label: ROLE_LABELS[ROLES.USER] },
+            ]}
+          />
+        </Toolbar>
 
-      <VinculosLocaisModal
-        usuario={vinculosModal.usuario}
-        open={vinculosModal.open}
-        onClose={() => setVinculosModal({ open: false, usuario: null })}
-      />
-    </div>
+        <Card noPadding>
+          <DataTable
+            columns={columns}
+            data={filtered}
+            emptyMessage="Nenhum usuário encontrado."
+          />
+        </Card>
+
+        <Modal
+          open={modal.open}
+          onClose={() => setModal({ open: false, editing: null })}
+          title={modal.editing ? "Editar usuário" : "Novo usuário"}
+        >
+          <UsuarioForm
+            initial={modal.editing}
+            onSubmit={handleSave}
+            onCancel={() => setModal({ open: false, editing: null })}
+            loading={saving}
+          />
+        </Modal>
+
+        <VinculosLocaisModal
+          usuario={vinculosModal.usuario}
+          open={vinculosModal.open}
+          onClose={() => setVinculosModal({ open: false, usuario: null })}
+        />
+      </div>
+    </ProtecaoDeRota>
   );
 }

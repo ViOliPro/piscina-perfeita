@@ -8,34 +8,89 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { useIsMobile } from "../../hooks/useIsMobile.js";
-import { ROLES, ROLE_LABELS } from "../../config/index.js";
+import { PERFIL_LABELS, ROLES, ROLE_LABELS } from "../../config/index.js";
 import { usuarioLocalService } from "../../config/services.js";
 import { LogoIcon } from "../ui/Logo.jsx";
+
+// ----------------------------------------------------------
+// IMPORTACAO DAS PERMISSIONS
+// ----------------------------------------------------------
+import { PERMISSIONS, can } from "../../helpers/Permissions.js";
 
 // ----------------------------------------------------------
 // Definição da navegação
 // ----------------------------------------------------------
 export const NAV = [
   { id: "dashboard", label: "Dashboard", icon: "📊", section: "principal" },
-  { id: "locais", label: "Locais", icon: "📍", section: "cadastros" },
-  { id: "piscinas", label: "Piscinas", icon: "🏊", section: "cadastros" },
-  { id: "usuarios", label: "Usuários", icon: "👥", section: "cadastros" },
-  { id: "produtos", label: "Produtos", icon: "📦", section: "cadastros" },
-  { id: "depositos", label: "Depósitos", icon: "🗄️", section: "cadastros" },
-  { id: "analises", label: "Análises", icon: "🧪", section: "operacional" },
-  { id: "aplicacoes", label: "Aplicações", icon: "💧", section: "operacional" },
-  { id: "estoque", label: "Estoque", icon: "🗃️", section: "operacional" },
+  {
+    id: "locais",
+    label: "Locais",
+    icon: "📍",
+    section: "cadastros",
+    permissions: PERMISSIONS.LOCAIS,
+  },
+  {
+    id: "piscinas",
+    label: "Piscinas",
+    icon: "🏊",
+    section: "cadastros",
+    permissions: PERMISSIONS.PISCINAS,
+  },
+  {
+    id: "usuarios",
+    label: "Usuários",
+    icon: "👥",
+    section: "cadastros",
+    permissions: PERMISSIONS.USUARIOS,
+  },
+  {
+    id: "produtos",
+    label: "Produtos",
+    icon: "📦",
+    section: "cadastros",
+    permissions: PERMISSIONS.PRODUTOS,
+  },
+  {
+    id: "depositos",
+    label: "Depósitos",
+    icon: "🗄️",
+    section: "cadastros",
+    permissions: PERMISSIONS.DEPOSITOS,
+  },
+  {
+    id: "analises",
+    label: "Análises",
+    icon: "🧪",
+    section: "operacional",
+    permissions: PERMISSIONS.ANALISES,
+  },
+  {
+    id: "aplicacoes",
+    label: "Aplicações",
+    icon: "💧",
+    section: "operacional",
+    permissions: PERMISSIONS.APLICACOES,
+  },
+  {
+    id: "estoque",
+    label: "Estoque",
+    icon: "🗃️",
+    section: "operacional",
+    permissions: PERMISSIONS.ESTOQUES,
+  },
   {
     id: "movimentacoes",
     label: "Movimentações",
     icon: "↔️",
     section: "operacional",
+    permissions: PERMISSIONS.MOVIMENTACOES,
   },
   {
     id: "inventario",
     label: "Contagem de Inventário",
     icon: "🔢",
     section: "operacional",
+    permissions: PERMISSIONS.INVENTARIOS,
   },
 ];
 
@@ -144,33 +199,45 @@ function SidebarContent({ activePage, onNavigate, onClose }) {
 
       {/* Itens de nav */}
       <div style={{ flex: 1, paddingBottom: 8 }}>
-        {sections.map((section) => (
-          <div key={section}>
-            <div
-              style={{
-                padding: "14px 12px 4px",
-                fontSize: 10,
-                fontWeight: 600,
-                letterSpacing: 1,
-                color: "#6B8CAE",
-                textTransform: "uppercase",
-              }}
-            >
-              {section}
-            </div>
-            {NAV.filter((n) => n.section === section).map((item) => (
-              <NavItem
-                key={item.id}
-                item={item}
-                active={activePage === item.id}
-                onClick={() => {
-                  onNavigate(item.id);
-                  onClose?.();
+        {sections.map((section) => {
+          const itemsDaSecao = NAV.filter(
+            (n) => n.section === section && can(n.permissions),
+          );
+
+          // Se o usuário não tiver permissão para NENHUM item desta seção, nem mostramos o título da seção
+          if (itemsDaSecao.length === 0) return null;
+
+          return (
+            <div key={section}>
+              <div
+                style={{
+                  padding: "14px 12px 4px",
+                  fontSize: 10,
+                  fontWeight: 600,
+                  letterSpacing: 1,
+                  color: "#6B8CAE",
+                  textTransform: "uppercase",
                 }}
-              />
-            ))}
-          </div>
-        ))}
+              >
+                {section}
+              </div>
+
+              {itemsDaSecao
+                .filter((n) => n.section === section && can(n.permissions))
+                .map((item) => (
+                  <NavItem
+                    key={item.id}
+                    item={item}
+                    active={activePage === item.id}
+                    onClick={() => {
+                      onNavigate(item.id);
+                      onClose?.();
+                    }}
+                  />
+                ))}
+            </div>
+          );
+        })}
       </div>
 
       {/* Usuário no fundo da sidebar */}

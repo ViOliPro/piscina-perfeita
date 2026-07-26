@@ -22,7 +22,7 @@ namespace PiscinaPerfeita.Api.Controllers
 
         // 1. GET: api/clientes (Retorna todos os registros do banco)
         [HttpGet]
-        [Authorize(Policy = Policies.GerenciarUsuario)]
+        [Authorize(Policy = Policies.Listar)]
         public async Task<ActionResult<IEnumerable<UsuarioResponseDto>>> Get()
         {
             try

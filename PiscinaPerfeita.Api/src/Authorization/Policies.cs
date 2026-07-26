@@ -18,6 +18,7 @@
 
         //POLICY DEPOSITO
         public const string GerenciarDeposito = "Perfil:GerenciarDeposito";
+        public const string GerenciarDepositoUpdate = "Perfil:GerenciarDepositoUpdate";
 
         //POLICY LOCAL
         public const string GerenciarLocal = "Perfil:GerenciarLocal";
