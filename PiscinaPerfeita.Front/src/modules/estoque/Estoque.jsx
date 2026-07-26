@@ -27,7 +27,7 @@ import {
   depositoService,
 } from "../../config/services.js";
 import { ESTOQUE_LIMITES, APP_META } from "../../config/index.js";
-import { can, PERMISSIONS } from "../../helpers/Permissions.js";
+import { PERMISSIONS } from "../../helpers/Permissions.js";
 import ProtecaoDeRota from "../../helpers/ProtecaoDeRota.jsx";
 
 // ----------------------------------------------------------

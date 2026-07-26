@@ -8,7 +8,7 @@
 //  MovimentacaoEstoque do tipo "Ajuste de Inventário" para cada produto
 //  com divergência (produtos que batem certinho não geram ajuste).
 // ============================================================
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   PageHeader,
   Card,
@@ -25,8 +25,8 @@ import {
   depositoService,
   movimentacaoService,
 } from "../../config/services.js";
-import { useAuth } from "../../context/AuthContext.jsx";
-import { can, PERMISSIONS } from "../../helpers/Permissions.js";
+import { useAuth, useCan } from "../../context/AuthContext.jsx";
+import { PERMISSIONS } from "../../helpers/Permissions.js";
 import ProtecaoDeRota from "../../helpers/ProtecaoDeRota.jsx";
 
 export default function ContagemInventario() {
@@ -40,6 +40,7 @@ export default function ContagemInventario() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [resultado, setResultado] = useState(null); // resultado da última contagem enviada
+  const podeMostrarCard = useCan(PERMISSIONS.INVENTARIOS.CREATE);
 
   useEffect(() => {
     async function load() {
@@ -127,7 +128,7 @@ export default function ContagemInventario() {
         />
         {error && <ErrorMessage message={error} />}
 
-        {can(PERMISSIONS.INVENTARIOS.CREATE) && (
+        {podeMostrarCard ?? (
           <Card>
             <FormField label="Depósito a conferir *">
               <select
@@ -145,6 +146,7 @@ export default function ContagemInventario() {
             </FormField>
           </Card>
         )}
+
         {loadingEstoques && <LoadingSpinner />}
 
         {!loadingEstoques && depositoId && estoques.length === 0 && (

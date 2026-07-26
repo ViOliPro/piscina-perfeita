@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { useIsMobile } from "../../hooks/useIsMobile.js";
 import { can } from "../../helpers/Permissions.js";
+import { useCan } from "../../context/AuthContext.jsx";
 
 // ----------------------------------------------------------
 // Badge
@@ -47,6 +48,8 @@ export function Button({
   fullWidth,
   permission,
 }) {
+  const permitido = useCan(permission);
+
   const isMobile = useIsMobile();
   const base = {
     display: "inline-flex",
@@ -87,17 +90,18 @@ export function Button({
       borderColor: "#E74C3C",
     },
   };
-  return (
-    can(permission) && (
-      <button
-        type={type}
-        onClick={onClick}
-        disabled={disabled}
-        style={{ ...base, ...sizes[size], ...variants[variant] }}
-      >
-        {children}
-      </button>
-    )
+  return;
+  permitido ? (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      style={{ ...base, ...sizes[size], ...variants[variant] }}
+    >
+      {children}
+    </button>
+  ) : (
+    ""
   );
 }
 

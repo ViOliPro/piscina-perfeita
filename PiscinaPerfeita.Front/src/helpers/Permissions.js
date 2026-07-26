@@ -117,8 +117,7 @@ export const USER_PERMISSIONS = {
   ],
 };
 
-export function can(requiredPermission, userPerfil = null) {
-  const { user } = useAuth();
+export function can(requiredPermission, user) {
   const PerfilUsuarioLogado =
     ROLES.ADMIN === user.role
       ? PERFIL_ADMINISTRADOR
@@ -126,7 +125,7 @@ export function can(requiredPermission, userPerfil = null) {
 
   // 1. Busca a lista de permissões que esse perfil tem direito
   // Se userPerfil nao for passado utiliza o padrao da aplicacao
-  const perfil = userPerfil ?? PerfilUsuarioLogado;
+  const perfil = PerfilUsuarioLogado;
 
   const userPerms = USER_PERMISSIONS[perfil] || [];
 

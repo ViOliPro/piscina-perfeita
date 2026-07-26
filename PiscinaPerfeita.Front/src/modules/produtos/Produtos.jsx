@@ -23,7 +23,7 @@ import {
 } from "../../config/index.js";
 
 import { PERFIL_LABELS } from "../../config/index.js";
-import { PERMISSIONS, can } from "../../helpers/Permissions.js";
+import { PERMISSIONS } from "../../helpers/Permissions.js";
 import ProtecaoDeRota from "../../helpers/ProtecaoDeRota.jsx";
 
 // ----------------------------------------------------------

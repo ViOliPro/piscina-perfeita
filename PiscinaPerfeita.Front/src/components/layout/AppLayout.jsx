@@ -6,7 +6,7 @@
 //           + bottom navigation bar (5 ítens pinados)
 // ============================================================
 import { useState, useEffect } from "react";
-import { useAuth } from "../../context/AuthContext.jsx";
+import { useAuth, useCan } from "../../context/AuthContext.jsx";
 import { useIsMobile } from "../../hooks/useIsMobile.js";
 import { PERFIL_LABELS, ROLES, ROLE_LABELS } from "../../config/index.js";
 import { usuarioLocalService } from "../../config/services.js";
@@ -15,7 +15,7 @@ import { LogoIcon } from "../ui/Logo.jsx";
 // ----------------------------------------------------------
 // IMPORTACAO DAS PERMISSIONS
 // ----------------------------------------------------------
-import { PERMISSIONS, can } from "../../helpers/Permissions.js";
+import { PERMISSIONS } from "../../helpers/Permissions.js";
 
 // ----------------------------------------------------------
 // Definição da navegação
@@ -201,7 +201,7 @@ function SidebarContent({ activePage, onNavigate, onClose }) {
       <div style={{ flex: 1, paddingBottom: 8 }}>
         {sections.map((section) => {
           const itemsDaSecao = NAV.filter(
-            (n) => n.section === section && can(n.permissions),
+            (n) => n.section === section && useCan(n.permissions),
           );
 
           // Se o usuário não tiver permissão para NENHUM item desta seção, nem mostramos o título da seção
@@ -223,7 +223,7 @@ function SidebarContent({ activePage, onNavigate, onClose }) {
               </div>
 
               {itemsDaSecao
-                .filter((n) => n.section === section && can(n.permissions))
+                .filter((n) => n.section === section && useCan(n.permissions))
                 .map((item) => (
                   <NavItem
                     key={item.id}

@@ -26,8 +26,9 @@ import {
 } from "../../config/services.js";
 import { ANALISE_FAIXAS } from "../../config/index.js";
 import { getLocalDateTimeInput } from "../../utils/getLocalDateTimeInput.js";
-import { can, PERMISSIONS } from "../../helpers/Permissions.js";
+import { PERMISSIONS } from "../../helpers/Permissions.js";
 import ProtecaoDeRota from "../../helpers/ProtecaoDeRota.jsx";
+import { useCan } from "../../context/AuthContext.jsx";
 
 // ----------------------------------------------------------
 // Helpers
@@ -68,6 +69,8 @@ function AnaliseForm({ piscinas, usuarios, onSubmit, onCancel, loading }) {
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
+  const podeMostrar = useCan(PERMISSIONS.ANALISES.VIEW_BTN);
+
   function handleSubmit(e) {
     e.preventDefault();
     onSubmit({
@@ -98,7 +101,7 @@ function AnaliseForm({ piscinas, usuarios, onSubmit, onCancel, loading }) {
             ))}
           </select>
         </FormField>
-        {can(PERMISSIONS.ANALISES.VIEW_BTN) && (
+        {podeMostrar ?? (
           <FormField label="Responsável">
             <select
               style={inputStyle}

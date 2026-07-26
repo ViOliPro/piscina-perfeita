@@ -33,8 +33,9 @@ import {
   UNIDADES_LANCAMENTO,
 } from "../../config/index.js";
 import { getLocalDateTimeInput } from "../../utils/getLocalDateTimeInput.js";
-import { can, PERMISSIONS } from "../../helpers/Permissions.js";
+import { PERMISSIONS } from "../../helpers/Permissions.js";
 import ProtecaoDeRota from "../../helpers/ProtecaoDeRota.jsx";
+import { useCan } from "../../context/AuthContext.jsx";
 
 // Cor do badge por tipo — entradas em azul, saídas em roxo/vermelho,
 // ajuste em amarelo (é sempre gerado automaticamente, nunca manual).
@@ -81,6 +82,8 @@ function MovimentacaoForm({
       quantidade: parseFloat(form.quantidade),
     });
   }
+
+  const podeMostrar = useCan(PERMISSIONS.MOVIMENTACOES.VIEW_INPUT_USUARIOS);
 
   return (
     <form onSubmit={handleSubmit}>
@@ -175,7 +178,7 @@ function MovimentacaoForm({
           </select>
         </FormField>
 
-        {can(PERMISSIONS.MOVIMENTACOES.VIEW_INPUT_USUARIOS) && (
+        {podeMostrar && (
           <FormField label="Responsável">
             <select
               style={inputStyle}

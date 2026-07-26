@@ -1,11 +1,9 @@
 // ProtecaoDeRota.jsx
 import Forbiden from "../modules/Forbidden/index.jsx";
-import { can } from "../helpers/Permissions.js";
+import { useCan } from "../context/AuthContext.jsx";
 
 export default function ProtecaoDeRota({ user, permissao, children }) {
-  if (!can(permissao, user)) {
-    return <Forbiden />;
-  }
+  const permitido = useCan(permissao);
 
-  return children;
+  return permitido ? children : <Forbiden />;
 }

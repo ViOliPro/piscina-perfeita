@@ -17,7 +17,7 @@ import {
   ErrorMessage,
 } from "../../components/ui/index.jsx";
 import { depositoService } from "../../config/services.js";
-import { can, PERMISSIONS } from "../../helpers/Permissions.js";
+import { PERMISSIONS } from "../../helpers/Permissions.js";
 import ProtecaoDeRota from "../../helpers/ProtecaoDeRota.jsx";
 
 // ----------------------------------------------------------
