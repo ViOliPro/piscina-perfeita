@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PiscinaPerfeita.Api.Authorization;
 using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Models;
@@ -9,7 +10,7 @@ namespace PiscinaPerfeita.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(Policy = Policies.UserOrSuper)]
     public class EstoquesController : ControllerBase
     {
         private readonly IEstoqueService _estoquesService;
@@ -22,6 +23,7 @@ namespace PiscinaPerfeita.Api.Controllers
 
         // 1. GET: api/clientes (Retorna todos os registros do banco)
         [HttpGet]
+        [Authorize(Policy = Policies.Listar)]
         public async Task<ActionResult<IEnumerable<EstoqueResponseDto>>> Get()
         {
             var estoques = await _estoquesService.Show();
@@ -30,6 +32,7 @@ namespace PiscinaPerfeita.Api.Controllers
 
         // 2. GET: api/clientes/id (Retorna o registro com id)
         [HttpGet("{id}")]
+        [Authorize(Policy = Policies.Listar)]
         public async Task<ActionResult<EstoqueResponseDto>> GetById(Guid id)
         {
             try
@@ -45,6 +48,7 @@ namespace PiscinaPerfeita.Api.Controllers
 
         // 3. POST: api/clientes (Insere um dado novo que aparecerá no pgAdmin)
         [HttpPost]
+        [Authorize(Policy = Policies.Cadastrar)]
         public async Task<ActionResult<EstoqueResponseDto>> Create(EstoqueRequestDto dto)
         {
             try
@@ -64,6 +68,7 @@ namespace PiscinaPerfeita.Api.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Policy = Policies.Editar)]
         public async Task<ActionResult<EstoqueResponseDto>> Update(Guid id, EstoqueRequestDto dto)
         {
             try
@@ -82,6 +87,7 @@ namespace PiscinaPerfeita.Api.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Policy = Policies.Deletar)]
         public async Task<ActionResult> Delete(Guid id)
         {
             try

@@ -25,6 +25,10 @@ import {
   usuarioService,
 } from "../../config/services.js";
 import { ANALISE_FAIXAS } from "../../config/index.js";
+import { getLocalDateTimeInput } from "../../utils/getLocalDateTimeInput.js";
+import { PERMISSIONS } from "../../helpers/Permissions.js";
+import ProtecaoDeRota from "../../helpers/ProtecaoDeRota.jsx";
+import { useCan } from "../../context/AuthContext.jsx";
 
 // ----------------------------------------------------------
 // Helpers
@@ -55,7 +59,7 @@ function AnaliseForm({ piscinas, usuarios, onSubmit, onCancel, loading }) {
   const [form, setForm] = useState({
     piscinaId: "",
     usuarioId: "",
-    dataAnalise: new Date().toISOString().slice(0, 16),
+    dataAnalise: getLocalDateTimeInput(),
     ph: "",
     cloroLivre: "",
     alcalinidade: "",
@@ -64,6 +68,8 @@ function AnaliseForm({ piscinas, usuarios, onSubmit, onCancel, loading }) {
   });
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+
+  const podeMostrar = useCan(PERMISSIONS.ANALISES.VIEW_BTN);
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -95,20 +101,22 @@ function AnaliseForm({ piscinas, usuarios, onSubmit, onCancel, loading }) {
             ))}
           </select>
         </FormField>
-        <FormField label="Responsável">
-          <select
-            style={inputStyle}
-            value={form.usuarioId}
-            onChange={set("usuarioId")}
-          >
-            <option value="">Selecione o usuário</option>
-            {usuarios.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.nome}
-              </option>
-            ))}
-          </select>
-        </FormField>
+        {podeMostrar ?? (
+          <FormField label="Responsável">
+            <select
+              style={inputStyle}
+              value={form.usuarioId}
+              onChange={set("usuarioId")}
+            >
+              <option value="">Selecione o usuário</option>
+              {usuarios.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.nome}
+                </option>
+              ))}
+            </select>
+          </FormField>
+        )}
         <FormField label="Data e hora">
           <input
             type="datetime-local"
@@ -190,10 +198,20 @@ function AnaliseForm({ piscinas, usuarios, onSubmit, onCancel, loading }) {
           marginTop: 16,
         }}
       >
-        <Button variant="ghost" onClick={onCancel} type="button">
+        <Button
+          variant="ghost"
+          onClick={onCancel}
+          type="button"
+          permission={PERMISSIONS.ANALISES.CREATE}
+        >
           Cancelar
         </Button>
-        <Button variant="primary" type="submit" disabled={loading}>
+        <Button
+          variant="primary"
+          type="submit"
+          disabled={loading}
+          permission={PERMISSIONS.ANALISES.CREATE}
+        >
           {loading ? "Salvando…" : "Salvar análise"}
         </Button>
       </div>
@@ -316,10 +334,16 @@ export default function Analises({ onRegistrarAplicacao }) {
             size="sm"
             onClick={() => onRegistrarAplicacao?.(r.piscinaId, r.id)}
             title="Registrar a aplicação de um produto motivada por esta análise"
+            permission={PERMISSIONS.ANALISES.CREATE}
           >
             Registrar aplicação
           </Button>
-          <Button variant="danger" size="sm" onClick={() => handleDelete(r.id)}>
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => handleDelete(r.id)}
+            permission={PERMISSIONS.ANALISES.CREATE}
+          >
             Excluir
           </Button>
         </div>
@@ -330,58 +354,64 @@ export default function Analises({ onRegistrarAplicacao }) {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div>
-      <PageHeader
-        title="Análises"
-        description="Registro de qualidade da água por piscina"
-        action={
-          <Button variant="primary" onClick={() => setModalOpen(true)}>
-            + Nova análise
-          </Button>
-        }
-      />
-
-      {error && <ErrorMessage message={error} />}
-
-      <Toolbar>
-        <SearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder="Buscar piscina ou responsável…"
+    <ProtecaoDeRota permissao={PERMISSIONS.ANALISES.VIEW}>
+      <div>
+        <PageHeader
+          title="Análises"
+          description="Registro de qualidade da água por piscina"
+          action={
+            <Button
+              variant="primary"
+              onClick={() => setModalOpen(true)}
+              permission={PERMISSIONS.ANALISES.CREATE}
+            >
+              + Nova análise
+            </Button>
+          }
         />
-        <FilterSelect
-          value={filtroStatus}
-          onChange={setFiltroStatus}
-          placeholder="Todos os status"
-          options={[
-            { value: "ok", label: "Normal" },
-            { value: "warn", label: "Atenção" },
-            { value: "bad", label: "Ajustar pH" },
-          ]}
-        />
-      </Toolbar>
 
-      <Card noPadding>
-        <DataTable
-          columns={columns}
-          data={filtered}
-          emptyMessage="Nenhuma análise encontrada com os filtros aplicados."
-        />
-      </Card>
+        {error && <ErrorMessage message={error} />}
 
-      <Modal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title="Nova análise"
-      >
-        <AnaliseForm
-          piscinas={piscinas}
-          usuarios={usuarios}
-          onSubmit={handleSave}
-          onCancel={() => setModalOpen(false)}
-          loading={saving}
-        />
-      </Modal>
-    </div>
+        <Toolbar>
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Buscar piscina ou responsável…"
+          />
+          <FilterSelect
+            value={filtroStatus}
+            onChange={setFiltroStatus}
+            placeholder="Todos os status"
+            options={[
+              { value: "ok", label: "Normal" },
+              { value: "warn", label: "Atenção" },
+              { value: "bad", label: "Ajustar pH" },
+            ]}
+          />
+        </Toolbar>
+
+        <Card noPadding>
+          <DataTable
+            columns={columns}
+            data={filtered}
+            emptyMessage="Nenhuma análise encontrada com os filtros aplicados."
+          />
+        </Card>
+
+        <Modal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          title="Nova análise"
+        >
+          <AnaliseForm
+            piscinas={piscinas}
+            usuarios={usuarios}
+            onSubmit={handleSave}
+            onCancel={() => setModalOpen(false)}
+            loading={saving}
+          />
+        </Modal>
+      </div>
+    </ProtecaoDeRota>
   );
 }

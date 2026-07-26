@@ -9,30 +9,56 @@
 // ============================================================
 import { useState, useEffect } from "react";
 import {
-  PageHeader, Card, Button, Modal, Toolbar,
-  SearchInput, DataTable, FormGrid, FormField,
-  inputStyle, LoadingSpinner, ErrorMessage,
+  PageHeader,
+  Card,
+  Button,
+  Modal,
+  Toolbar,
+  SearchInput,
+  DataTable,
+  FormGrid,
+  FormField,
+  inputStyle,
+  LoadingSpinner,
+  ErrorMessage,
 } from "../../components/ui/index.jsx";
 import {
-  aplicacaoProdutoService, piscinaService, produtoService,
-  depositoService, analiseService,
+  aplicacaoProdutoService,
+  piscinaService,
+  produtoService,
+  depositoService,
+  analiseService,
 } from "../../config/services.js";
 import { UNIDADES_LANCAMENTO } from "../../config/index.js";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { getLocalDateTimeInput } from "../../utils/getLocalDateTimeInput.js";
+import ProtecaoDeRota from "../../helpers/ProtecaoDeRota.jsx";
+import { PERMISSIONS } from "../../helpers/Permissions.js";
 
 // ----------------------------------------------------------
 // Formulário
 // ----------------------------------------------------------
 function AplicacaoForm({
-  piscinas, produtos, depositos, analises, initial, onSubmit, onCancel, loading,
+  piscinas,
+  produtos,
+  depositos,
+  analises,
+  initial,
+  onSubmit,
+  onCancel,
+  loading,
 }) {
   const [form, setForm] = useState(
     initial ?? {
-      piscinaId: "", produtoId: "", depositoId: "",
-      quantidade: "", unidadeLancamento: "", analiseId: "",
-      dataAplicacao: new Date().toISOString().slice(0, 16),
+      piscinaId: "",
+      produtoId: "",
+      depositoId: "",
+      quantidade: "",
+      unidadeLancamento: "",
+      analiseId: "",
+      dataAplicacao: getLocalDateTimeInput(),
       observacoes: "",
-    }
+    },
   );
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
   const produtoSelecionado = produtos.find((p) => p.id === form.produtoId);
@@ -44,63 +70,144 @@ function AplicacaoForm({
 
   // Análises da piscina selecionada — ajuda a vincular a aplicação ao
   // motivo real (ex.: pH baixo → aplicação de elevador de pH).
-  const analisesDaPiscina = analises.filter((a) => a.piscinaId === form.piscinaId);
+  const analisesDaPiscina = analises.filter(
+    (a) => a.piscinaId === form.piscinaId,
+  );
 
   return (
     <form onSubmit={handleSubmit}>
       <FormGrid>
         <FormField label="Piscina *">
-          <select required style={inputStyle} value={form.piscinaId} onChange={set("piscinaId")}>
+          <select
+            required
+            style={inputStyle}
+            value={form.piscinaId}
+            onChange={set("piscinaId")}
+          >
             <option value="">Selecione a piscina</option>
-            {piscinas.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
+            {piscinas.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.nome}
+              </option>
+            ))}
           </select>
         </FormField>
         <FormField label="Análise relacionada (opcional)">
-          <select style={inputStyle} value={form.analiseId} onChange={set("analiseId")}>
+          <select
+            style={inputStyle}
+            value={form.analiseId}
+            onChange={set("analiseId")}
+          >
             <option value="">Nenhuma</option>
             {analisesDaPiscina.map((a) => (
               <option key={a.id} value={a.id}>
-                {new Date(a.dataAnalise).toLocaleDateString("pt-BR")} — pH {a.ph ?? "—"} / Cloro {a.cloroLivre ?? "—"}
+                {new Date(a.dataAnalise).toLocaleDateString("pt-BR")} — pH{" "}
+                {a.ph ?? "—"} / Cloro {a.cloroLivre ?? "—"}
               </option>
             ))}
           </select>
         </FormField>
         <FormField label="Depósito *">
-          <select required style={inputStyle} value={form.depositoId} onChange={set("depositoId")}>
+          <select
+            required
+            style={inputStyle}
+            value={form.depositoId}
+            onChange={set("depositoId")}
+          >
             <option value="">Selecione o depósito</option>
-            {depositos.map((d) => <option key={d.id} value={d.id}>{d.nome}</option>)}
+            {depositos.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.nome}
+              </option>
+            ))}
           </select>
         </FormField>
         <FormField label="Produto *">
-          <select required style={inputStyle} value={form.produtoId} onChange={set("produtoId")}>
+          <select
+            required
+            style={inputStyle}
+            value={form.produtoId}
+            onChange={set("produtoId")}
+          >
             <option value="">Selecione o produto</option>
-            {produtos.map((p) => <option key={p.id} value={p.id}>{p.nome} ({p.unidadeMedida})</option>)}
+            {produtos.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.nome} ({p.unidadeMedida})
+              </option>
+            ))}
           </select>
         </FormField>
         <FormField label="Quantidade aplicada *">
-          <input required type="number" step="0.0001" min="0.0001" placeholder="Ex.: 500"
-            style={inputStyle} value={form.quantidade} onChange={set("quantidade")} />
+          <input
+            required
+            type="number"
+            step="0.0001"
+            min="0.0001"
+            placeholder="Ex.: 500"
+            style={inputStyle}
+            value={form.quantidade}
+            onChange={set("quantidade")}
+          />
         </FormField>
         <FormField label="Unidade da aplicação">
-          <select style={inputStyle} value={form.unidadeLancamento} onChange={set("unidadeLancamento")}>
+          <select
+            style={inputStyle}
+            value={form.unidadeLancamento}
+            onChange={set("unidadeLancamento")}
+          >
             <option value="">
-              {produtoSelecionado ? `Mesma do produto (${produtoSelecionado.unidadeMedida})` : "Mesma unidade do produto"}
+              {produtoSelecionado
+                ? `Mesma do produto (${produtoSelecionado.unidadeMedida})`
+                : "Mesma unidade do produto"}
             </option>
-            {UNIDADES_LANCAMENTO.map((u) => <option key={u} value={u}>{u}</option>)}
+            {UNIDADES_LANCAMENTO.map((u) => (
+              <option key={u} value={u}>
+                {u}
+              </option>
+            ))}
           </select>
         </FormField>
         <FormField label="Data e hora *">
-          <input required type="datetime-local" style={inputStyle}
-            value={form.dataAplicacao} onChange={set("dataAplicacao")} />
+          <input
+            required
+            type="datetime-local"
+            style={inputStyle}
+            value={form.dataAplicacao}
+            onChange={set("dataAplicacao")}
+          />
         </FormField>
         <FormField label="Observações" fullWidth>
-          <input type="text" placeholder="Detalhes adicionais sobre a aplicação"
-            style={inputStyle} value={form.observacoes} onChange={set("observacoes")} />
+          <input
+            type="text"
+            placeholder="Detalhes adicionais sobre a aplicação"
+            style={inputStyle}
+            value={form.observacoes}
+            onChange={set("observacoes")}
+          />
         </FormField>
       </FormGrid>
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
-        <Button variant="ghost" onClick={onCancel} type="button">Cancelar</Button>
-        <Button variant="primary" type="submit" disabled={loading}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 8,
+          marginTop: 16,
+        }}
+      >
+        <Button
+          variant="ghost"
+          onClick={onCancel}
+          type="button"
+          permission={PERMISSIONS.APLICACOES.CREATE}
+        >
+          Cancelar
+        </Button>
+        <Button
+          variant="primary"
+          type="submit"
+          disabled={loading}
+          permission={PERMISSIONS.APLICACOES.CREATE}
+        >
           {loading ? "Salvando…" : "Registrar aplicação"}
         </Button>
       </div>
@@ -140,8 +247,11 @@ export default function Aplicacoes({ prefill, onPrefillConsumed }) {
         setProdutos(pr ?? []);
         setDepositos(d ?? []);
         setAnalises(an ?? []);
-      } catch (err) { setError(err.message); }
-      finally { setLoading(false); }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
     }
     load();
   }, []);
@@ -153,9 +263,14 @@ export default function Aplicacoes({ prefill, onPrefillConsumed }) {
       setModal({
         open: true,
         initial: {
-          piscinaId: prefill.piscinaId ?? "", produtoId: "", depositoId: "",
-          quantidade: "", unidadeLancamento: "", analiseId: prefill.analiseId ?? "",
-          dataAplicacao: new Date().toISOString().slice(0, 16), observacoes: "",
+          piscinaId: prefill.piscinaId ?? "",
+          produtoId: "",
+          depositoId: "",
+          quantidade: "",
+          unidadeLancamento: "",
+          analiseId: prefill.analiseId ?? "",
+          dataAplicacao: getLocalDateTimeInput(),
+          observacoes: "",
         },
       });
       onPrefillConsumed?.();
@@ -166,75 +281,112 @@ export default function Aplicacoes({ prefill, onPrefillConsumed }) {
     try {
       setSaving(true);
       setError(null);
-      const nova = await aplicacaoProdutoService.criar({ ...dto, usuarioId: user?.userId });
+      const nova = await aplicacaoProdutoService.criar({
+        ...dto,
+        usuarioId: user?.userId,
+      });
       setAplicacoes((prev) => [nova, ...prev]);
       setModal({ open: false, initial: null });
-    } catch (err) { setError(err.message); }
-    finally { setSaving(false); }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
   }
 
   const filtered = aplicacoes.filter((a) =>
-    `${a.produto?.nome} ${a.piscina?.nome}`.toLowerCase().includes(search.toLowerCase())
+    `${a.produto?.nome} ${a.piscina?.nome}`
+      .toLowerCase()
+      .includes(search.toLowerCase()),
   );
 
   const columns = [
-    { key: "piscina",  label: "Piscina",  render: (_, r) => r.piscina?.nome ?? "—" },
-    { key: "produto",  label: "Produto",  render: (_, r) => r.produto?.nome ?? "—" },
-    { key: "deposito", label: "Depósito", render: (_, r) => r.deposito?.nome ?? "—" },
     {
-      key: "quantidade", label: "Quantidade",
+      key: "piscina",
+      label: "Piscina",
+      render: (_, r) => r.piscina?.nome ?? "—",
+    },
+    {
+      key: "produto",
+      label: "Produto",
+      render: (_, r) => r.produto?.nome ?? "—",
+    },
+    {
+      key: "deposito",
+      label: "Depósito",
+      render: (_, r) => r.deposito?.nome ?? "—",
+    },
+    {
+      key: "quantidade",
+      label: "Quantidade",
       render: (v, r) => `${v} ${r.unidadeLancamento || ""}`,
     },
     {
-      key: "dataAplicacao", label: "Data",
+      key: "dataAplicacao",
+      label: "Data",
       render: (v) => new Date(v).toLocaleString("pt-BR"),
     },
     {
-      key: "analiseId", label: "Análise relacionada",
-      render: (v) => v ? "Vinculada" : "—",
+      key: "analiseId",
+      label: "Análise relacionada",
+      render: (v) => (v ? "Vinculada" : "—"),
     },
   ];
 
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div>
-      <PageHeader
-        title="Aplicações de produto"
-        description="Registre o uso de produtos nas piscinas — o estoque é atualizado automaticamente"
-        action={
-          <Button variant="primary" onClick={() => setModal({ open: true, initial: null })}>
-            + Registrar aplicação
-          </Button>
-        }
-      />
-
-      {error && <ErrorMessage message={error} />}
-
-      <Toolbar>
-        <SearchInput value={search} onChange={setSearch} placeholder="Buscar produto ou piscina…" />
-      </Toolbar>
-
-      <Card noPadding>
-        <DataTable columns={columns} data={filtered} emptyMessage="Nenhuma aplicação registrada." />
-      </Card>
-
-      <Modal
-        open={modal.open}
-        onClose={() => setModal({ open: false, initial: null })}
-        title="Registrar aplicação de produto"
-      >
-        <AplicacaoForm
-          piscinas={piscinas}
-          produtos={produtos}
-          depositos={depositos}
-          analises={analises}
-          initial={modal.initial}
-          onSubmit={handleSave}
-          onCancel={() => setModal({ open: false, initial: null })}
-          loading={saving}
+    <ProtecaoDeRota permissao={PERMISSIONS.APLICACOES.VIEW}>
+      <div>
+        <PageHeader
+          title="Aplicações de produto"
+          description="Registre o uso de produtos nas piscinas — o estoque é atualizado automaticamente"
+          action={
+            <Button
+              variant="primary"
+              onClick={() => setModal({ open: true, initial: null })}
+              permission={PERMISSIONS.APLICACOES.CREATE}
+            >
+              + Registrar aplicação
+            </Button>
+          }
         />
-      </Modal>
-    </div>
+
+        {error && <ErrorMessage message={error} />}
+
+        <Toolbar>
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Buscar produto ou piscina…"
+          />
+        </Toolbar>
+
+        <Card noPadding>
+          <DataTable
+            columns={columns}
+            data={filtered}
+            emptyMessage="Nenhuma aplicação registrada."
+          />
+        </Card>
+
+        <Modal
+          open={modal.open}
+          onClose={() => setModal({ open: false, initial: null })}
+          title="Registrar aplicação de produto"
+        >
+          <AplicacaoForm
+            piscinas={piscinas}
+            produtos={produtos}
+            depositos={depositos}
+            analises={analises}
+            initial={modal.initial}
+            onSubmit={handleSave}
+            onCancel={() => setModal({ open: false, initial: null })}
+            loading={saving}
+          />
+        </Modal>
+      </div>
+    </ProtecaoDeRota>
   );
 }

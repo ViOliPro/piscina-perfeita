@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PiscinaPerfeita.Api.Authorization;
 using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Service.MovimentacoesEstoque;
@@ -8,7 +9,7 @@ namespace PiscinaPerfeita.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(Policy = Policies.UserOrSuper)]
     public class MovimentacoesController : ControllerBase
     {
         private readonly IMovimentacaoService _movimentacoesService;
@@ -22,6 +23,7 @@ namespace PiscinaPerfeita.Api.Controllers
 
         // GET: api/movimentacoes
         [HttpGet]
+        [Authorize(Policy = Policies.Listar)]
         public async Task<ActionResult<IEnumerable<MovimentacaoEstoqueResponseDto>>> Get()
         {
             try
@@ -37,6 +39,7 @@ namespace PiscinaPerfeita.Api.Controllers
 
         // GET: api/movimentacoes/{id}
         [HttpGet("{id}")]
+        [Authorize(Policy = Policies.Listar)]
         public async Task<ActionResult<MovimentacaoEstoqueResponseDto>> GetById(Guid id)
         {
             try
@@ -54,6 +57,7 @@ namespace PiscinaPerfeita.Api.Controllers
         // Cria a movimentação e já atualiza o saldo do Estoque na mesma
         // operação (ver MovimentacaoService.Create).
         [HttpPost]
+        [Authorize(Policy = Policies.Cadastrar)]
         public async Task<ActionResult<MovimentacaoEstoqueResponseDto>> Create(
             MovimentacaoEstoqueRequestDto dto
         )
@@ -85,6 +89,7 @@ namespace PiscinaPerfeita.Api.Controllers
         // NOTA: só corrige campos de registro — não recalcula o efeito no
         // Estoque (ver comentário em MovimentacaoService.Update).
         [HttpPut("{id}")]
+        [Authorize(Policy = Policies.Editar)]
         public async Task<ActionResult> Update(Guid id, MovimentacaoEstoqueRequestDto dto)
         {
             try
@@ -103,6 +108,7 @@ namespace PiscinaPerfeita.Api.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Policy = Policies.Deletar)]
         public async Task<ActionResult> Delete(Guid id)
         {
             try
@@ -123,9 +129,9 @@ namespace PiscinaPerfeita.Api.Controllers
         // diferença contra o estoque lógico e gera uma MovimentacaoEstoque
         // do tipo AjusteInventario para cada divergência encontrada.
         [HttpPost("contagem-inventario")]
-        public async Task<ActionResult<IEnumerable<ContagemInventarioResultadoDto>>> ContagemInventario(
-            ContagemInventarioRequestDto dto
-        )
+        public async Task<
+            ActionResult<IEnumerable<ContagemInventarioResultadoDto>>
+        > ContagemInventario(ContagemInventarioRequestDto dto)
         {
             try
             {

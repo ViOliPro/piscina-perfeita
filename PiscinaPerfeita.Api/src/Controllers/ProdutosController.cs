@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PiscinaPerfeita.Api.Authorization;
 using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Service.Produtos;
@@ -8,18 +9,20 @@ namespace PiscinaPerfeita.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(Policy = Policies.UserOrSuper)]
     public class ProdutosController : ControllerBase
     {
         private readonly IProdutoService _produtosService;
 
         public ProdutosController(IProdutoService produtosService)
         {
-            _produtosService = produtosService ?? throw new ArgumentNullException(nameof(produtosService));
+            _produtosService =
+                produtosService ?? throw new ArgumentNullException(nameof(produtosService));
         }
 
         // 1. GET: api/clientes (Retorna todos os registros do banco)
         [HttpGet]
+        [Authorize(Policy = Policies.Listar)]
         public async Task<ActionResult<IEnumerable<ProdutoResponseDto>>> Get()
         {
             try
@@ -35,6 +38,7 @@ namespace PiscinaPerfeita.Api.Controllers
 
         // 2. GET: api/clientes/id (Retorna o registro com id)
         [HttpGet("{id}")]
+        [Authorize(Policy = Policies.Listar)]
         public async Task<ActionResult<ProdutoResponseDto>> GetById(Guid id)
         {
             try
@@ -50,6 +54,7 @@ namespace PiscinaPerfeita.Api.Controllers
 
         // 3. POST: api/clientes (Insere um dado novo que aparecerá no pgAdmin)
         [HttpPost]
+        [Authorize(Policy = Policies.Cadastrar)]
         public async Task<ActionResult<ProdutoResponseDto>> Create(ProdutoRequestDto dto)
         {
             try
@@ -65,6 +70,7 @@ namespace PiscinaPerfeita.Api.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Policy = Policies.Editar)]
         public async Task<ActionResult<ProdutoResponseDto>> Update(Guid id, ProdutoRequestDto dto)
         {
             try
@@ -76,10 +82,10 @@ namespace PiscinaPerfeita.Api.Controllers
             {
                 return NotFound(new { message = ex.Message });
             }
-
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Policy = Policies.Deletar)]
         public async Task<ActionResult> Delete(Guid id)
         {
             try
@@ -91,7 +97,6 @@ namespace PiscinaPerfeita.Api.Controllers
             {
                 return NotFound(new { message = ex.Message });
             }
-
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PiscinaPerfeita.Api.Authorization;
 using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Service.Piscinas;
@@ -8,18 +9,20 @@ namespace PiscinaPerfeita.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(Policy = Policies.UserOrSuper)]
     public class PiscinasController : ControllerBase
     {
         private readonly IPiscinaService _piscinasService;
 
         public PiscinasController(IPiscinaService piscinasService)
         {
-            _piscinasService = piscinasService ?? throw new ArgumentNullException(nameof(piscinasService));
+            _piscinasService =
+                piscinasService ?? throw new ArgumentNullException(nameof(piscinasService));
         }
 
         // 1. GET: api/clientes (Retorna todos os registros do banco)
         [HttpGet]
+        [Authorize(Policy = Policies.Listar)]
         public async Task<ActionResult<IEnumerable<PiscinaResponseDto>>> Get()
         {
             try
@@ -35,6 +38,7 @@ namespace PiscinaPerfeita.Api.Controllers
 
         // 2. GET: api/clientes/id (Retorna o registro com id)
         [HttpGet("{id}")]
+        [Authorize(Policy = Policies.Listar)]
         public async Task<ActionResult<PiscinaResponseDto>> GetById(Guid id)
         {
             try
@@ -50,6 +54,7 @@ namespace PiscinaPerfeita.Api.Controllers
 
         // 3. POST: api/clientes (Insere um dado novo que aparecerá no pgAdmin)
         [HttpPost]
+        [Authorize(Policy = Policies.Cadastrar)]
         public async Task<ActionResult<PiscinaResponseDto>> Create(PiscinaRequestDto dto)
         {
             try
@@ -69,18 +74,20 @@ namespace PiscinaPerfeita.Api.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Policy = Policies.Editar)]
         public async Task<ActionResult<PiscinaResponseDto>> Update(Guid id, PiscinaRequestDto dto)
         {
-
             if (dto.UsuarioId == Guid.Empty)
             {
-                return BadRequest(new { message = "O ID do usuário é obrigatório e não pode ser vazio." });
+                return BadRequest(
+                    new { message = "O ID do usuário é obrigatório e não pode ser vazio." }
+                );
             }
 
             try
             {
                 var data = await _piscinasService.Update(id, dto);
-                
+
                 return CreatedAtAction(nameof(GetById), new { id = data.Id }, data);
             }
             catch (KeyNotFoundException ex)
@@ -91,10 +98,10 @@ namespace PiscinaPerfeita.Api.Controllers
             {
                 return Unauthorized(new { message = ex.Message });
             }
-
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Policy = Policies.Deletar)]
         public async Task<ActionResult> Delete(Guid id)
         {
             try
@@ -106,7 +113,6 @@ namespace PiscinaPerfeita.Api.Controllers
             {
                 return NotFound(new { message = ex.Message });
             }
-
         }
     }
 }

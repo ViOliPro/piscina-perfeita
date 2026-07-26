@@ -1,13 +1,14 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
+using PiscinaPerfeita.Api.Migrations;
 using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Repository.Locais;
 using PiscinaPerfeita.Api.Repository.Usuarios;
 using PiscinaPerfeita.Api.Repository.UsuariosLocal;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace PiscinaPerfeita.Api.Service.Account
 {
@@ -46,7 +47,32 @@ namespace PiscinaPerfeita.Api.Service.Account
 
             // Validação da lógica de usuário Local (retorna o Local ativo e o
             // Perfil correspondente a esse Local — ou ao vínculo pendente).
+            //SuperAdmin, nao precisa estar vinculado a um local
+
+            if(usuario.Role == Role.SuperAdmin)
+            {
+                await _usuarioRepository.UpdateUltimoLocal(usuario.Id, Guid.Empty);
+                var tokenVerTodos = NewToken(usuario, Guid.Empty.ToString(), Perfil.Administrador);
+
+                return new AccountResponseDto
+                {
+                    AccessToken = tokenVerTodos,
+                    TokenType = "Bearer",
+                    expiresIn = 28800,
+                    User = new UserResponseDto
+                    {
+                        UserId = usuario.Id,
+                        Nome = usuario.Nome ?? string.Empty,
+                        Email = usuario.Email ?? string.Empty,
+                        LocalId = Guid.Empty,
+                        Role = usuario.Role,
+                        Perfil = null,
+                    },
+                };
+            }
+
             var (localIdAtivo, perfilAtivo) = await ValidacaoUsuarioLocal(usuario.Id, usuario);
+
             string stringLocalId = localIdAtivo?.ToString() ?? string.Empty;
 
             // Geração do Token JWT

@@ -19,6 +19,8 @@ import {
 import { localService } from "../../config/services.js";
 import { ROLES, PERFIS } from "../../config/index.js";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { PERMISSIONS } from "../../helpers/Permissions.js";
+import ProtecaoDeRota from "../../helpers/ProtecaoDeRota.jsx";
 
 // ----------------------------------------------------------
 // Formulário
@@ -135,10 +137,20 @@ function LocalForm({ initial, onSubmit, onCancel, loading }) {
           marginTop: 16,
         }}
       >
-        <Button variant="ghost" onClick={onCancel} type="button">
+        <Button
+          variant="ghost"
+          onClick={onCancel}
+          type="button"
+          permission={PERMISSIONS.LOCAIS.CREATE}
+        >
           Cancelar
         </Button>
-        <Button variant="primary" type="submit" disabled={loading}>
+        <Button
+          variant="primary"
+          type="submit"
+          disabled={loading}
+          permission={PERMISSIONS.LOCAIS.CREATE}
+        >
           {loading
             ? "Salvando…"
             : initial
@@ -244,6 +256,7 @@ export default function Locais() {
                   variant="ghost"
                   size="sm"
                   onClick={() => setModal({ open: true, editing: r })}
+                  permission={PERMISSIONS.LOCAIS.EDIT}
                 >
                   Editar
                 </Button>
@@ -251,6 +264,7 @@ export default function Locais() {
                   variant="danger"
                   size="sm"
                   onClick={() => handleDelete(r.id)}
+                  permission={PERMISSIONS.LOCAIS.DELETE}
                 >
                   Excluir
                 </Button>
@@ -264,58 +278,61 @@ export default function Locais() {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div>
-      <PageHeader
-        title="Locais"
-        description={
-          ehSuperAdmin || ehPerfilAdmin
-            ? "Condomínios e unidades cadastrados no sistema"
-            : "Condomínios e unidades aos quais você tem acesso"
-        }
-        action={
-          (ehSuperAdmin || ehPerfilAdmin) && (
-            <Button
-              variant="primary"
-              onClick={() => setModal({ open: true, editing: null })}
-            >
-              + Novo local
-            </Button>
-          )
-        }
-      />
-
-      {error && <ErrorMessage message={error} />}
-
-      <Toolbar>
-        <SearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder="Buscar local…"
+    <ProtecaoDeRota permissao={PERMISSIONS.LOCAIS.VIEW}>
+      <div>
+        <PageHeader
+          title="Locais"
+          description={
+            ehSuperAdmin || ehPerfilAdmin
+              ? "Condomínios e unidades cadastrados no sistema"
+              : "Condomínios e unidades aos quais você tem acesso"
+          }
+          action={
+            (ehSuperAdmin || ehPerfilAdmin) && (
+              <Button
+                variant="primary"
+                onClick={() => setModal({ open: true, editing: null })}
+                permission={PERMISSIONS.LOCAIS.CREATE}
+              >
+                + Novo local
+              </Button>
+            )
+          }
         />
-      </Toolbar>
 
-      <Card noPadding>
-        <DataTable
-          columns={columns}
-          data={filtered}
-          emptyMessage="Nenhum local cadastrado."
-        />
-      </Card>
+        {error && <ErrorMessage message={error} />}
 
-      {(ehSuperAdmin || ehPerfilAdmin) && (
-        <Modal
-          open={modal.open}
-          onClose={() => setModal({ open: false, editing: null })}
-          title={modal.editing ? "Editar local" : "Novo local"}
-        >
-          <LocalForm
-            initial={modal.editing}
-            onSubmit={handleSave}
-            onCancel={() => setModal({ open: false, editing: null })}
-            loading={saving}
+        <Toolbar>
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Buscar local…"
           />
-        </Modal>
-      )}
-    </div>
+        </Toolbar>
+
+        <Card noPadding>
+          <DataTable
+            columns={columns}
+            data={filtered}
+            emptyMessage="Nenhum local cadastrado."
+          />
+        </Card>
+
+        {(ehSuperAdmin || ehPerfilAdmin) && (
+          <Modal
+            open={modal.open}
+            onClose={() => setModal({ open: false, editing: null })}
+            title={modal.editing ? "Editar local" : "Novo local"}
+          >
+            <LocalForm
+              initial={modal.editing}
+              onSubmit={handleSave}
+              onCancel={() => setModal({ open: false, editing: null })}
+              loading={saving}
+            />
+          </Modal>
+        )}
+      </div>
+    </ProtecaoDeRota>
   );
 }
