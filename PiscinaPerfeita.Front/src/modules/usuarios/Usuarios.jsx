@@ -14,10 +14,10 @@ import {
   DataTable,
   FormGrid,
   FormField,
-  inputStyle,
   LoadingSpinner,
   ErrorMessage,
 } from "../../components/ui/index.jsx";
+import { inputStyle } from "../../components/ui/styles.js";
 import {
   usuarioService,
   localService,
@@ -47,7 +47,7 @@ function UsuarioForm({ initial, onSubmit, onCancel, loading }) {
       ? {
           nome: initial.nome,
           email: initial.email ?? "",
-          role: String(initial.role),
+          perfil: String(initial.perfil),
           senha: "",
         }
       : {

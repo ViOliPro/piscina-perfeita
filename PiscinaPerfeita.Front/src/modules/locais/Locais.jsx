@@ -12,10 +12,10 @@ import {
   DataTable,
   FormGrid,
   FormField,
-  inputStyle,
   LoadingSpinner,
   ErrorMessage,
 } from "../../components/ui/index.jsx";
+import { inputStyle } from "../../components/ui/styles.js";
 import { localService } from "../../config/services.js";
 import { ROLES, PERFIS } from "../../config/index.js";
 import { useAuth } from "../../context/AuthContext.jsx";

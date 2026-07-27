@@ -118,14 +118,19 @@ export const USER_PERMISSIONS = {
 };
 
 export function can(requiredPermission, user) {
-  const PerfilUsuarioLogado =
-    ROLES.ADMIN === user.role
-      ? PERFIL_ADMINISTRADOR
-      : PERFIL_LABELS[user.perfil];
+  // SuperAdmin sem perfil, apenas ROLE
+  const isSuperAdmin = ROLES.ADMIN === user.role;
+  const isPerfilAdministrador = PERFIS.ADMINISTRADOR === user.perfil;
+
+  const permissoesAtribuidas = isSuperAdmin
+    ? [ROLE_LABELS[ROLES.ADMIN]]
+    : isPerfilAdministrador
+      ? [PERFIL_LABELS[PERFIS.ADMINISTRADOR]]
+      : [PERFIL_LABELS[user.perfil]];
 
   // 1. Busca a lista de permissões que esse perfil tem direito
   // Se userPerfil nao for passado utiliza o padrao da aplicacao
-  const perfil = PerfilUsuarioLogado;
+  const perfil = permissoesAtribuidas;
 
   const userPerms = USER_PERMISSIONS[perfil] || [];
 

@@ -37,6 +37,7 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             try
             {
                 var usuarioLogado = _user.IsSuperAdmin();
+              
                 if (usuarioLogado)
                     return await _usuariosRepository.Show();
 

@@ -69,7 +69,7 @@ namespace PiscinaPerfeita.Api.Service.Estoques
                 throw new KeyNotFoundException(
                     $"Não foi encontrado um deposito com o id {dto.DepositoId}"
                 );
-
+            
             ValidarMinimoEIdeal(dto.QuantidadeMinima, dto.EstoqueIdeal);
 
             var estoque = new Estoque

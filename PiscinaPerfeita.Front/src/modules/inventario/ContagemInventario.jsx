@@ -14,12 +14,12 @@ import {
   Card,
   Button,
   FormField,
-  inputStyle,
   LoadingSpinner,
   ErrorMessage,
   DataTable,
   Badge,
 } from "../../components/ui/index.jsx";
+import { inputStyle } from "../../components/ui/styles.js";
 import {
   estoqueService,
   depositoService,
@@ -40,7 +40,6 @@ export default function ContagemInventario() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [resultado, setResultado] = useState(null); // resultado da última contagem enviada
-  const podeMostrarCard = useCan(PERMISSIONS.INVENTARIOS.CREATE);
 
   useEffect(() => {
     async function load() {
@@ -117,6 +116,8 @@ export default function ContagemInventario() {
     }
   }
 
+  const podeMostrarCard = useCan(PERMISSIONS.INVENTARIOS.CREATE);
+
   if (loading) return <LoadingSpinner />;
 
   return (
@@ -128,7 +129,7 @@ export default function ContagemInventario() {
         />
         {error && <ErrorMessage message={error} />}
 
-        {podeMostrarCard ?? (
+        {podeMostrarCard && (
           <Card>
             <FormField label="Depósito a conferir *">
               <select
