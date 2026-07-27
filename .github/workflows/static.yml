@@ -1,0 +1,31 @@
+name: Deploy - PiscinaPerfeita Front
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'PiscinaPerfeita.Front/**' # Executa apenas quando a pasta do Front mudar
+
+jobs:
+  build-and-deploy-front:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+          cache-dependency-path: './PiscinaPerfeita.Front/yarn.lock'
+
+      - name: Instalar dependências e Build do Front
+        working-directory: ./PiscinaPerfeita.Front
+        run: |
+          yarn install
+          yarn build
+
+      - name: Disparar Deploy no Render (Front)
+        run: |
+          curl -X POST "${{ secrets.RENDER_FRONT_DEPLOY_HOOK }}"
