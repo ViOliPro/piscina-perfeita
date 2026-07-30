@@ -62,25 +62,33 @@ namespace PiscinaPerfeita.Api.Service.UsuariosLocal
             return await _usuariosLocalRepository.GetAllByUserId(usuarioId);
         }
 
-        // Vincular/desvincular um usuário a um Local é uma ação administrativa
-        // — é exatamente o passo de "vincular o Local ao usuário" que o
-        // SuperAdmin faz depois de criar cada entidade de forma independente.
+        // Vincular/desvincular um usuário a um Local é uma ação administrativa.
+        // CORRIGIDO: antes disso era restrito a SuperAdmin (GarantirSuperAdmin),
+        // o que contrariava a regra de negócio — "O Administrador Pai pode
+        // alterar, gerenciar ou remover privilégios e vínculos de seus
+        // usuários filhos". Agora um Administrador comum também pode criar
+        // vínculos, mas só dentro do próprio Local ativo (nunca em outro
+        // tenant) e nunca marcando o novo vínculo como Administrador Pai.
         public async Task<UsuarioLocalResponseDto> Create(UsuarioLocalRequestDto dto)
         {
-            await GarantirSuperAdmin();
+            var localId = await GarantirPodeGerenciarNoLocal(dto.LocalId);
 
-            if (dto.LocalId.HasValue)
-                await GarantirLocalExiste(dto.LocalId.Value);
+            if (localId.HasValue)
+                await GarantirLocalExiste(localId.Value);
 
             var vinculosExistentes = await _usuariosLocalRepository.GetAllByUserId(dto.UsuarioId);
-            if (dto.LocalId.HasValue && vinculosExistentes.Any(v => v.LocalId == dto.LocalId))
+            if (localId.HasValue && vinculosExistentes.Any(v => v.LocalId == localId))
                 throw new InvalidOperationException("Este usuário já está cadastrado neste local");
 
             var newUser = new UsuarioLocal
             {
                 UsuarioId = dto.UsuarioId,
-                LocalId = dto.LocalId,
+                LocalId = localId,
                 Perfil = dto.Perfil,
+                // EhAdministradorPai nunca vem do request (não existe no
+                // DTO): só nasce true nos fluxos internos de onboarding do
+                // SuperAdmin/LocalService — nunca por essa rota.
+                EhAdministradorPai = false,
             };
 
             await _usuariosLocalRepository.Create(newUser);
@@ -93,35 +101,35 @@ namespace PiscinaPerfeita.Api.Service.UsuariosLocal
                 Perfil = newUser.Perfil,
                 CreatedAt = newUser.CreatedAt,
                 Ativo = newUser.Ativo,
+                EhAdministradorPai = newUser.EhAdministradorPai,
             };
         }
 
-        // Também usado para o passo de "vincular": o SuperAdmin edita o
-        // vínculo pendente (criado com LocalId nulo junto do usuário) e
-        // define o LocalId, oficializando a ligação usuário ↔ local.
+        // Também usado para o passo de "vincular": edita o vínculo pendente
+        // (criado com LocalId nulo junto do usuário) e define o LocalId,
+        // oficializando a ligação usuário ↔ local.
         public async Task<UsuarioLocalResponseDto> Update(Guid id, UsuarioLocalRequestDto dto)
         {
-            await GarantirSuperAdmin();
-
             if (id == Guid.Empty)
             {
                 throw new ArgumentException($"O id informado não pode ser vazio {nameof(id)} .");
             }
 
-            var usuario = await _usuariosLocalRepository.GetById(id);
-            if (usuario == null)
-            {
-                throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
-            }
+            var usuario = await GarantirPodeGerenciarVinculo(id);
 
-            if (dto.LocalId.HasValue)
-                await GarantirLocalExiste(dto.LocalId.Value);
+            var localId = await GarantirPodeGerenciarNoLocal(dto.LocalId);
+            if (localId.HasValue)
+                await GarantirLocalExiste(localId.Value);
 
             var newUser = new UsuarioLocal
             {
                 UsuarioId = dto.UsuarioId,
-                LocalId = dto.LocalId,
+                LocalId = localId,
                 Perfil = dto.Perfil,
+                // Preserva o status de Administrador Pai já existente — essa
+                // rota nunca cria nem remove esse status (só o SuperAdmin
+                // altera isso, e não por aqui).
+                EhAdministradorPai = usuario.EhAdministradorPai,
             };
 
             await _usuariosLocalRepository.Update(id, newUser);
@@ -134,20 +142,72 @@ namespace PiscinaPerfeita.Api.Service.UsuariosLocal
                 Perfil = newUser.Perfil,
                 CreatedAt = newUser.CreatedAt,
                 Ativo = newUser.Ativo,
+                EhAdministradorPai = newUser.EhAdministradorPai,
             };
         }
 
         public async Task Delete(Guid id)
         {
-            await GarantirSuperAdmin();
-
-            var usuarioDb = await _usuariosLocalRepository.GetById(id);
-            if (usuarioDb == null)
-            {
-                throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
-            }
+            await GarantirPodeGerenciarVinculo(id);
 
             await _usuariosLocalRepository.Delete(id);
+        }
+
+        // SuperAdmin sempre pode. Um Administrador comum só pode gerenciar
+        // vínculos DENTRO do seu próprio Local ativo — nunca em outro
+        // LocalId (mesmo que informado no dto) e nunca vínculos pendentes
+        // (LocalId nulo) de outro Local, que são exclusivos do onboarding
+        // conduzido pelo SuperAdmin.
+        private async Task<Guid?> GarantirPodeGerenciarNoLocal(Guid? localIdDoDto)
+        {
+            var usuarioLogado = await _user.GetCurrentUser();
+            if (usuarioLogado.Role == Role.SuperAdmin)
+                return localIdDoDto;
+
+            if (usuarioLogado.Perfil != Perfil.Administrador)
+                throw new UnauthorizedAccessException(
+                    "Somente um SuperAdmin ou um Administrador pode gerenciar vínculos entre usuários e locais."
+                );
+
+            if (usuarioLogado.LocalId == null || usuarioLogado.LocalId == Guid.Empty)
+                throw new UnauthorizedAccessException(
+                    "Selecione um Local ativo para gerenciar vínculos de usuários."
+                );
+
+            // Ignora silenciosamente um LocalId diferente vindo do dto — o
+            // Administrador só pode agir sobre o próprio Local ativo.
+            return usuarioLogado.LocalId;
+        }
+
+        // Garante que o vínculo (id) existe, pertence ao Local ativo do
+        // Administrador logado (SuperAdmin ignora essa restrição) e não é o
+        // vínculo do Administrador Pai — que só o SuperAdmin pode alterar ou
+        // remover.
+        private async Task<UsuarioLocalResponseDto> GarantirPodeGerenciarVinculo(Guid id)
+        {
+            var usuario = await _usuariosLocalRepository.GetById(id);
+            if (usuario == null)
+                throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
+
+            var usuarioLogado = await _user.GetCurrentUser();
+            if (usuarioLogado.Role == Role.SuperAdmin)
+                return usuario;
+
+            if (
+                usuarioLogado.Perfil != Perfil.Administrador
+                || usuarioLogado.LocalId == null
+                || usuario.LocalId != usuarioLogado.LocalId
+            )
+                // 404 (não 403): não confirma a existência do vínculo fora
+                // do tenant do Administrador logado.
+                throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
+
+            if (usuario.EhAdministradorPai)
+                throw new UnauthorizedAccessException(
+                    "Somente o SuperAdmin pode alterar ou remover o vínculo do Administrador responsável por este Local."
+                );
+
+            return usuario;
         }
 
         private async Task GarantirSuperAdmin()
@@ -155,7 +215,7 @@ namespace PiscinaPerfeita.Api.Service.UsuariosLocal
             var usuarioLogado = await _user.GetCurrentUser();
             if (usuarioLogado.Role != Role.SuperAdmin)
                 throw new UnauthorizedAccessException(
-                    "Somente um SuperAdmin pode gerenciar vínculos entre usuários e locais."
+                    "Somente um SuperAdmin pode executar esta ação."
                 );
         }
 

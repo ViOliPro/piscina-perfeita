@@ -28,6 +28,7 @@ import {
   produtoService,
   depositoService,
   analiseService,
+  estoqueService,
 } from "../../config/services.js";
 import { UNIDADES_LANCAMENTO } from "../../config/index.js";
 import { useAuth } from "../../context/AuthContext.jsx";
@@ -43,6 +44,7 @@ function AplicacaoForm({
   produtos,
   depositos,
   analises,
+  estoques,
   initial,
   onSubmit,
   onCancel,
@@ -63,15 +65,44 @@ function AplicacaoForm({
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
   const produtoSelecionado = produtos.find((p) => p.id === form.produtoId);
 
+  // Veio do botão "Registrar aplicação" na tela de uma Análise: Piscina e
+  // Análise já chegam definidas pelo contexto e ficam travadas — evita que
+  // o usuário troque sem querer o alvo da aplicação no meio do fluxo.
+  const contextoTravado = Boolean(initial?.fromAnalise);
+
+  // Filtro em cadeia: só é possível escolher um Produto depois de escolher
+  // o Depósito, e a lista mostra estritamente os produtos que têm estoque
+  // registrado naquele Depósito.
+  const produtosDoDeposito = form.depositoId
+    ? produtos.filter((p) =>
+        estoques.some(
+          (e) => e?.deposito?.id === form.depositoId && e?.produto?.id === p.id,
+        ),
+      )
+    : [];
+
+  // Se o depósito muda (ou é limpo), o produto selecionado deixa de ser
+  // válido — evita enviar um produtoId que não pertence mais ao depósito.
+  useEffect(() => {
+    if (
+      form.produtoId &&
+      !produtosDoDeposito.some((p) => p.id === form.produtoId)
+    ) {
+      setForm((f) => ({ ...f, produtoId: "" }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.depositoId]);
+
   function handleSubmit(e) {
     e.preventDefault();
-    onSubmit({ ...form, analiseId: form.analiseId || null });
+    const { fromAnalise, ...dto } = form;
+    onSubmit({ ...dto, analiseId: form.analiseId || null });
   }
 
   // Análises da piscina selecionada — ajuda a vincular a aplicação ao
   // motivo real (ex.: pH baixo → aplicação de elevador de pH).
   const analisesDaPiscina = analises.filter(
-    (a) => a.piscinaId === form.piscinaId,
+    (a) => a?.piscina?.id === form.piscinaId,
   );
 
   return (
@@ -80,6 +111,7 @@ function AplicacaoForm({
         <FormField label="Piscina *">
           <select
             required
+            disabled={contextoTravado}
             style={inputStyle}
             value={form.piscinaId}
             onChange={set("piscinaId")}
@@ -92,8 +124,11 @@ function AplicacaoForm({
             ))}
           </select>
         </FormField>
-        <FormField label="Análise relacionada (opcional)">
+        <FormField
+          label={`Análise relacionada ${contextoTravado ? "" : "(opcional)"}`}
+        >
           <select
+            disabled={contextoTravado}
             style={inputStyle}
             value={form.analiseId}
             onChange={set("analiseId")}
@@ -125,12 +160,17 @@ function AplicacaoForm({
         <FormField label="Produto *">
           <select
             required
+            disabled={!form.depositoId}
             style={inputStyle}
             value={form.produtoId}
             onChange={set("produtoId")}
           >
-            <option value="">Selecione o produto</option>
-            {produtos.map((p) => (
+            <option value="">
+              {form.depositoId
+                ? "Selecione o produto"
+                : "Selecione um depósito primeiro"}
+            </option>
+            {produtosDoDeposito.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.nome} ({p.unidadeMedida})
               </option>
@@ -225,6 +265,7 @@ export default function Aplicacoes({ prefill, onPrefillConsumed }) {
   const [produtos, setProdutos] = useState([]);
   const [depositos, setDepositos] = useState([]);
   const [analises, setAnalises] = useState([]);
+  const [estoques, setEstoques] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -235,18 +276,20 @@ export default function Aplicacoes({ prefill, onPrefillConsumed }) {
     async function load() {
       try {
         setLoading(true);
-        const [ap, p, pr, d, an] = await Promise.all([
+        const [ap, p, pr, d, an, es] = await Promise.all([
           aplicacaoProdutoService.listar(),
           piscinaService.listar(),
           produtoService.listar(),
           depositoService.listar(),
           analiseService.listar(),
+          estoqueService.listar(),
         ]);
         setAplicacoes(ap ?? []);
         setPiscinas(p ?? []);
         setProdutos(pr ?? []);
         setDepositos(d ?? []);
         setAnalises(an ?? []);
+        setEstoques(es ?? []);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -257,7 +300,8 @@ export default function Aplicacoes({ prefill, onPrefillConsumed }) {
   }, []);
 
   // Vindo do botão "Registrar aplicação" na tela de Análises: abre o modal
-  // já com a piscina e a análise pré-selecionadas.
+  // já com a piscina e a análise pré-selecionadas (e travadas — ver
+  // AplicacaoForm/contextoTravado).
   useEffect(() => {
     if (prefill) {
       setModal({
@@ -271,6 +315,7 @@ export default function Aplicacoes({ prefill, onPrefillConsumed }) {
           analiseId: prefill.analiseId ?? "",
           dataAplicacao: getLocalDateTimeInput(),
           observacoes: "",
+          fromAnalise: true,
         },
       });
       onPrefillConsumed?.();
@@ -380,6 +425,7 @@ export default function Aplicacoes({ prefill, onPrefillConsumed }) {
             produtos={produtos}
             depositos={depositos}
             analises={analises}
+            estoques={estoques}
             initial={modal.initial}
             onSubmit={handleSave}
             onCancel={() => setModal({ open: false, initial: null })}

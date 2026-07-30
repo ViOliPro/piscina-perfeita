@@ -27,6 +27,12 @@
         public const string GerenciarUsuario = "Perfil:GerenciarUsuario";
 
         //POLICY USUARIOLOCAL
-        public const string GerenciarUsuarioLocal = "Perfil:GerenciarUsuario";
+        // ATENÇÃO: antes essa constante tinha o mesmo valor de GerenciarUsuario
+        // ("Perfil:GerenciarUsuario"), o que fazia o Dictionary estático em
+        // PerfilPolicyProvider.Mapa lançar ArgumentException ("An item with
+        // the same key has already been added") na primeira vez que qualquer
+        // policy fosse resolvida — ou seja, a API quebrava (500) na primeira
+        // requisição autenticada que passasse por [Authorize(Policy = ...)].
+        public const string GerenciarUsuarioLocal = "Perfil:GerenciarUsuarioLocal";
     }
 }

@@ -105,12 +105,12 @@ namespace PiscinaPerfeita.Api.Controllers
             }
         }
 
-        // Restrito a SuperAdmin: o serviço ainda não valida se o usuário logado
-        // pertence ao mesmo Local do usuário sendo apagado, então liberar isso
-        // pra qualquer usuário autenticado permitiria um Administrador apagar
-        // usuários de outros Locais (IDOR). Enquanto esse escopo não é
-        // implementado no service, mantemos essa ação restrita ao papel mais
-        // privilegiado.
+        // Restrito a Administrador (do próprio tenant) ou SuperAdmin. O
+        // UsuarioService.Delete agora valida que o usuário-alvo pertence ao
+        // mesmo Local do Administrador logado e bloqueia a exclusão do
+        // Administrador Pai (só o SuperAdmin pode removê-lo) — antes isso
+        // não existia e qualquer Administrador podia apagar usuários de
+        // QUALQUER Local (IDOR).
         [Authorize(Policy = Policies.GerenciarUsuario)]
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(Guid id)

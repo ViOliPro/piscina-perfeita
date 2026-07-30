@@ -17,14 +17,16 @@ import {
   ErrorMessage,
 } from "../../components/ui/index.jsx";
 import { inputStyle } from "../../components/ui/styles.js";
-import { piscinaService, usuarioService } from "../../config/services.js";
+import { piscinaService } from "../../config/services.js";
 import { PERMISSIONS } from "../../helpers/Permissions.js";
 import ProtecaoDeRota from "../../helpers/ProtecaoDeRota.jsx";
+import { useUsuariosSelecionaveis } from "../../hooks/useUsuariosSelecionaveis.js";
 
 // ----------------------------------------------------------
 // Formulário
 // ----------------------------------------------------------
-function PiscinaForm({ usuarios, initial, onSubmit, onCancel, loading }) {
+function PiscinaForm({ initial, onSubmit, onCancel, loading }) {
+  const { usuarios, podeVerUsuario } = useUsuariosSelecionaveis();
   const [form, setForm] = useState(
     initial ?? {
       nome: "",
@@ -43,6 +45,7 @@ function PiscinaForm({ usuarios, initial, onSubmit, onCancel, loading }) {
       profundidadeMedia: form.profundidadeMedia
         ? parseFloat(form.profundidadeMedia)
         : null,
+      usuarioId: podeVerUsuario ? form.usuarioId || null : null,
     });
   }
 
@@ -59,9 +62,10 @@ function PiscinaForm({ usuarios, initial, onSubmit, onCancel, loading }) {
             onChange={set("nome")}
           />
         </FormField>
-        <FormField label="Volume (litros)">
+        <FormField label="Volume (litros) *">
           <input
             type="number"
+            required
             min="0"
             placeholder="Ex.: 1000000"
             style={inputStyle}
@@ -69,9 +73,10 @@ function PiscinaForm({ usuarios, initial, onSubmit, onCancel, loading }) {
             onChange={set("volumeLitros")}
           />
         </FormField>
-        <FormField label="Profundidade média (m)">
+        <FormField label="Profundidade média (m) *">
           <input
             type="number"
+            required
             step="0.1"
             min="0"
             placeholder="Ex.: 2.0"
@@ -134,7 +139,6 @@ function PiscinaForm({ usuarios, initial, onSubmit, onCancel, loading }) {
 // ----------------------------------------------------------
 export default function Piscinas() {
   const [piscinas, setPiscinas] = useState([]);
-  const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -145,12 +149,8 @@ export default function Piscinas() {
     async function load() {
       try {
         setLoading(true);
-        const [p, u] = await Promise.all([
-          piscinaService.listar(),
-          usuarioService.listar(),
-        ]);
+        const p = await piscinaService.listar();
         setPiscinas(p ?? []);
-        setUsuarios(u ?? []);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -293,7 +293,6 @@ export default function Piscinas() {
           title={modal.editing ? "Editar piscina" : "Nova piscina"}
         >
           <PiscinaForm
-            usuarios={usuarios}
             initial={modal.editing}
             onSubmit={handleSave}
             onCancel={() => setModal({ open: false, editing: null })}

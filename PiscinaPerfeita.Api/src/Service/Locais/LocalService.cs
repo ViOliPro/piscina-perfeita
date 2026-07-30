@@ -209,6 +209,11 @@ namespace PiscinaPerfeita.Api.Service.Locais
                         UsuarioId = userId,
                         LocalId = novoLocalId,
                         Perfil = pendente.Perfil,
+                        // Quem cria o próprio Local (self-onboarding) é, por
+                        // definição, o Administrador Pai/original desse
+                        // Local — só o SuperAdmin poderá depois alterar ou
+                        // remover esse vínculo específico.
+                        EhAdministradorPai = true,
                     }
                 );
                 return;
@@ -220,6 +225,7 @@ namespace PiscinaPerfeita.Api.Service.Locais
                     UsuarioId = userId,
                     LocalId = novoLocalId,
                     Perfil = Perfil.Administrador,
+                    EhAdministradorPai = true,
                 }
             );
         }

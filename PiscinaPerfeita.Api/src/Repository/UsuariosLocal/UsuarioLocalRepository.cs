@@ -25,6 +25,7 @@ public class UsuarioLocalRepository : IUsuarioLocalRepository
                 Perfil = u.Perfil,
                 CreatedAt = u.CreatedAt,
                 Ativo = u.Ativo,
+                EhAdministradorPai = u.EhAdministradorPai,
             })
             .ToListAsync();
     }
@@ -42,6 +43,7 @@ public class UsuarioLocalRepository : IUsuarioLocalRepository
                 Perfil = u.Perfil,
                 CreatedAt = u.CreatedAt,
                 Ativo = u.Ativo,
+                EhAdministradorPai = u.EhAdministradorPai,
             })
             .FirstOrDefaultAsync();
 
@@ -91,6 +93,7 @@ public class UsuarioLocalRepository : IUsuarioLocalRepository
                 Perfil = u.Perfil,
                 CreatedAt = u.CreatedAt,
                 Ativo = u.Ativo,
+                EhAdministradorPai = u.EhAdministradorPai,
             })
             .OrderBy(u => u.LocalNome)
             .ToListAsync();
@@ -112,6 +115,7 @@ public class UsuarioLocalRepository : IUsuarioLocalRepository
         user.UsuarioId = usuarioLocal.UsuarioId;
         user.LocalId = usuarioLocal.LocalId;
         user.Perfil = usuarioLocal.Perfil;
+        user.EhAdministradorPai = usuarioLocal.EhAdministradorPai;
 
         await _context.SaveChangesAsync();
     }

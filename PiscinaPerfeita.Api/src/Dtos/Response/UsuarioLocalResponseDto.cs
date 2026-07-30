@@ -14,5 +14,10 @@ namespace PiscinaPerfeita.Api.Dtos.Response
         public Perfil Perfil { get; set; } = Perfil.Visualizador;
         public DateTimeOffset CreatedAt { get; set; }
         public bool Ativo { get; set; }
+
+        // Somente leitura: nunca é aceito via UsuarioLocalRequestDto. Indica
+        // que este vínculo é o do Administrador Pai/original do Local — só
+        // um SuperAdmin pode alterá-lo ou removê-lo.
+        public bool EhAdministradorPai { get; set; }
     }
 }

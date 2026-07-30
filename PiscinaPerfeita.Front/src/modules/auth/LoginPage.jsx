@@ -506,11 +506,14 @@ export default function LoginPage() {
       </div>
 
       {/* Painel direito — formulário */}
-      <div style={{
-        width: 420, display: "flex", alignItems: "center",
-        justifyContent: "center", padding: 32,
-        position: "relative", zIndex: 1,
-      }}>
+      <div
+        className="login-form-panel"
+        style={{
+          width: "100%", maxWidth: 420, display: "flex", alignItems: "center",
+          justifyContent: "center", padding: 32,
+          position: "relative", zIndex: 1,
+        }}
+      >
         <div style={{
           background: "#fff", borderRadius: 16, padding: "36px 32px",
           width: "100%", boxShadow: "0 24px 64px rgba(0,0,0,.25)",
@@ -549,6 +552,7 @@ export default function LoginPage() {
       <style>{`
         @media (max-width: 720px) {
           .login-brand-panel { display: none !important; }
+          .login-form-panel { padding: 20px !important; }
         }
       `}</style>
     </div>

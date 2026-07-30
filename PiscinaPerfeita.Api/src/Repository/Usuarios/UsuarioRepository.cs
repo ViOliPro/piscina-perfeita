@@ -32,10 +32,18 @@ public class UsuarioRepository : IUsuarioRepository
             .ToListAsync();
     }
 
-    public async Task<List<UsuarioResponseDto>> FilterRoleUsuario()
+    public async Task<List<UsuarioResponseDto>> FilterRoleUsuario(Guid localId)
     {
+        // CORRIGIDO: antes filtrava só por `u.Role == Role.Usuario`, ou seja,
+        // qualquer Administrador via TODOS os usuários comuns do sistema,
+        // de qualquer Local/tenant — vazamento direto entre tenants. Agora
+        // exige também um vínculo ATIVO em UsuariosLocais para o Local do
+        // Administrador que está fazendo a consulta.
         var usuarioDto = await _context
-            .Usuarios.Where(u => u.Role == Role.Usuario)
+            .Usuarios.Where(u =>
+                u.Role == Role.Usuario
+                && u.UsuariosLocais.Any(ul => ul.LocalId == localId && ul.Ativo)
+            )
             .Select(u => new UsuarioResponseDto
             {
                 Id = u.Id,
@@ -44,6 +52,15 @@ public class UsuarioRepository : IUsuarioRepository
                 Cpf = u.Cpf ?? string.Empty,
                 CreatedAt = u.CreatedAt,
                 Role = u.Role,
+                // CORRIGIDO: este campo nunca era preenchido aqui — como o valor
+                // default do enum Perfil é 0 (Administrador), todo usuário retornado
+                // por este endpoint aparecia como "Administrador" no front, mesmo
+                // sendo Operador ou Visualizador. Agora reflete o Perfil do vínculo
+                // ativo deste usuário especificamente no Local consultado.
+                Perfil = u
+                    .UsuariosLocais.Where(ul => ul.LocalId == localId && ul.Ativo)
+                    .Select(ul => ul.Perfil)
+                    .FirstOrDefault(),
                 Piscinas = u
                     .Piscinas.Where(p => p.UsuarioId == u.Id)
                     .Select(p => new NomeIdDto(p.Id, p.Nome))

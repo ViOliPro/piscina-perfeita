@@ -267,6 +267,8 @@ function VinculoPendente({ vinculo, locaisDisponiveis, onVincular, saving }) {
 }
 
 function VinculosLocaisModal({ usuario, open, onClose }) {
+  const { user: usuarioLogado } = useAuth();
+  const souSuperAdmin = usuarioLogado?.role === ROLES.ADMIN;
   const [vinculos, setVinculos] = useState([]);
   const [locaisDisponiveis, setLocaisDisponiveis] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -401,21 +403,34 @@ function VinculosLocaisModal({ usuario, open, onClose }) {
                 }}
               >
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>
+                  <div
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
                     {v.localNome ?? localNome(v.localId)}
+                    {v.ehAdministradorPai && (
+                      <Badge variant="purple">Administrador responsável</Badge>
+                    )}
                   </div>
                   <div style={{ fontSize: 12, color: "#5a6b7a" }}>
                     {PERFIL_LABELS[v.perfil] ?? "—"}
                   </div>
                 </div>
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={() => handleRemove(v.id)}
-                  permission={PERMISSIONS.USUARIOS.DELETE}
-                >
-                  Remover
-                </Button>
+                {(!v.ehAdministradorPai || souSuperAdmin) && (
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={() => handleRemove(v.id)}
+                    permission={PERMISSIONS.USUARIOS.DELETE}
+                  >
+                    Remover
+                  </Button>
+                )}
               </div>
             ))}
           </div>
@@ -471,7 +486,7 @@ function VinculosLocaisModal({ usuario, open, onClose }) {
                 variant="primary"
                 type="submit"
                 disabled={saving || !novo.localId}
-                permission={PERMISSIONS.USUARIOS.VINCULo}
+                permission={PERMISSIONS.USUARIOS.VINCULO}
               >
                 {saving ? "Vinculando…" : "+ Vincular local"}
               </Button>

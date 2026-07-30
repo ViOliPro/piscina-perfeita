@@ -22,7 +22,6 @@ import {
   movimentacaoService,
   piscinaService,
   produtoService,
-  usuarioService,
   depositoService,
 } from "../../config/services.js";
 import {
@@ -35,7 +34,7 @@ import {
 import { getLocalDateTimeInput } from "../../utils/getLocalDateTimeInput.js";
 import { PERMISSIONS } from "../../helpers/Permissions.js";
 import ProtecaoDeRota from "../../helpers/ProtecaoDeRota.jsx";
-import { useCan } from "../../context/AuthContext.jsx";
+import { useUsuariosSelecionaveis } from "../../hooks/useUsuariosSelecionaveis.js";
 
 // Cor do badge por tipo — entradas em azul, saídas em roxo/vermelho,
 // ajuste em amarelo (é sempre gerado automaticamente, nunca manual).
@@ -53,6 +52,7 @@ function MovimentacaoForm({
   piscinas,
   produtos,
   usuarios,
+  podeVerUsuario,
   depositos,
   onSubmit,
   onCancel,
@@ -78,12 +78,16 @@ function MovimentacaoForm({
     onSubmit({
       ...form,
       piscinaId: form.piscinaId || null,
+      // Operador/Visualizador nunca enviam usuarioId — mesmo que o campo
+      // nunca apareça na UI para esses perfis, garantimos aqui que o
+      // payload nunca carregue um valor residual.
+      usuarioId: podeVerUsuario ? form.usuarioId || null : null,
       tipoMovimentacao: tipoNum,
       quantidade: parseFloat(form.quantidade),
     });
   }
 
-  const podeMostrar = useCan(PERMISSIONS.MOVIMENTACOES.VIEW_INPUT_USUARIOS);
+  const podeMostrar = podeVerUsuario;
 
   return (
     <form onSubmit={handleSubmit}>
@@ -240,7 +244,7 @@ export default function Movimentacoes() {
   const [movimentos, setMovimentos] = useState([]);
   const [piscinas, setPiscinas] = useState([]);
   const [produtos, setProdutos] = useState([]);
-  const [usuarios, setUsuarios] = useState([]);
+  const { usuarios, podeVerUsuario } = useUsuariosSelecionaveis();
   const [depositos, setDepositos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -253,17 +257,15 @@ export default function Movimentacoes() {
     async function load() {
       try {
         setLoading(true);
-        const [m, p, pr, u, d] = await Promise.all([
+        const [m, p, pr, d] = await Promise.all([
           movimentacaoService.listar(),
           piscinaService.listar(),
           produtoService.listar(),
-          usuarioService.listar(),
           depositoService.listar(),
         ]);
         setMovimentos(m ?? []);
         setPiscinas(p ?? []);
         setProdutos(pr ?? []);
-        setUsuarios(u ?? []);
         setDepositos(d ?? []);
       } catch (err) {
         setError(err.message);
@@ -392,6 +394,7 @@ export default function Movimentacoes() {
             piscinas={piscinas}
             produtos={produtos}
             usuarios={usuarios}
+            podeVerUsuario={podeVerUsuario}
             depositos={depositos}
             onSubmit={handleSave}
             onCancel={() => setModalOpen(false)}

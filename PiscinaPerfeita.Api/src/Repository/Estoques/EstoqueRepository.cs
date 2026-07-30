@@ -30,6 +30,7 @@ public class EstoqueRepository : IEstoqueRepository
                             Id = a.ProdutoId,
                             Nome = a.Produto.Nome,
                             UnidadeMedida = a.Produto.UnidadeMedida,
+                            Categoria = a.Produto.Categoria != null ? a.Produto.Categoria : string.Empty,
                         }
                         : null,
                 // Bug corrigido: antes o Deposito nunca era preenchido aqui
@@ -61,6 +62,7 @@ public class EstoqueRepository : IEstoqueRepository
                             Id = a.ProdutoId,
                             Nome = a.Produto.Nome,
                             UnidadeMedida = a.Produto.UnidadeMedida,
+                            Categoria = a.Produto.Categoria != null ? a.Produto.Categoria : string.Empty,
                         }
                         : null,
                 Deposito =
