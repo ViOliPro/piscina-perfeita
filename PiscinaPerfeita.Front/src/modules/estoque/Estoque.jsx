@@ -23,12 +23,12 @@ import {
   estoqueService,
   piscinaService,
   produtoService,
-  usuarioService,
   depositoService,
 } from "../../config/services.js";
 import { ESTOQUE_LIMITES, APP_META } from "../../config/index.js";
 import { PERMISSIONS } from "../../helpers/Permissions.js";
 import ProtecaoDeRota from "../../helpers/ProtecaoDeRota.jsx";
+import { useUsuariosSelecionaveis } from "../../hooks/useUsuariosSelecionaveis.js";
 
 // ----------------------------------------------------------
 // Helpers
@@ -73,6 +73,7 @@ function EstoqueForm({
   piscinas,
   produtos,
   usuarios,
+  podeVerUsuario,
   depositos,
   onSubmit,
   onCancel,
@@ -110,6 +111,10 @@ function EstoqueForm({
       quantidadeAtual: parseFloat(form.quantidadeAtual) || 0,
       quantidadeMinima,
       estoqueIdeal,
+      // Operador/Visualizador nunca enviam usuarioId — mesmo que o campo
+      // nunca apareça na UI para esses perfis, garantimos aqui que o
+      // payload nunca carregue um valor residual.
+      usuarioId: podeVerUsuario ? form.usuarioId || null : null,
     });
   }
 
@@ -159,20 +164,22 @@ function EstoqueForm({
             onChange={set("quantidadeAtual")}
           />
         </FormField>
-        <FormField label="Responsável">
-          <select
-            style={inputStyle}
-            value={form.usuarioId ?? form?.usuario?.id}
-            onChange={set("usuarioId")}
-          >
-            <option value="">Selecione o usuário</option>
-            {usuarios.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.nome}
-              </option>
-            ))}
-          </select>
-        </FormField>
+        {podeVerUsuario && (
+          <FormField label="Responsável">
+            <select
+              style={inputStyle}
+              value={form.usuarioId ?? form?.usuario?.id}
+              onChange={set("usuarioId")}
+            >
+              <option value="">Selecione o usuário</option>
+              {usuarios.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.nome}
+                </option>
+              ))}
+            </select>
+          </FormField>
+        )}
         <FormField label="Estoque mínimo *">
           <input
             required
@@ -231,17 +238,35 @@ function EstoqueForm({
 // ----------------------------------------------------------
 // Aba: pedido de orçamento
 // ----------------------------------------------------------
-function PedidoOrcamento({ itens }) {
+function PedidoOrcamento({ estoques, depositos }) {
   const hoje = new Date().toLocaleDateString("pt-BR");
+
+  // Escopo: por padrão só itens baixos/em atenção (comportamento antigo),
+  // mas o usuário pode pedir orçamento para todos os produtos elegíveis.
+  const [escopo, setEscopo] = useState("baixo");
+  const [filtroDeposito, setFiltroDeposito] = useState("");
+  const [filtroCategoria, setFiltroCategoria] = useState("");
+
+  const categorias = Array.from(
+    new Set(estoques.map((e) => e.produto?.categoria).filter(Boolean)),
+  );
+
+  const itens = estoques
+    .filter((e) => (escopo === "todos" ? true : isBaixoOuAtencao(e)))
+    .filter((e) => !filtroDeposito || e?.deposito?.id === filtroDeposito)
+    .filter((e) => !filtroCategoria || e.produto?.categoria === filtroCategoria)
+    // Não faz sentido pedir orçamento de 0 unidades (item já no nível
+    // ideal, ou sem quantidade sugerida a repor).
+    .filter((e) => calcularQtdSugerida(e) > 0);
 
   function copiar() {
     const linhas = [
-      "#\tProduto\tUnidade\tQtd. solicitada\tUso\tValor unit. (R$)\tValor total (R$)\tPrazo entrega",
+      "#\tProduto\tUnidade\tQtd. solicitada\tValor unit. (R$)\tValor total (R$)\tPrazo entrega",
     ];
     itens.forEach((item, i) => {
       const qtdSugerida = calcularQtdSugerida(item);
       linhas.push(
-        `${String(i + 1).padStart(2, "0")}\t${item.produto?.nome}\t${item.produto?.unidadeMedida}\t${qtdSugerida}\tTratamento piscinas\t___\t___\t___`,
+        `${String(i + 1).padStart(2, "0")}\t${item.produto?.nome}\t${item.produto?.unidadeMedida}\t${qtdSugerida}\t___\t___\t___`,
       );
     });
     navigator.clipboard
@@ -261,6 +286,8 @@ function PedidoOrcamento({ itens }) {
           alignItems: "center",
           justifyContent: "space-between",
           marginBottom: 12,
+          flexWrap: "wrap",
+          gap: 8,
         }}
       >
         <div>
@@ -268,7 +295,10 @@ function PedidoOrcamento({ itens }) {
             Solicitação de orçamento — fornecedores
           </div>
           <div style={{ fontSize: 12, color: "#6B8CAE" }}>
-            Itens com estoque baixo ou em atenção · gerado em {hoje}
+            {escopo === "todos"
+              ? "Todos os produtos elegíveis do estoque"
+              : "Itens com estoque baixo ou em atenção"}{" "}
+            · gerado em {hoje}
           </div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
@@ -290,6 +320,30 @@ function PedidoOrcamento({ itens }) {
           </Button>
         </div>
       </div>
+
+      <Toolbar>
+        <FilterSelect
+          value={escopo}
+          onChange={setEscopo}
+          placeholder="Escopo"
+          options={[
+            { value: "baixo", label: "Estoque baixo/atenção" },
+            { value: "todos", label: "Todos os produtos" },
+          ]}
+        />
+        <FilterSelect
+          value={filtroDeposito}
+          onChange={setFiltroDeposito}
+          placeholder="Todos os depósitos"
+          options={depositos.map((d) => ({ value: d.id, label: d.nome }))}
+        />
+        <FilterSelect
+          value={filtroCategoria}
+          onChange={setFiltroCategoria}
+          placeholder="Todas as categorias"
+          options={categorias.map((c) => ({ value: c, label: c }))}
+        />
+      </Toolbar>
 
       <Card noPadding>
         <div
@@ -318,7 +372,6 @@ function PedidoOrcamento({ itens }) {
                   "Produto",
                   "Und.",
                   "Qtd. solicitada",
-                  "Uso",
                   "Valor unit. (R$)",
                   "Valor total (R$)",
                   "Prazo entrega",
@@ -375,9 +428,6 @@ function PedidoOrcamento({ itens }) {
                         </span>
                       )}
                     </td>
-                    <td style={{ padding: "7px 10px", color: "#6B8CAE" }}>
-                      Tratamento piscinas
-                    </td>
                     <td style={{ padding: "7px 10px", color: "#aaa" }}>
                       ___________
                     </td>
@@ -416,7 +466,7 @@ export default function Estoque() {
   const [estoques, setEstoques] = useState([]);
   const [piscinas, setPiscinas] = useState([]);
   const [produtos, setProdutos] = useState([]);
-  const [usuarios, setUsuarios] = useState([]);
+  const { usuarios, podeVerUsuario } = useUsuariosSelecionaveis();
   const [depositos, setDepositos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -431,17 +481,15 @@ export default function Estoque() {
     async function load() {
       try {
         setLoading(true);
-        const [e, p, pr, u, d] = await Promise.all([
+        const [e, p, pr, d] = await Promise.all([
           estoqueService.listar(),
           piscinaService.listar(),
           produtoService.listar(),
-          usuarioService.listar(),
           depositoService.listar(),
         ]);
         setEstoques(e ?? []);
         setPiscinas(p ?? []);
         setProdutos(pr ?? []);
-        setUsuarios(u ?? []);
         setDepositos(d ?? []);
       } catch (err) {
         setError(err.message);
@@ -562,7 +610,7 @@ export default function Estoque() {
               <Button
                 variant="primary"
                 onClick={() => setModal({ open: true, editing: false })}
-                permissao={PERMISSIONS.ESTOQUES.CREATE}
+                permission={PERMISSIONS.ESTOQUES.CREATE}
               >
                 + Registrar entrada
               </Button>
@@ -598,7 +646,7 @@ export default function Estoque() {
           )}
 
           {tab === "orcamento" ? (
-            <PedidoOrcamento itens={baixoItens} />
+            <PedidoOrcamento estoques={estoques} depositos={depositos} />
           ) : (
             <Card noPadding>
               <DataTable
@@ -625,6 +673,7 @@ export default function Estoque() {
               piscinas={piscinas}
               produtos={produtos}
               usuarios={usuarios}
+              podeVerUsuario={podeVerUsuario}
               depositos={depositos}
               onSubmit={handleSave}
               onCancel={() => setModal({ open: false, editing: null })}

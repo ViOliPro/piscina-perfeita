@@ -40,7 +40,7 @@ namespace PiscinaPerfeita.Api.Service.Produtos
         // Metodo Create: Cria um novo estoque com base nos dados fornecidos, incluindo as informações relacionadas de piscina e produto.
         public async Task<ProdutoResponseDto> Create(ProdutoRequestDto dto)
         {
-            var produtos = new Produto { Nome = dto.Nome, UnidadeMedida = dto.UnidadeMedida };
+            var produtos = new Produto { Nome = dto.Nome, UnidadeMedida = dto.UnidadeMedida, Fabricante = dto.Fabricante, Marca = dto.Marca, Observacoes = dto.Observacoes, Categoria = dto.Categoria };
 
             await _produtoRepository.Create(produtos);
 
@@ -64,7 +64,7 @@ namespace PiscinaPerfeita.Api.Service.Produtos
             {
                 throw new KeyNotFoundException($"Produto com id {id} não encontrado.");
             }
-            var u = new Produto { Nome = dto.Nome, UnidadeMedida = dto.UnidadeMedida };
+            var u = new Produto { Nome = dto.Nome, UnidadeMedida = dto.UnidadeMedida, Fabricante = dto.Fabricante, Marca = dto.Marca, Observacoes = dto.Observacoes, Categoria = dto.Categoria };
 
             await _produtoRepository.Update(id, u);
 

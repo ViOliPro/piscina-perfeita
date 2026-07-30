@@ -527,6 +527,10 @@ export function fromApiUsuarioLocal(raw) {
     perfil: field(raw, "perfil", "Perfil"),
     createdAt: field(raw, "createdAt", "CreatedAt") ?? null,
     ativo: field(raw, "ativo", "Ativo") ?? true,
+    // Vínculo do Administrador Pai/original do Local — só um SuperAdmin
+    // pode editar ou remover esse vínculo (ver regra de negócio da API).
+    ehAdministradorPai:
+      field(raw, "ehAdministradorPai", "EhAdministradorPai") ?? false,
   };
 }
 

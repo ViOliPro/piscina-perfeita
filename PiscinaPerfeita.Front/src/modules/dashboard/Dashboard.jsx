@@ -162,7 +162,8 @@ export default function Dashboard({ onNavigate }) {
             <p style={{ color: "#27AE60", fontSize: 13 }}>Todos os produtos estão em nível adequado.</p>
           ) : (
             <>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+              <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 360 }}>
                 <thead>
                   <tr>
                     {["Produto", "Qtd.", "Status"].map((h) => (
@@ -180,6 +181,7 @@ export default function Dashboard({ onNavigate }) {
                   ))}
                 </tbody>
               </table>
+              </div>
               <div style={{ marginTop: 10 }}>
                 <button
                   onClick={() => onNavigate("estoque")}
@@ -199,7 +201,8 @@ export default function Dashboard({ onNavigate }) {
 
         {/* Últimas análises */}
         <Card title="Últimas análises" noPadding>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+          <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 420 }}>
             <thead>
               <tr>
                 {["Piscina", "Data", "pH", "Status"].map((h) => (
@@ -233,6 +236,7 @@ export default function Dashboard({ onNavigate }) {
               )}
             </tbody>
           </table>
+          </div>
         </Card>
 
         {/* Movimentações recentes */}

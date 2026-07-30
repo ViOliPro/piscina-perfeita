@@ -34,19 +34,20 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
 
         public async Task<List<UsuarioResponseDto>> Show()
         {
-            try
-            {
-                var usuarioLogado = _user.IsSuperAdmin();
-              
-                if (usuarioLogado)
-                    return await _usuariosRepository.Show();
+            if (_user.IsSuperAdmin())
+                return await _usuariosRepository.Show();
 
-                return await _usuariosRepository.FilterRoleUsuario();
-            }
-            catch
-            {
-                throw new Exception("Erro com a requisicao");
-            }
+            // CORRIGIDO: antes retornava TODOS os usuários com Role=Usuario do
+            // sistema inteiro, de qualquer Local — um Administrador enxergava
+            // usuários de outros tenants. Agora fica restrito ao Local ativo
+            // do Administrador que está consultando.
+            var localId = _user.GetLocalId();
+            if (localId == Guid.Empty)
+                throw new InvalidOperationException(
+                    "Selecione um Local ativo para listar os usuários."
+                );
+
+            return await _usuariosRepository.FilterRoleUsuario(localId);
         }
 
         public async Task<UsuarioResponseDto> GetById(Guid id)
@@ -56,6 +57,15 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             {
                 throw new KeyNotFoundException($"Usuario com id {id} não encontrado");
             }
+
+            // CORRIGIDO: faltava checar se o usuário buscado pertence ao
+            // mesmo tenant do Administrador logado — sem isso, qualquer
+            // Administrador podia consultar dados de usuários de QUALQUER
+            // outro Local só sabendo o Guid (IDOR/vazamento entre tenants).
+            // Devolvemos 404 (não 403) para não confirmar nem a existência
+            // do usuário fora do escopo do tenant atual. Leitura não altera
+            // privilégio, então não bloqueia por causa do Administrador Pai.
+            await GarantirUsuarioNoTenantAtual(id, protegerAdministradorPai: false);
 
             return usuarioDb;
         }
@@ -116,6 +126,14 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 );
             }
 
+            // CORRIGIDO: mesmo IDOR do GetById — faltava garantir que o
+            // usuário editado pertence ao tenant do Administrador logado.
+            // A proteção extra do Administrador Pai só entra quando a
+            // chamada tenta mexer em Role (privilégio); edição básica de
+            // nome/email/senha continua permitida por outro Administrador
+            // do mesmo tenant.
+            await GarantirUsuarioNoTenantAtual(id, protegerAdministradorPai: dto.Role.HasValue);
+
             var usuarioDb = new Usuario
             {
                 Id = id,
@@ -147,7 +165,49 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
             }
 
+            // CORRIGIDO: mesmo IDOR do GetById/Update — um Administrador
+            // conseguia apagar QUALQUER usuário do sistema (de qualquer
+            // Local) só sabendo o Guid, e nada impedia apagar o
+            // Administrador Pai do próprio tenant. Excluir é sempre uma
+            // ação sobre o vínculo, então aqui a proteção do Administrador
+            // Pai vale sempre.
+            await GarantirUsuarioNoTenantAtual(id, protegerAdministradorPai: true);
+
             await _usuariosRepository.Delete(id);
+        }
+
+        // Garante que o usuário-alvo (id) está vinculado, com vínculo ATIVO,
+        // ao Local em que o Administrador logado está atuando no momento.
+        // Quando protegerAdministradorPai=true, também bloqueia a ação se o
+        // vínculo pertencer ao Administrador Pai (só o SuperAdmin pode
+        // alterar privilégio/excluir esse vínculo). SuperAdmin sempre passa
+        // sem restrição.
+        private async Task GarantirUsuarioNoTenantAtual(
+            Guid usuarioAlvoId,
+            bool protegerAdministradorPai
+        )
+        {
+            if (_user.IsSuperAdmin())
+                return;
+
+            var localAtivo = _user.GetLocalId();
+            if (localAtivo == Guid.Empty)
+                throw new UnauthorizedAccessException(
+                    "Selecione um Local ativo para gerenciar usuários."
+                );
+
+            var vinculo = await _usuariosLocalRepository.Vinculo(usuarioAlvoId, localAtivo);
+
+            // Não confirmamos a existência do usuário fora do tenant atual:
+            // 404 igual ao caso de "não existe" (evita enumeração de Ids de
+            // outros tenants).
+            if (vinculo == null)
+                throw new KeyNotFoundException($"Usuario com id {usuarioAlvoId} não encontrado");
+
+            if (protegerAdministradorPai && vinculo.EhAdministradorPai)
+                throw new UnauthorizedAccessException(
+                    "Somente o SuperAdmin pode alterar ou remover o Administrador responsável por este Local."
+                );
         }
 
         private async Task ValidarPermissaoCadastro(
@@ -193,11 +253,18 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 if (dto.LocalId.HasValue)
                     await GarantirLocalExiste(dto.LocalId.Value);
 
+                var perfilAtribuido = dto.Perfil ?? Perfil.Administrador;
                 var novoUsuarioLocal = new UsuarioLocal
                 {
                     UsuarioId = usuarioCriado.Id,
                     LocalId = dto.LocalId ?? null,
-                    Perfil = dto.Perfil ?? Perfil.Administrador,
+                    Perfil = perfilAtribuido,
+                    // O SuperAdmin pode "criar um Local e vinculá-lo
+                    // diretamente a um Administrador" (regra de negócio) —
+                    // quando isso acontece já no cadastro (LocalId + Perfil
+                    // Administrador informados juntos), esse vínculo nasce
+                    // como o Administrador Pai daquele Local.
+                    EhAdministradorPai = dto.LocalId.HasValue && perfilAtribuido == Perfil.Administrador,
                 };
 
                 await _usuariosLocalRepository.Create(novoUsuarioLocal);
@@ -218,6 +285,12 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 UsuarioId = usuarioCriado.Id,
                 LocalId = usuarioLogado.LocalId,
                 Perfil = dto.Perfil ?? Perfil.Visualizador,
+                // Mesmo que o Administrador logado crie outro Admin (Admin
+                // Filho — permitido pela regra de negócio), o novo vínculo
+                // NUNCA nasce como Administrador Pai: só o SuperAdmin ou o
+                // fluxo de auto-vínculo em LocalService.VincularCriadorAoNovoLocal
+                // podem originar um Administrador Pai.
+                EhAdministradorPai = false,
             };
 
             await _usuariosLocalRepository.Create(usuarioLocal);

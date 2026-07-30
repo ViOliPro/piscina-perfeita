@@ -31,7 +31,6 @@ export const PERMISSIONS = {
     CREATE: "analises.create",
     EDIT: "analises.edit",
     DELETE: "analises.delete",
-    VIEW_BTN: "analises.ViewBtn",
   },
   PISCINAS: {
     VIEW: "piscinas.view",
@@ -70,13 +69,19 @@ export const PERMISSIONS = {
     CREATE: "movimentacoes.create",
     EDIT: "movimentacoes.edit",
     DELETE: "movimentacoes.delete",
-    VIEW_INPUT_USUARIOS: "movimentacoes.viewInput",
   },
   INVENTARIOS: {
     VIEW: "inventarios.view",
     CREATE: "inventarios.create",
     EDIT: "inventarios.edit",
     DELETE: "inventarios.delete",
+  },
+  // Permissão transversal (não é um módulo/tela) usada em QUALQUER
+  // formulário que tenha um campo de seleção de usuário (ex.: "Responsável"
+  // em Estoque, Movimentações). Só Administrador e SuperAdmin enxergam
+  // esse campo — Operador nunca visualiza nem seleciona outros usuários.
+  GERAL: {
+    VIEW_USUARIO_SELETOR: "geral.viewUsuarioSeletor",
   },
 };
 

@@ -30,6 +30,11 @@ namespace PiscinaPerfeita.Api.Models
         public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
         public virtual ICollection<Piscina> Piscinas { get; set; } = [];
 
+        // Vínculos reais de tenant (multi-Local). O par (LocalId/Local) acima
+        // é legado/onboarding (ver UltimoLocalId e o fluxo de PrimeiroLocal);
+        // quem manda no pertencimento a um tenant é sempre UsuariosLocais.
+        public virtual ICollection<UsuarioLocal> UsuariosLocais { get; set; } = [];
+
         [ForeignKey(nameof(LocalId))]
         public virtual Local Local { get; set; } = null!;
     }

@@ -19,16 +19,12 @@ import {
   ErrorMessage,
 } from "../../components/ui/index.jsx";
 import { inputStyle } from "../../components/ui/styles.js";
-import {
-  analiseService,
-  piscinaService,
-  usuarioService,
-} from "../../config/services.js";
+import { analiseService, piscinaService } from "../../config/services.js";
 import { ANALISE_FAIXAS } from "../../config/index.js";
 import { getLocalDateTimeInput } from "../../utils/getLocalDateTimeInput.js";
 import { PERMISSIONS } from "../../helpers/Permissions.js";
 import ProtecaoDeRota from "../../helpers/ProtecaoDeRota.jsx";
-import { useCan } from "../../context/AuthContext.jsx";
+import { useUsuariosSelecionaveis } from "../../hooks/useUsuariosSelecionaveis.js";
 
 // ----------------------------------------------------------
 // Helpers
@@ -55,7 +51,7 @@ const STATUS_LABELS = {
 // ----------------------------------------------------------
 // Formulário de nova análise
 // ----------------------------------------------------------
-function AnaliseForm({ piscinas, usuarios, onSubmit, onCancel, loading }) {
+function AnaliseForm({ piscinas, onSubmit, onCancel, loading }) {
   const [form, setForm] = useState({
     piscinaId: "",
     usuarioId: "",
@@ -69,7 +65,7 @@ function AnaliseForm({ piscinas, usuarios, onSubmit, onCancel, loading }) {
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
-  const podeMostrar = useCan(PERMISSIONS.ANALISES.VIEW_BTN);
+  const { usuarios, podeVerUsuario } = useUsuariosSelecionaveis();
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -79,7 +75,10 @@ function AnaliseForm({ piscinas, usuarios, onSubmit, onCancel, loading }) {
       cloroLivre: form.cloroLivre ? parseFloat(form.cloroLivre) : null,
       alcalinidade: form.alcalinidade ? parseFloat(form.alcalinidade) : null,
       temperatura: form.temperatura ? parseFloat(form.temperatura) : null,
-      usuarioId: form.usuarioId === "" ? null : form.usuarioId,
+      // Operador/Visualizador nunca enviam usuarioId — mesmo que o campo
+      // nunca apareça na UI para esses perfis, garantimos aqui que o
+      // payload nunca carregue um valor residual.
+      usuarioId: podeVerUsuario && form.usuarioId ? form.usuarioId : null,
     });
   }
 
@@ -101,7 +100,7 @@ function AnaliseForm({ piscinas, usuarios, onSubmit, onCancel, loading }) {
             ))}
           </select>
         </FormField>
-        {podeMostrar ?? (
+        {podeVerUsuario && (
           <FormField label="Responsável">
             <select
               style={inputStyle}
@@ -225,7 +224,6 @@ function AnaliseForm({ piscinas, usuarios, onSubmit, onCancel, loading }) {
 export default function Analises({ onRegistrarAplicacao }) {
   const [analises, setAnalises] = useState([]);
   const [piscinas, setPiscinas] = useState([]);
-  const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -237,14 +235,12 @@ export default function Analises({ onRegistrarAplicacao }) {
     async function load() {
       try {
         setLoading(true);
-        const [a, p, u] = await Promise.all([
+        const [a, p] = await Promise.all([
           analiseService.listar(),
           piscinaService.listar(),
-          usuarioService.listar(),
         ]);
         setAnalises(a ?? []);
         setPiscinas(p ?? []);
-        setUsuarios(u ?? []);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -332,7 +328,7 @@ export default function Analises({ onRegistrarAplicacao }) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onRegistrarAplicacao?.(r.piscinaId, r.id)}
+            onClick={() => onRegistrarAplicacao?.(r?.piscina?.id, r.id)}
             title="Registrar a aplicação de um produto motivada por esta análise"
             permission={PERMISSIONS.ANALISES.CREATE}
           >
@@ -405,7 +401,6 @@ export default function Analises({ onRegistrarAplicacao }) {
         >
           <AnaliseForm
             piscinas={piscinas}
-            usuarios={usuarios}
             onSubmit={handleSave}
             onCancel={() => setModalOpen(false)}
             loading={saving}

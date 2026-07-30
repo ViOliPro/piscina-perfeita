@@ -18,4 +18,5 @@ public class ProdutoEstoque
     public Guid Id { set; get; }
     public string Nome { set; get; } = string.Empty;
     public string UnidadeMedida { get; set; } = string.Empty;
+    public string Categoria { get; set; } = string.Empty;
 }
