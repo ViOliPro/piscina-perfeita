@@ -143,7 +143,10 @@ public class UsuarioRepository : IUsuarioRepository
 
     public async Task<Usuario?> GetByEmail(string email)
     {
-        var user = await _context.Usuarios.Where(u => u.Email == email).FirstOrDefaultAsync();
+        var user = await _context
+            .Usuarios.IgnoreQueryFilters()
+            .Where(u => u.Email == email)
+            .FirstOrDefaultAsync();
 
         return user;
     }

@@ -1,3 +1,6 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
@@ -6,9 +9,6 @@ using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Repository.Locais;
 using PiscinaPerfeita.Api.Repository.Usuarios;
 using PiscinaPerfeita.Api.Repository.UsuariosLocal;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 
 namespace PiscinaPerfeita.Api.Service.Account
 {
@@ -49,7 +49,7 @@ namespace PiscinaPerfeita.Api.Service.Account
             // Perfil correspondente a esse Local — ou ao vínculo pendente).
             //SuperAdmin, nao precisa estar vinculado a um local
 
-            if(usuario.Role == Role.SuperAdmin)
+            if (usuario.Role == Role.SuperAdmin)
             {
                 await _usuarioRepository.UpdateUltimoLocal(usuario.Id, Guid.Empty);
                 var tokenVerTodos = NewToken(usuario, Guid.Empty.ToString(), Perfil.Administrador);
@@ -249,6 +249,13 @@ namespace PiscinaPerfeita.Api.Service.Account
                         new Claim(ClaimTypes.Name, usuario.Nome ?? string.Empty),
                         new Claim("local_id", stringLocalId),
                         new Claim("perfil", perfil.ToString()),
+                        new Claim("security_stamp", usuario.SecurityStamp ?? string.Empty),
+                        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // ID Único do Token
+                        new Claim(
+                            JwtRegisteredClaimNames.Iat,
+                            DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
+                            ClaimValueTypes.Integer64
+                        ), // Emissão
                     }
                 ),
                 Expires = DateTime.UtcNow.AddHours(8),

@@ -52,7 +52,7 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
 
         public async Task<UsuarioResponseDto> GetById(Guid id)
         {
-            var usuarioDb = await _usuariosRepository.GetById(id);
+            var usuarioDb = await _usuariosRepository.GetByIdDto(id);
             if (usuarioDb == null)
             {
                 throw new KeyNotFoundException($"Usuario com id {id} não encontrado");
@@ -107,7 +107,7 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 throw new ArgumentException($"O id informado não pode ser vazio {nameof(id)} .");
             }
 
-            var usuario = await _usuariosRepository.GetById(id);
+            var usuario = await _usuariosRepository.GetByIdDto(id);
             if (usuario == null)
             {
                 throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
@@ -264,7 +264,8 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                     // quando isso acontece já no cadastro (LocalId + Perfil
                     // Administrador informados juntos), esse vínculo nasce
                     // como o Administrador Pai daquele Local.
-                    EhAdministradorPai = dto.LocalId.HasValue && perfilAtribuido == Perfil.Administrador,
+                    EhAdministradorPai =
+                        dto.LocalId.HasValue && perfilAtribuido == Perfil.Administrador,
                 };
 
                 await _usuariosLocalRepository.Create(novoUsuarioLocal);
@@ -301,6 +302,85 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             var local = await _locaisRepository.GetById(localId);
             if (local == null)
                 throw new KeyNotFoundException($"Local com id {localId} não encontrado.");
+        }
+
+        // Listar dados do perfil logado
+        public async Task<UsuarioResponseDto?> GetMeuPerfil()
+        {
+            var usuarioLogado = await _user.GetCurrentUser();
+            if (usuarioLogado == null)
+                return null;
+
+            var userId = usuarioLogado.UserId;
+            if (userId == null)
+                return null;
+
+            var usuarioDb = await _usuariosRepository.GetById(userId.Value);
+
+            if (usuarioDb == null)
+                return null;
+
+            return new UsuarioResponseDto
+            {
+                Id = usuarioDb.Id,
+                Nome = usuarioDb.Nome,
+                Email = usuarioDb.Email ?? string.Empty,
+                Cpf = usuarioDb.Cpf ?? string.Empty,
+                Role = usuarioDb.Role,
+                CreatedAt = usuarioDb.CreatedAt,
+                LocalId = usuarioDb.LocalId,
+            };
+        }
+
+        // Atualizar dados do perfil logado
+        public async Task<UsuarioResponseDto> UpdateMyProfileAsync(UsuarioRequestUpdateDto dto)
+        {
+            var usuarioLogado = await _user.GetCurrentUser();
+            if (usuarioLogado == null)
+                throw new KeyNotFoundException("Usuário não encontrado.");
+
+            var userId = usuarioLogado.UserId;
+            if (userId == null)
+                throw new KeyNotFoundException("ID do usuário não encontrado.");
+
+            var usuarioDb = await _usuariosRepository.GetById(userId.Value);
+            if (usuarioDb == null)
+                throw new KeyNotFoundException("Usuário não encontrado.");
+
+            var emailJaExiste = await _usuariosRepository.GetByEmail(dto.Email ?? string.Empty);
+            if (emailJaExiste != null && emailJaExiste.Id != usuarioDb.Id)
+                throw new InvalidOperationException(
+                    "Já existe um usuário com este e-mail cadastrado."
+                );
+
+            if (
+                !string.IsNullOrWhiteSpace(dto.Email)
+                && !dto.Email.Equals(usuarioDb.Email, StringComparison.OrdinalIgnoreCase)
+            )
+            {
+                usuarioDb.SecurityStamp = Guid.NewGuid().ToString(); // Atualiza o SecurityStamp para invalidar tokens antigos
+            }
+
+            // Atualizar os dados do usuário
+            var newUsuario = new Usuario
+            {
+                Nome = !string.IsNullOrEmpty(dto.Nome) ? dto.Nome : usuarioDb.Nome,
+                Email = !string.IsNullOrEmpty(dto.Email) ? dto.Email : usuarioDb.Email,
+                Cpf = !string.IsNullOrEmpty(dto.Cpf) ? dto.Cpf : usuarioDb.Cpf,
+                Role = usuarioDb.Role, // O usuário não pode alterar sua própria role
+                SecurityStamp = usuarioDb.SecurityStamp, // Mantém o SecurityStamp atual, a menos que o e-mail seja alterado
+            };
+
+            await _usuariosRepository.Update(userId.Value, newUsuario);
+
+            return new UsuarioResponseDto
+            {
+                Id = usuarioDb.Id,
+                Nome = usuarioDb.Nome,
+                Email = usuarioDb.Email ?? string.Empty,
+                Cpf = usuarioDb.Cpf ?? string.Empty,
+                LocalId = usuarioDb.LocalId,
+            };
         }
     }
 }

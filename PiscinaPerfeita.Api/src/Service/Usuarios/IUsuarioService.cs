@@ -10,6 +10,7 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
         Task<UsuarioResponseDto> Create(UsuarioRequestDto dto);
         Task<UsuarioResponseDto> Update(Guid id, UsuarioRequestUpdateDto dto);
         Task Delete(Guid id);
-
+        Task<UsuarioResponseDto?> GetMeuPerfil();
+        Task<UsuarioResponseDto> UpdateMyProfileAsync(UsuarioRequestUpdateDto dto);
     }
 }
