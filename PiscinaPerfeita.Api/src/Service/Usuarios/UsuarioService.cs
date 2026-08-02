@@ -1,10 +1,13 @@
-﻿using PiscinaPerfeita.Api.Dtos.Request;
+﻿using System.Security.Cryptography;
+using PiscinaPerfeita.Api.Data;
+using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Helpers.Authenticated;
 using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Repository.Locais;
 using PiscinaPerfeita.Api.Repository.Usuarios;
 using PiscinaPerfeita.Api.Repository.UsuariosLocal;
+using PiscinaPerfeita.Api.Service.Email;
 
 namespace PiscinaPerfeita.Api.Service.Usuarios
 {
@@ -14,12 +17,16 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
         private readonly IUsuarioLocalRepository _usuariosLocalRepository;
         private readonly ILocalRepository _locaisRepository;
         private readonly IAuthenticatedUser _user;
+        private readonly IConfiguration _config;
+        private readonly IEmailService _email;
 
         public UsuarioService(
             IUsuarioRepository usuariosRepository,
             IAuthenticatedUser user,
             IUsuarioLocalRepository usuariosLocalRepository,
-            ILocalRepository locaisRepository
+            ILocalRepository locaisRepository,
+            IConfiguration config,
+            IEmailService email
         )
         {
             _usuariosRepository =
@@ -30,6 +37,8 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             _locaisRepository =
                 locaisRepository ?? throw new ArgumentNullException(nameof(locaisRepository));
             _user = user ?? throw new ArgumentNullException(nameof(user));
+            _config = config ?? throw new ArgumentNullException(nameof(config));
+            _email = email ?? throw new ArgumentNullException(nameof(email));
         }
 
         public async Task<List<UsuarioResponseDto>> Show()
@@ -66,6 +75,19 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             // do usuário fora do escopo do tenant atual. Leitura não altera
             // privilégio, então não bloqueia por causa do Administrador Pai.
             await GarantirUsuarioNoTenantAtual(id, protegerAdministradorPai: false);
+
+            return usuarioDb;
+        }
+
+        public async Task<Usuario?> GetUsuarioByEmail(string email)
+        {
+            var usuarioDb = await _usuariosRepository.GetByEmail(email);
+            if (usuarioDb == null)
+            {
+                return null;
+            }
+
+            await GarantirUsuarioNoTenantAtual(usuarioDb.Id, protegerAdministradorPai: false);
 
             return usuarioDb;
         }
@@ -381,6 +403,114 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 Cpf = usuarioDb.Cpf ?? string.Empty,
                 LocalId = usuarioDb.LocalId,
             };
+        }
+
+        public async Task<string?> PasswordResetToken(string email)
+        {
+            var usuario = await _usuariosRepository.GetByEmail(email);
+            if (usuario == null)
+                throw new KeyNotFoundException($"Usuário com email {email} não encontrado.");
+
+            var tokenBytes = RandomNumberGenerator.GetBytes(32);
+            var token = Convert
+                .ToBase64String(tokenBytes)
+                .Replace("+", "-")
+                .Replace("/", "_")
+                .TrimEnd('='); // base64url
+
+            var resetToken = new PasswordResetToken
+            {
+                Id = Guid.NewGuid(),
+                UsuarioId = usuario.Id,
+                TokenHash = HashToken(token),
+                ExpiraEm = DateTime.UtcNow.AddHours(1),
+            };
+
+            await _usuariosRepository.PasswordResetToken(resetToken);
+
+            var link = $"{_config["Frontend:BaseUrl"]}/redefinir-senha?token={token}";
+
+            return link;
+        }
+
+        public async Task UpdatePasswordResetToken(RedefinirSenhaRequestDto data)
+        {
+            var hash = HashToken(data.Token);
+
+            var resetToken = await _usuariosRepository.GetPasswordResetToken(hash);
+
+            if (
+                resetToken is null
+                || resetToken.UsadoEm is not null
+                || resetToken.ExpiraEm < DateTime.UtcNow
+            )
+                await _usuariosRepository.PasswordResetToken(
+                    resetToken ?? new PasswordResetToken { TokenHash = hash }
+                );
+
+            if (!ValidarForcaSenha(data.NovaSenha, out var motivo))
+                throw new InvalidOperationException($"Senha inválida: {motivo}");
+
+            resetToken?.Usuario.SenhaHash = BCrypt.Net.BCrypt.HashPassword(data.NovaSenha);
+            resetToken?.Usuario.SecurityStamp = Guid.NewGuid().ToString(); // Atualiza o SecurityStamp para invalidar tokens antigos
+            resetToken?.UsadoEm = DateTime.UtcNow;
+
+            await _usuariosRepository.Update(
+                resetToken?.Usuario.Id ?? Guid.Empty,
+                resetToken?.Usuario
+            );
+        }
+
+        public async Task EsqueciSenha(EsqueciSenhaRequestDto dto)
+        {
+            var usuario = await _usuariosRepository.GetByEmail(dto.Email);
+            if (usuario is null)
+                return;
+
+            var linkPasswordResetToken = await PasswordResetToken(usuario.Email);
+
+            await _email.EnviarRedefinicaoSenhaAsync(
+                usuario.Email,
+                usuario.Nome,
+                linkPasswordResetToken
+            );
+        }
+
+        public async Task<PasswordResetToken?> GetPasswordResetTokenByHash(string tokenHash)
+        {
+            var token = await _usuariosRepository.GetPasswordResetToken(tokenHash);
+            return token;
+        }
+
+        private static string HashToken(string token)
+        {
+            // Guarda hash do token, não o token puro — se o banco vazar, o token
+            // (que por 1h vale como reset de senha) não fica reutilizável.
+            var bytes = System.Security.Cryptography.SHA256.HashData(
+                System.Text.Encoding.UTF8.GetBytes(token)
+            );
+            return Convert.ToHexString(bytes);
+        }
+
+        private static bool ValidarForcaSenha(string senha, out string motivo)
+        {
+            if (senha.Length < 8)
+            {
+                motivo = "A senha precisa ter ao menos 8 caracteres.";
+                return false;
+            }
+            if (!senha.Any(char.IsUpper))
+            {
+                motivo = "A senha precisa de uma letra maiúscula.";
+                return false;
+            }
+            if (!senha.Any(char.IsDigit))
+            {
+                motivo = "A senha precisa de um número.";
+                return false;
+            }
+            motivo = "";
+            return true;
         }
     }
 }

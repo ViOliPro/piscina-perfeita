@@ -28,5 +28,9 @@ namespace PiscinaPerfeita.Api.Repository.Usuarios
 
         Task<Usuario?> GetPasswordById(Guid id);
         Task<Usuario?> GetById(Guid id);
+        Task PasswordResetToken(PasswordResetToken token);
+        Task UpdatePasswordResetToken(PasswordResetToken token);
+
+        Task<PasswordResetToken?> GetPasswordResetToken(string tokenHash);
     }
 }

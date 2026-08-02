@@ -1,0 +1,78 @@
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
+using PiscinaPerfeita.Api.Service.Email;
+
+namespace PiscinaPerfeita.Api.Services;
+
+/// <summary>
+/// Envia e-mails via API do Resend (https://resend.com/docs/api-reference/emails/send-email).
+/// Free tier: 100 e-mails/dia, 3.000/mês — suficiente pro volume esperado hoje.
+/// Precisa verificar um domínio no painel do Resend antes de usar um remetente
+/// @seudominio.com; enquanto não verificar, só é permitido enviar para o
+/// próprio e-mail cadastrado na conta Resend (bom para testar antes do domínio).
+/// </summary>
+public class ResendEmailService : IEmailService
+{
+    private readonly HttpClient _http;
+    private readonly string _remetente; // ex.: "PiscinaPerfeita <naoresponda@seudominio.com>"
+
+    public ResendEmailService(HttpClient http, IConfiguration config)
+    {
+        _http = http;
+        _http.BaseAddress = new Uri("https://api.resend.com/");
+        _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            config["Resend:ApiKey"]
+        );
+        _remetente =
+            config["Resend:Remetente"]
+            ?? throw new InvalidOperationException("Configuração 'Resend:Remetente' ausente.");
+    }
+
+    public async Task EnviarRedefinicaoSenhaAsync(
+        string destinatarioEmail,
+        string destinatarioNome,
+        string linkRedefinicao
+    )
+    {
+        var payload = new
+        {
+            from = _remetente,
+            to = new[] { destinatarioEmail },
+            subject = "Redefinição de senha — PiscinaPerfeita",
+            html = MontarHtml(destinatarioNome, linkRedefinicao),
+        };
+
+        var content = new StringContent(
+            JsonSerializer.Serialize(payload),
+            Encoding.UTF8,
+            "application/json"
+        );
+        var response = await _http.PostAsync("emails", content);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync();
+            // Logar mas não relançar pro chamador quebrar o fluxo do usuário —
+            // o endpoint de "esqueci senha" já responde sucesso genérico antes
+            // de chamar isso; falha de e-mail deve virar alerta/log, não 500 pro usuário.
+            throw new EmailDeliveryException($"Resend retornou {response.StatusCode}: {body}");
+        }
+    }
+
+    private static string MontarHtml(string nome, string link) =>
+        $"""
+            <p>Olá, {nome}.</p>
+            <p>Recebemos uma solicitação para redefinir sua senha no PiscinaPerfeita.</p>
+            <p><a href="{link}">Clique aqui para definir uma nova senha</a></p>
+            <p>Se você não pediu isso, pode ignorar este e-mail — sua senha continua a mesma.</p>
+            <p>Este link expira em 1 hora.</p>
+            """;
+}
+
+public class EmailDeliveryException : Exception
+{
+    public EmailDeliveryException(string message)
+        : base(message) { }
+}

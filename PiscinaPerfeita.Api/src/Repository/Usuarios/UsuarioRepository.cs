@@ -71,7 +71,7 @@ public class UsuarioRepository : IUsuarioRepository
         return usuarioDto;
     }
 
-    public async Task<UsuarioResponseDto?> GetById(Guid id)
+    public async Task<UsuarioResponseDto?> GetByIdDto(Guid id)
     {
         var usuarioDto = await _context
             .Usuarios.Where(u => u.Id == id)
@@ -163,5 +163,46 @@ public class UsuarioRepository : IUsuarioRepository
         var user = await _context.Usuarios.Where(u => u.Id == id).FirstOrDefaultAsync();
 
         return user ?? null;
+    }
+
+    public async Task<Usuario?> GetById(Guid id)
+    {
+        var usuarioDto = await _context
+            .Usuarios.Where(u => u.Id == id)
+            .Select(u => new Usuario
+            {
+                Id = u.Id,
+                Nome = u.Nome,
+                Email = u.Email ?? string.Empty,
+                Cpf = u.Cpf ?? string.Empty,
+                CreatedAt = u.CreatedAt,
+                Role = u.Role,
+                SecurityStamp = u.SecurityStamp,
+            })
+            .FirstOrDefaultAsync();
+
+        return usuarioDto ?? null;
+    }
+
+    public async Task PasswordResetToken(PasswordResetToken token)
+    {
+        _context.PasswordResetTokens.Add(token);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<PasswordResetToken?> GetPasswordResetToken(string tokenHash)
+    {
+        var token = await _context
+            .PasswordResetTokens.IgnoreQueryFilters()
+            .Include(t => t.Usuario)
+            .FirstOrDefaultAsync(t => t.TokenHash == tokenHash);
+
+        return token;
+    }
+
+    public async Task UpdatePasswordResetToken(PasswordResetToken token)
+    {
+        _context.PasswordResetTokens.Update(token);
+        await _context.SaveChangesAsync();
     }
 }

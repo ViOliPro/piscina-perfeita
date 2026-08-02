@@ -39,6 +39,7 @@ public partial class PiscinaPerfeitaContext : DbContext
     public virtual DbSet<UsuarioLocal> UsuariosLocal { get; set; }
     public virtual DbSet<Deposito> Depositos { get; set; }
     public virtual DbSet<AplicacaoProduto> AplicacoesProduto { get; set; }
+    public virtual DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -211,6 +212,24 @@ public partial class PiscinaPerfeitaContext : DbContext
                 .WithMany()
                 .HasForeignKey(a => a.AnaliseId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<PasswordResetToken>(entity =>
+        {
+            entity.ToTable("PasswordResetTokens", "piscina-perfeita");
+            entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.TokenHash).IsRequired();
+            entity.Property(e => e.ExpiraEm).IsRequired();
+            entity.Property(e => e.CriadoEm).HasDefaultValueSql("now() at time zone 'utc'");
+            entity.Property(e => e.UsadoEm).IsRequired(false);
+
+            // Relacionamento com Usuario
+            entity.HasIndex(t => t.TokenHash).IsUnique();
+            entity
+                .HasOne(t => t.Usuario)
+                .WithMany()
+                .HasForeignKey(t => t.UsuarioId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         OnModelCreatingPartial(modelBuilder);
