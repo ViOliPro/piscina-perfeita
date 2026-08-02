@@ -63,44 +63,45 @@ builder
         {
             OnTokenValidated = async context =>
             {
-                // 1. Extrai o ID do Usuário e a claim 'security_stamp' do token recebido
                 var userIdClaim = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var securityStampClaim = context.Principal?.FindFirst("security_stamp")?.Value;
 
-                if (
-                    string.IsNullOrWhiteSpace(userIdClaim)
-                    || string.IsNullOrWhiteSpace(securityStampClaim)
-                )
+                if (string.IsNullOrWhiteSpace(userIdClaim) || string.IsNullOrWhiteSpace(securityStampClaim))
                 {
                     context.Fail("Token inválido: ID do usuário ou security_stamp ausente.");
                     return;
                 }
 
-                // 2. Busca o usuário atual no banco de dados
-                var dbContext =
-                    context.HttpContext.RequestServices.GetRequiredService<PiscinaPerfeitaContext>();
-                var userId = Guid.Parse(userIdClaim);
-                var user = await dbContext.Usuarios.FindAsync(userId);
+                // Recuperamos o DbContext (já que a injeção está certa)
+                var dbContext = context.HttpContext.RequestServices.GetRequiredService<PiscinaPerfeitaContext>();
 
-                if (user == null)
+                if (!Guid.TryParse(userIdClaim, out var userId))
+                {
+                    context.Fail("Token inválido: ID do usuário mal formatado.");
+                    return;
+                }
+
+                // CÓDIGO CORRIGIDO: Em vez de FindAsync (que traz o usuário inteiro e joga no ChangeTracker), 
+                // fazemos um Select() apenas do campo que importa. Muito mais leve para o banco.
+                var currentStamp = await dbContext.Usuarios
+                    .AsNoTracking()
+                    .Where(u => u.Id == userId)
+                    .Select(u => u.SecurityStamp)
+                    .FirstOrDefaultAsync();
+
+                if (currentStamp == null)
                 {
                     context.Fail("Token inválido: Usuário não encontrado.");
                     return;
                 }
 
-                if (user.SecurityStamp != securityStampClaim)
-                {
-                    context.Fail("Token inválido: Stamp de segurança não corresponde.");
-                    return;
-                }
-
-                // 3. Se o usuário não existir ou se o stamp do banco for DIFERENTE do stamp do token:
-                if (user == null || user.SecurityStamp != securityStampClaim)
+                if (currentStamp != securityStampClaim)
                 {
                     // Isso invalida o token antigo na hora!
                     context.Fail("Token invalidado devido a alterações na conta.");
+                    return;
                 }
-            },
+            }
         };
     });
 

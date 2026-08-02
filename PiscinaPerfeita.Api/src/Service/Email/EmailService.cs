@@ -1,9 +1,9 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using PiscinaPerfeita.Api.Service.Email;
 
-namespace PiscinaPerfeita.Api.Services;
+
+namespace PiscinaPerfeita.Api.Service.Email;
 
 /// <summary>
 /// Envia e-mails via API do Resend (https://resend.com/docs/api-reference/emails/send-email).
@@ -16,6 +16,8 @@ public class ResendEmailService : IEmailService
 {
     private readonly HttpClient _http;
     private readonly string _remetente; // ex.: "PiscinaPerfeita <naoresponda@seudominio.com>"
+
+    
 
     public ResendEmailService(HttpClient http, IConfiguration config)
     {

@@ -5,6 +5,9 @@ using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Helpers.Authenticated;
 using PiscinaPerfeita.Api.Service.Account;
+using PiscinaPerfeita.Api.Service.Email;
+using PiscinaPerfeita.Api.Service.Usuarios;
+
 
 namespace PiscinaPerfeita.Api.Controllers
 {
@@ -14,16 +17,20 @@ namespace PiscinaPerfeita.Api.Controllers
     {
         private readonly IAccountService _accountService;
         private readonly IAuthenticatedUser _authenticatedUser;
+        private readonly IUsuarioService _usuarioService;
 
         public AccountController(
             IAccountService accountService,
-            IAuthenticatedUser authenticatedUser
+            IAuthenticatedUser authenticatedUser,
+            IUsuarioService usuarioService
         )
         {
             _accountService =
                 accountService ?? throw new ArgumentNullException(nameof(accountService));
             _authenticatedUser =
                 authenticatedUser ?? throw new ArgumentNullException(nameof(authenticatedUser));
+            _usuarioService =
+                usuarioService ?? throw new ArgumentNullException(nameof(usuarioService));
         }
 
         // Login
@@ -70,6 +77,60 @@ namespace PiscinaPerfeita.Api.Controllers
             catch (Exception ex)
             {
                 return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // POST /api/auth/esqueci-senha
+        [HttpPost("esqueci-senha")]
+        [AllowAnonymous]
+        public async Task<IActionResult> EsqueciSenha([FromBody] EsqueciSenhaRequestDto dto)
+        {
+            // Sempre responde 200 igual, exista ou não o e-mail —
+            // impede que alguém descubra quais e-mails estão cadastrados.
+            try
+            {
+                var usuario = await _usuarioService.GetUsuarioByEmail(dto.Email);
+                if (usuario is null)
+                    return Ok(
+                        new { message = "Usuario Is null Se o e-mail existir, você receberá um link em instantes." }
+                    );
+
+                var linkPasswordResetToken = _usuarioService.PasswordResetToken(dto.Email);
+
+                return Ok(
+                    new { message = "Se o e-mail existir, você receberá um link em instantes." }
+                );
+            }
+            catch (EmailDeliveryException)
+            {
+                return StatusCode(
+                    200,
+                    new { error = "Se o e-mail existir, você receberá um link em instantes." }
+                );
+            }
+        }
+
+        // POST /api/auth/redefinir-senha
+        [HttpPost("redefinir-senha")]
+        [AllowAnonymous]
+        public async Task<IActionResult> RedefinirSenha([FromBody] RedefinirSenhaRequestDto dto)
+        {
+            try
+            {
+                var resetToken = await _usuarioService.GetPasswordResetTokenByHash(dto.Token);
+
+                if (
+                    resetToken is null
+                    || resetToken.UsadoEm != null
+                    || resetToken.ExpiraEm < DateTime.UtcNow
+                )
+                    return BadRequest(new { error = "Link inválido ou expirado." });
+
+                return Ok(new { message = "Senha redefinida com sucesso." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Ocorreu um erro ao redefinir a senha." });
             }
         }
     }

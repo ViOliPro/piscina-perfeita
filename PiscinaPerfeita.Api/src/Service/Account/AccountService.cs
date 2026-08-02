@@ -58,7 +58,7 @@ namespace PiscinaPerfeita.Api.Service.Account
                 {
                     AccessToken = tokenVerTodos,
                     TokenType = "Bearer",
-                    expiresIn = 28800,
+                    expiresIn = 3600,
                     User = new UserResponseDto
                     {
                         UserId = usuario.Id,
@@ -83,7 +83,7 @@ namespace PiscinaPerfeita.Api.Service.Account
             {
                 AccessToken = stringToken,
                 TokenType = "Bearer",
-                expiresIn = 28800, // 8 horas em segundos
+                expiresIn = 3600, // 1 horas em segundos
                 User = new UserResponseDto
                 {
                     UserId = usuario.Id,
@@ -119,7 +119,7 @@ namespace PiscinaPerfeita.Api.Service.Account
                 {
                     AccessToken = tokenVerTodos,
                     TokenType = "Bearer",
-                    expiresIn = 28800,
+                    expiresIn = 3600,
                     User = new UserResponseDto
                     {
                         UserId = usuario.Id,
@@ -165,7 +165,7 @@ namespace PiscinaPerfeita.Api.Service.Account
             {
                 AccessToken = stringToken,
                 TokenType = "Bearer",
-                expiresIn = 28800,
+                expiresIn = 3600,
                 User = new UserResponseDto
                 {
                     UserId = usuario.Id,

@@ -87,7 +87,7 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 return null;
             }
 
-            await GarantirUsuarioNoTenantAtual(usuarioDb.Id, protegerAdministradorPai: false);
+            //await GarantirUsuarioNoTenantAtual(usuarioDb.Id, protegerAdministradorPai: false);
 
             return usuarioDb;
         }

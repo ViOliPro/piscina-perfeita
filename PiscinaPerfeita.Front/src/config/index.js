@@ -9,12 +9,44 @@
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5258/api";
 
+// Acrescentar estas funções ao seu services/usuarioService.js (ou similar)
+// já existente — mantendo o padrão de vocês de mapear PascalCase<->camelCase
+// via mappers.js antes de expor pro componente.
+/*import { api } from "./apiClient"; // ajuste para o client axios/fetch já usado no projeto
+import { mapUsuarioFromApi } from "./mappers"; // reaproveita o mapper já existente
+
+export async function buscarMeuPerfil() {
+  const { data } = await api.get("/usuarios/me");
+  return mapUsuarioFromApi(data);
+}
+
+export async function atualizarMeuPerfil({ nome, email }) {
+  const { data } = await api.put("/usuarios/me", { nome, email });
+  return mapUsuarioFromApi(data);
+}
+
+export async function alterarSenha({ senhaAtual, novaSenha }) {
+  await api.put("/usuarios/me/senha", { senhaAtual, novaSenha });
+}
+
+export async function solicitarRedefinicaoSenha({ email }) {
+  // Sempre retorna sucesso no backend independente do e-mail existir,
+  // pra não vazar quais e-mails estão cadastrados (ver README do backend).
+  await api.post("/auth/esqueci-senha", { email });
+}
+
+export async function redefinirSenha({ token, novaSenha }) {
+  await api.post("/auth/redefinir-senha", { token, novaSenha });
+}
+ */
 export const API_ENDPOINTS = {
   // Autenticação  (AccountController → api/account/...)
   login: `${API_BASE_URL}/account/login`,
   switchLocal: `${API_BASE_URL}/account/SwitchLocal`,
-  forgotPassword: `${API_BASE_URL}/account/forgot-password`, // a implementar no backend
-  resetPassword: `${API_BASE_URL}/account/reset-password`, // a implementar no backend
+  forgotPassword: `${API_BASE_URL}/account/esqueci-senha`, // a implementar no backend
+  resetPassword: `${API_BASE_URL}/account/redefinir-senha`, // a implementar no backend
+  authPasswordSenhaAtualENova: `${API_BASE_URL}/usuarios/me/senha`,
+  meuPerfil: `${API_BASE_URL}/usuarios/me`,
 
   // Usuários
   usuarios: `${API_BASE_URL}/usuarios`,
