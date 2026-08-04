@@ -61,12 +61,9 @@ export default function AlterarSenhaForm() {
       setSucesso(true);
       setForm({ senhaAtual: "", novaSenha: "", confirmar: "" });
     } catch (err) {
-      // 401/400 do backend quando a senha atual está incorreta
-      setErro(
-        err?.response?.status === 400
-          ? "Senha atual incorreta."
-          : "Não foi possível alterar a senha agora.",
-      );
+      // request() (config/services.js) lança um Error simples com a
+      // mensagem da API — não existe err.response neste projeto (sem axios).
+      setErro(err?.message ?? "Não foi possível alterar a senha agora.");
     } finally {
       setEnviando(false);
     }

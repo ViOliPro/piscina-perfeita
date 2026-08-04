@@ -12,7 +12,7 @@ import {
   errorTextStyle,
   successBannerStyle,
 } from "../styles/tokens";
-import AlterarSenhaForm from "../components/AlterarSenhaForm";
+import AlterarSenhaForm from "./AlterarSenhaForm";
 
 /**
  * Tela "Meu Cadastro". Dados de Perfil e Local são somente leitura aqui —
@@ -59,9 +59,7 @@ export default function MeuPerfil() {
       await atualizarMeuPerfil(form);
       setSucesso(true);
     } catch (err) {
-      setErro(
-        err?.response?.data?.error ?? "Não foi possível salvar as alterações.",
-      );
+      setErro(err?.message ?? "Não foi possível salvar as alterações.");
     } finally {
       setSalvando(false);
     }

@@ -50,6 +50,17 @@ services:
       - key: Cors__AllowedOrigins
         value: "https://piscina-perfeita-front-roel.onrender.com"
 
+      # Resend (envio de e-mail no fluxo "esqueci minha senha")
+      - key: Resend__ApiKey
+        sync: false # defina no painel do Render — não versionar a key
+      - key: Resend__Remetente
+        sync: false # ex.: "PiscinaPerfeita <naoresponda@seudominio.com>"
+
+      # URL pública do front — usada para montar o link de redefinição
+      # de senha enviado por e-mail
+      - key: Frontend__BaseUrl
+        value: "https://piscina-perfeita-front-roel.onrender.com"
+
   # ------------------------------------------------------------
   # Front (React/Vite) — Static Site (Distribuído via CDN global)
   # ------------------------------------------------------------

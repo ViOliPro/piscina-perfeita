@@ -85,29 +85,27 @@ namespace PiscinaPerfeita.Api.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> EsqueciSenha([FromBody] EsqueciSenhaRequestDto dto)
         {
-            // Sempre responde 200 igual, exista ou não o e-mail —
-            // impede que alguém descubra quais e-mails estão cadastrados.
+            // Sempre responde 200 igual, exista ou não o e-mail, e mesmo que o
+            // envio do e-mail falhe — impede que alguém descubra quais e-mails
+            // estão cadastrados (ou que o Resend está fora do ar).
+            //
+            // CORRIGIDO: antes chamávamos _usuarioService.PasswordResetToken()
+            // direto, que só gera e salva o token — o e-mail nunca era
+            // disparado. EsqueciSenha() é o método que gera o token E chama
+            // o EmailService.
             try
             {
-                var usuario = await _usuarioService.GetUsuarioByEmail(dto.Email);
-                if (usuario is null)
-                    return Ok(
-                        new { message = "Usuario Is null Se o e-mail existir, você receberá um link em instantes." }
-                    );
-
-                var linkPasswordResetToken = _usuarioService.PasswordResetToken(dto.Email);
-
-                return Ok(
-                    new { message = "Se o e-mail existir, você receberá um link em instantes." }
-                );
+                await _usuarioService.EsqueciSenha(dto);
             }
             catch (EmailDeliveryException)
             {
-                return StatusCode(
-                    200,
-                    new { error = "Se o e-mail existir, você receberá um link em instantes." }
-                );
+                // Falha no Resend não deve virar erro pro usuário — só significa
+                // que o e-mail pode não ter chegado; a resposta continua neutra.
             }
+
+            return Ok(
+                new { message = "Se o e-mail existir, você receberá um link em instantes." }
+            );
         }
 
         // POST /api/auth/redefinir-senha
@@ -115,22 +113,45 @@ namespace PiscinaPerfeita.Api.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> RedefinirSenha([FromBody] RedefinirSenhaRequestDto dto)
         {
+            // CORRIGIDO: antes só validávamos o token e retornávamos sucesso
+            // sem nunca trocar a senha. UpdatePasswordResetToken() é o método
+            // que de fato faz o hash da nova senha, marca o token como usado
+            // e rotaciona o SecurityStamp.
             try
             {
-                var resetToken = await _usuarioService.GetPasswordResetTokenByHash(dto.Token);
-
-                if (
-                    resetToken is null
-                    || resetToken.UsadoEm != null
-                    || resetToken.ExpiraEm < DateTime.UtcNow
-                )
-                    return BadRequest(new { error = "Link inválido ou expirado." });
-
+                await _usuarioService.UpdatePasswordResetToken(dto);
                 return Ok(new { message = "Senha redefinida com sucesso." });
             }
-            catch (Exception ex)
+            catch (InvalidOperationException ex)
+            {
+                // Token inválido/expirado/já usado ou senha fora dos requisitos.
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception)
             {
                 return StatusCode(500, new { error = "Ocorreu um erro ao redefinir a senha." });
+            }
+        }
+
+        // POST /api/account/completar-convite
+        [HttpPost("completar-convite")]
+        [AllowAnonymous]
+        public async Task<IActionResult> CompletarConvite([FromBody] CompletarConviteRequestDto dto)
+        {
+            try
+            {
+                await _usuarioService.CompletarConvite(dto);
+                return Ok(new { message = "Cadastro concluído. Faça login para continuar." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Convite inválido/expirado/já usado, e-mail já cadastrado
+                // (corrida) ou senha fora dos requisitos.
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { error = "Ocorreu um erro ao concluir o cadastro." });
             }
         }
     }

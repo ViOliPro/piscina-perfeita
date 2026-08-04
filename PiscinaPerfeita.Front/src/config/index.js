@@ -43,10 +43,12 @@ export const API_ENDPOINTS = {
   // Autenticação  (AccountController → api/account/...)
   login: `${API_BASE_URL}/account/login`,
   switchLocal: `${API_BASE_URL}/account/SwitchLocal`,
-  forgotPassword: `${API_BASE_URL}/account/esqueci-senha`, // a implementar no backend
-  resetPassword: `${API_BASE_URL}/account/redefinir-senha`, // a implementar no backend
+  forgotPassword: `${API_BASE_URL}/account/esqueci-senha`,
+  resetPassword: `${API_BASE_URL}/account/redefinir-senha`,
+  completarConvite: `${API_BASE_URL}/account/completar-convite`,
   authPasswordSenhaAtualENova: `${API_BASE_URL}/usuarios/me/senha`,
   meuPerfil: `${API_BASE_URL}/usuarios/me`,
+  criarConvite: `${API_BASE_URL}/usuarios/convites`,
 
   // Usuários
   usuarios: `${API_BASE_URL}/usuarios`,

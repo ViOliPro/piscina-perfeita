@@ -1,7 +1,6 @@
 ﻿using PiscinaPerfeita.Api.Helpers.Authenticated;
 using PiscinaPerfeita.Api.Repository.Analises;
 using PiscinaPerfeita.Api.Repository.AplicacoesProduto;
-using PiscinaPerfeita.Api.Repository.Depositos;
 using PiscinaPerfeita.Api.Repository.Estoques;
 using PiscinaPerfeita.Api.Repository.Locais;
 using PiscinaPerfeita.Api.Repository.MovimentacoesEstoque;
@@ -9,11 +8,11 @@ using PiscinaPerfeita.Api.Repository.Piscinas;
 using PiscinaPerfeita.Api.Repository.Produtos;
 using PiscinaPerfeita.Api.Repository.Usuarios;
 using PiscinaPerfeita.Api.Repository.UsuariosLocal;
+using PiscinaPerfeita.Api.Repository.Depositos;
+
 using PiscinaPerfeita.Api.Service.Account;
 using PiscinaPerfeita.Api.Service.Analises;
 using PiscinaPerfeita.Api.Service.AplicacoesProduto;
-using PiscinaPerfeita.Api.Service.Depositos;
-using PiscinaPerfeita.Api.Service.Email;
 using PiscinaPerfeita.Api.Service.Estoques;
 using PiscinaPerfeita.Api.Service.Locais;
 using PiscinaPerfeita.Api.Service.MovimentacoesEstoque;
@@ -21,6 +20,8 @@ using PiscinaPerfeita.Api.Service.Piscinas;
 using PiscinaPerfeita.Api.Service.Produtos;
 using PiscinaPerfeita.Api.Service.Usuarios;
 using PiscinaPerfeita.Api.Service.UsuariosLocal;
+using PiscinaPerfeita.Api.Service.Depositos;
+using PiscinaPerfeita.Api.Service.Email;
 
 namespace PiscinaPerfeita.Api.Extension
 {
@@ -28,7 +29,6 @@ namespace PiscinaPerfeita.Api.Extension
     {
         public static IServiceCollection ResolveDependencies(this IServiceCollection services)
         {
-            services.AddHttpClient();
             // 1. Registre aqui todos os seus Services
             services.AddScoped<IUsuarioService, UsuarioService>();
             services.AddScoped<IEstoqueService, EstoqueService>();
@@ -41,6 +41,12 @@ namespace PiscinaPerfeita.Api.Extension
             services.AddScoped<ILocalService, LocalService>();
             services.AddScoped<IDepositoService, DepositoService>();
             services.AddScoped<IAplicacaoProdutoService, AplicacaoProdutoService>();
+            // ResendEmailService pede um HttpClient no construtor. Sem essa
+            // linha, o container de DI não sabe como resolver HttpClient, e
+            // isso quebra a resolução de IEmailService — e, por tabela,
+            // qualquer coisa que dependa de IUsuarioService (incluindo o
+            // login), já que UsuarioService também depende de IEmailService.
+            services.AddHttpClient();
             services.AddScoped<IEmailService, ResendEmailService>();
             //Autheticated
             services.AddScoped<IAuthenticatedUser, AuthenticatedUser>();

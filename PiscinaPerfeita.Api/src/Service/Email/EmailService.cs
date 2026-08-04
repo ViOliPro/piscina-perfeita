@@ -71,6 +71,40 @@ public class ResendEmailService : IEmailService
             <p>Se você não pediu isso, pode ignorar este e-mail — sua senha continua a mesma.</p>
             <p>Este link expira em 1 hora.</p>
             """;
+
+    public async Task EnviarConviteAsync(string destinatarioEmail, string linkConvite)
+    {
+        var payload = new
+        {
+            from = _remetente,
+            to = new[] { destinatarioEmail },
+            subject = "Você foi convidado para o PiscinaPerfeita",
+            html = MontarHtmlConvite(linkConvite),
+        };
+
+        var content = new StringContent(
+            JsonSerializer.Serialize(payload),
+            Encoding.UTF8,
+            "application/json"
+        );
+        var response = await _http.PostAsync("emails", content);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"_____________________________________________________________{response}");
+            Console.WriteLine($"_____________________________________________________________{body}");
+            throw new EmailDeliveryException($"Resend retornou {response.StatusCode}: {body}");
+        }
+    }
+
+    private static string MontarHtmlConvite(string link) =>
+        $"""
+            <p>Você foi convidado para acessar o PiscinaPerfeita.</p>
+            <p><a href="{link}">Clique aqui para completar seu cadastro</a></p>
+            <p>Você vai definir seu nome e senha na próxima tela.</p>
+            <p>Este link expira em 48 horas. Se você não esperava este convite, pode ignorá-lo.</p>
+            """;
 }
 
 public class EmailDeliveryException : Exception

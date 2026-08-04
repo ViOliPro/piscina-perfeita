@@ -165,6 +165,14 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                     ? BCrypt.Net.BCrypt.HashPassword(dto.SenhaHash)
                     : getPassword?.SenhaHash,
                 Role = dto.Role ?? usuario.Role,
+                // Mantém o SecurityStamp atual (o repositório agora persiste
+                // este campo — sem isso, toda edição feita por um Admin
+                // derrubaria a sessão do usuário editado, já que `new Usuario`
+                // sem valor explícito cai no default do model, um Guid novo).
+                // `usuario` é um UsuarioResponseDto (não tem SecurityStamp);
+                // usamos `getPassword`, que é a entidade completa já buscada
+                // logo acima.
+                SecurityStamp = getPassword?.SecurityStamp ?? Guid.NewGuid().ToString(),
             };
 
             await _usuariosRepository.Update(id, usuarioDb);
@@ -439,26 +447,28 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
 
             var resetToken = await _usuariosRepository.GetPasswordResetToken(hash);
 
+            // CORRIGIDO: antes, um token inválido/expirado/usado disparava um
+            // INSERT esquisito (_usuariosRepository.PasswordResetToken, que é
+            // o método de CRIAR token, não de validar) e o código continuava
+            // adiante mesmo assim — como os campos abaixo usam `?.`, tudo
+            // virava no-op silencioso e o método retornava sem erro nenhum
+            // pro chamador. Agora falha de verdade com uma mensagem clara.
             if (
                 resetToken is null
                 || resetToken.UsadoEm is not null
                 || resetToken.ExpiraEm < DateTime.UtcNow
             )
-                await _usuariosRepository.PasswordResetToken(
-                    resetToken ?? new PasswordResetToken { TokenHash = hash }
-                );
+                throw new InvalidOperationException("Link inválido ou expirado.");
 
             if (!ValidarForcaSenha(data.NovaSenha, out var motivo))
                 throw new InvalidOperationException($"Senha inválida: {motivo}");
 
-            resetToken?.Usuario.SenhaHash = BCrypt.Net.BCrypt.HashPassword(data.NovaSenha);
-            resetToken?.Usuario.SecurityStamp = Guid.NewGuid().ToString(); // Atualiza o SecurityStamp para invalidar tokens antigos
-            resetToken?.UsadoEm = DateTime.UtcNow;
+            resetToken.Usuario.SenhaHash = BCrypt.Net.BCrypt.HashPassword(data.NovaSenha);
+            resetToken.Usuario.SecurityStamp = Guid.NewGuid().ToString(); // Atualiza o SecurityStamp para invalidar tokens antigos
+            resetToken.UsadoEm = DateTime.UtcNow;
 
-            await _usuariosRepository.Update(
-                resetToken?.Usuario.Id ?? Guid.Empty,
-                resetToken?.Usuario
-            );
+            await _usuariosRepository.Update(resetToken.Usuario.Id, resetToken.Usuario);
+            await _usuariosRepository.UpdatePasswordResetToken(resetToken);
         }
 
         public async Task EsqueciSenha(EsqueciSenhaRequestDto dto)
@@ -480,6 +490,132 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
         {
             var token = await _usuariosRepository.GetPasswordResetToken(tokenHash);
             return token;
+        }
+
+        public async Task<ConviteResponseDto> CriarConvite(ConviteRequestDto dto)
+        {
+            var existente = await _usuariosRepository.GetByEmail(dto.Email);
+            if (existente != null)
+                throw new InvalidOperationException("Já existe um usuário com este e-mail.");
+
+            var usuarioLogado = await _user.GetCurrentUser();
+
+            // Mesma regra do cadastro direto: só um SuperAdmin pode convidar
+            // outro SuperAdmin (ver ValidarPermissaoCadastro).
+            if (usuarioLogado.Role != Role.SuperAdmin && dto.Role == Role.SuperAdmin)
+                throw new InvalidOperationException(
+                    "Você não tem permissão para esse convite, contate um administrador"
+                );
+
+            Guid? localId;
+            Perfil perfilAtribuido;
+            var criadoPorSuperAdmin = usuarioLogado.Role == Role.SuperAdmin;
+
+            if (criadoPorSuperAdmin)
+            {
+                // Mesma regra de CriarUsuarioLocal: o SuperAdmin decide
+                // livremente. LocalId pode ficar em aberto — o convidado
+                // vira Administrador sem Local e, ao aceitar o convite e
+                // logar, cai no fluxo de criar o primeiro Local (PrimeiroLocal.jsx).
+                if (dto.LocalId.HasValue)
+                    await GarantirLocalExiste(dto.LocalId.Value);
+
+                localId = dto.LocalId;
+                perfilAtribuido = dto.Perfil ?? Perfil.Administrador;
+            }
+            else
+            {
+                // Um Administrador só convida gente pro seu próprio Local —
+                // nunca aceita um LocalId arbitrário vindo do request (mesma
+                // proteção contra vazamento entre tenants de CriarUsuarioLocal).
+                if (usuarioLogado.LocalId == null)
+                    throw new InvalidOperationException(
+                        "Você precisa estar vinculado a um Local para convidar usuários."
+                    );
+
+                localId = usuarioLogado.LocalId;
+                perfilAtribuido = dto.Perfil ?? Perfil.Visualizador;
+            }
+
+            var tokenBytes = RandomNumberGenerator.GetBytes(32);
+            var token = Convert
+                .ToBase64String(tokenBytes)
+                .Replace("+", "-")
+                .Replace("/", "_")
+                .TrimEnd('=');
+
+            var convite = new ConviteToken
+            {
+                Id = Guid.NewGuid(),
+                Email = dto.Email,
+                Role = dto.Role,
+                Perfil = perfilAtribuido,
+                LocalId = localId,
+                CriadoPorId = usuarioLogado.UserId ?? Guid.Empty,
+                CriadoPorSuperAdmin = criadoPorSuperAdmin,
+                TokenHash = HashToken(token),
+                ExpiraEm = DateTime.UtcNow.AddHours(48),
+            };
+
+            await _usuariosRepository.CriarConvite(convite);
+
+            var link = $"{_config["Frontend:BaseUrl"]}/completar-cadastro?token={token}";
+
+            // Diferente do "esqueci senha" (onde escondemos falha de e-mail
+            // por segurança, pra não confirmar quais e-mails existem), aqui
+            // é uma ação explícita do Admin — faz sentido ele saber que o
+            // e-mail não saiu, então deixamos a exceção subir pro controller.
+            await _email.EnviarConviteAsync(dto.Email, link);
+
+            return new ConviteResponseDto { Email = dto.Email, ExpiraEm = convite.ExpiraEm };
+        }
+
+        public async Task CompletarConvite(CompletarConviteRequestDto dto)
+        {
+            var hash = HashToken(dto.Token);
+            var convite = await _usuariosRepository.GetConviteByHash(hash);
+
+            if (convite is null || convite.UsadoEm is not null || convite.ExpiraEm < DateTime.UtcNow)
+                throw new InvalidOperationException("Convite inválido ou expirado.");
+
+            // Alguém pode ter se cadastrado com este e-mail por outro caminho
+            // entre o convite ser criado e ser aceito — checagem de corrida.
+            var existente = await _usuariosRepository.GetByEmail(convite.Email);
+            if (existente != null)
+                throw new InvalidOperationException("Já existe um usuário com este e-mail.");
+
+            if (!ValidarForcaSenha(dto.Senha, out var motivo))
+                throw new InvalidOperationException($"Senha inválida: {motivo}");
+
+            var novoUsuario = new Usuario
+            {
+                Nome = dto.Nome,
+                Email = convite.Email,
+                Cpf = dto.Cpf,
+                SenhaHash = BCrypt.Net.BCrypt.HashPassword(dto.Senha),
+                Role = convite.Role,
+            };
+
+            await _usuariosRepository.Create(novoUsuario);
+
+            var usuarioLocal = new UsuarioLocal
+            {
+                UsuarioId = novoUsuario.Id,
+                LocalId = convite.LocalId,
+                Perfil = convite.Perfil,
+                // Só reproduz Administrador Pai quando o convite (a) veio de
+                // um SuperAdmin e (b) já tinha LocalId + Perfil Administrador
+                // definidos juntos — mesma condição de CriarUsuarioLocal.
+                EhAdministradorPai =
+                    convite.CriadoPorSuperAdmin
+                    && convite.LocalId.HasValue
+                    && convite.Perfil == Perfil.Administrador,
+            };
+
+            await _usuariosLocalRepository.Create(usuarioLocal);
+
+            convite.UsadoEm = DateTime.UtcNow;
+            await _usuariosRepository.UpdateConvite(convite);
         }
 
         private static string HashToken(string token)

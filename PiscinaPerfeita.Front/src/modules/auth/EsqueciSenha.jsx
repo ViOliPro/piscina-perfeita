@@ -9,7 +9,7 @@ import {
   errorTextStyle,
 } from "../styles/tokens";
 
-export default function EsqueciSenha() {
+export default function EsqueciSenha({ onBack }) {
   const [email, setEmail] = useState("");
   const [enviado, setEnviado] = useState(false);
   const [erro, setErro] = useState(null);
@@ -104,6 +104,27 @@ export default function EsqueciSenha() {
               {enviando ? "Enviando..." : "Enviar link de redefinição"}
             </button>
           </form>
+        )}
+
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              fontSize: 13,
+              color: tokens.color.accent,
+              fontFamily: "inherit",
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              margin: "16px auto 0",
+            }}
+          >
+            ← Voltar ao login
+          </button>
         )}
       </div>
     </div>

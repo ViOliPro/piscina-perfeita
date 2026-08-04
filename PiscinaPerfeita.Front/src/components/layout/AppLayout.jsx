@@ -454,7 +454,7 @@ function LocalSwitcher() {
   );
 }
 
-function Topbar({ activePage, onMenuToggle }) {
+function Topbar({ activePage, onMenuToggle, onNavigate }) {
   const isMobile = useIsMobile();
   const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -651,9 +651,10 @@ function Topbar({ activePage, onMenuToggle }) {
                   <DropdownItem
                     icon="👤"
                     label="Meu perfil"
-                    disabled
-                    hint="em breve"
-                    onClick={() => setMenuOpen(false)}
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onNavigate("meuPerfil");
+                    }}
                   />
                   <div
                     style={{
@@ -846,6 +847,7 @@ export function AppLayout({ children, activePage, onNavigate }) {
         <Topbar
           activePage={activePage}
           onMenuToggle={() => setDrawerOpen((o) => !o)}
+          onNavigate={handleNavigate}
         />
 
         <main

@@ -70,6 +70,11 @@ services:
       # a API recusa subir se isso estiver vazio — defina com o(s)
       # domínio(s) do front quando for pra produção — ex.: https://app.piscinaperfeita.com.br
       Cors__AllowedOrigins: ${CORS_ALLOWED_ORIGINS:-}
+      # Resend (envio de e-mail no fluxo "esqueci minha senha") e a URL
+      # pública do front, usada para montar o link enviado por e-mail.
+      Resend__ApiKey: ${RESEND_API_KEY:?defina RESEND_API_KEY no .env}
+      Resend__Remetente: ${RESEND_REMETENTE:?defina RESEND_REMETENTE no .env}
+      Frontend__BaseUrl: ${FRONTEND_BASE_URL:?defina FRONTEND_BASE_URL no .env}
     # Sem "ports": a API só é acessível de dentro da rede do Docker agora
     # (via Nginx do front, que já faz proxy de /api e /health) — ninguém
     # de fora bate direto na porta 10000.

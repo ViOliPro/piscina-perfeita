@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { redefinirSenha } from "../services/usuarioServiceAdditions";
+import { authService } from "../../config/services.js";
 import {
   tokens,
   cardStyle,
@@ -16,17 +16,18 @@ const REQUISITOS_SENHA = [
   { regex: /[0-9]/, label: "Um número" },
 ];
 
-// Este projeto não usa react-router — a navegação é feita por estado
-// (ver LoginPage.jsx), então token e onDone chegam como props em vez de
-// vir de useSearchParams()/useNavigate().
-export default function RedefinirSenha({ token, onDone }) {
-  const [form, setForm] = useState({ novaSenha: "", confirmar: "" });
+// Tela de "aceitar convite": o Admin/SuperAdmin já decidiu e-mail, perfil
+// e Local (se aplicável) ao gerar o convite — aqui o convidado só define
+// nome e senha. Sem react-router (mesmo padrão de RedefinirSenha.jsx):
+// token e onDone chegam como props vindas de LoginPage.jsx.
+export default function CompletarConvite({ token, onDone }) {
+  const [form, setForm] = useState({ nome: "", senha: "", confirmar: "" });
   const [erro, setErro] = useState(null);
   const [enviando, setEnviando] = useState(false);
   const [sucesso, setSucesso] = useState(false);
 
   const requisitosFaltando = REQUISITOS_SENHA.filter(
-    (r) => !r.regex.test(form.novaSenha),
+    (r) => !r.regex.test(form.senha),
   );
 
   if (!token) {
@@ -40,7 +41,8 @@ export default function RedefinirSenha({ token, onDone }) {
       >
         <div style={cardStyle}>
           <p style={errorTextStyle}>
-            Link inválido. Solicite um novo link de redefinição de senha.
+            Link de convite inválido. Peça para quem te convidou enviar um
+            novo link.
           </p>
         </div>
       </div>
@@ -51,24 +53,32 @@ export default function RedefinirSenha({ token, onDone }) {
     e.preventDefault();
     setErro(null);
 
+    if (!form.nome.trim()) {
+      setErro("Informe seu nome.");
+      return;
+    }
     if (requisitosFaltando.length > 0) {
       setErro("A senha não atende aos requisitos abaixo.");
       return;
     }
-    if (form.novaSenha !== form.confirmar) {
-      setErro("A confirmação não corresponde à nova senha.");
+    if (form.senha !== form.confirmar) {
+      setErro("A confirmação não corresponde à senha.");
       return;
     }
 
     setEnviando(true);
     try {
-      await redefinirSenha({ token, novaSenha: form.novaSenha });
+      await authService.completarConvite({
+        token,
+        nome: form.nome.trim(),
+        senha: form.senha,
+      });
       setSucesso(true);
       setTimeout(() => onDone?.(), 2500);
     } catch (err) {
       // request() (config/services.js) lança um Error simples com a
-      // mensagem que a API devolveu — não é um erro no estilo axios.
-      setErro(err?.message ?? "Não foi possível redefinir a senha agora.");
+      // mensagem da API — não existe err.response neste projeto (sem axios).
+      setErro(err?.message ?? "Não foi possível concluir o cadastro agora.");
     } finally {
       setEnviando(false);
     }
@@ -90,29 +100,55 @@ export default function RedefinirSenha({ token, onDone }) {
             color: tokens.color.text,
           }}
         >
-          Definir nova senha
+          Completar cadastro
         </h2>
+        <p
+          style={{
+            margin: "0 0 16px",
+            fontSize: "13px",
+            color: tokens.color.textMuted,
+          }}
+        >
+          Você foi convidado para o PiscinaPerfeita. Defina seu nome e senha
+          para continuar.
+        </p>
 
         {sucesso ? (
           <p style={{ fontSize: "14px", color: tokens.color.success }}>
-            Senha redefinida. Redirecionando para o login...
+            Cadastro concluído! Redirecionando para o login...
           </p>
         ) : (
           <form onSubmit={handleSubmit}>
             <div style={{ marginBottom: tokens.spacing(4) }}>
-              <label style={labelStyle} htmlFor="novaSenha">
-                Nova senha
+              <label style={labelStyle} htmlFor="nome">
+                Nome completo
               </label>
               <input
-                id="novaSenha"
+                id="nome"
+                type="text"
+                style={inputStyle}
+                value={form.nome}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, nome: e.target.value }))
+                }
+                autoComplete="name"
+                autoFocus
+              />
+            </div>
+
+            <div style={{ marginBottom: tokens.spacing(4) }}>
+              <label style={labelStyle} htmlFor="senha">
+                Senha
+              </label>
+              <input
+                id="senha"
                 type="password"
                 style={inputStyle}
-                value={form.novaSenha}
+                value={form.senha}
                 onChange={(e) =>
-                  setForm((f) => ({ ...f, novaSenha: e.target.value }))
+                  setForm((f) => ({ ...f, senha: e.target.value }))
                 }
                 autoComplete="new-password"
-                autoFocus
               />
               <ul
                 style={{
@@ -125,7 +161,7 @@ export default function RedefinirSenha({ token, onDone }) {
                   <li
                     key={r.label}
                     style={{
-                      color: r.regex.test(form.novaSenha)
+                      color: r.regex.test(form.senha)
                         ? tokens.color.success
                         : tokens.color.textMuted,
                     }}
@@ -138,7 +174,7 @@ export default function RedefinirSenha({ token, onDone }) {
 
             <div style={{ marginBottom: tokens.spacing(4) }}>
               <label style={labelStyle} htmlFor="confirmar">
-                Confirmar nova senha
+                Confirmar senha
               </label>
               <input
                 id="confirmar"
@@ -159,7 +195,7 @@ export default function RedefinirSenha({ token, onDone }) {
               disabled={enviando}
               style={primaryButtonStyle(enviando)}
             >
-              {enviando ? "Salvando..." : "Redefinir senha"}
+              {enviando ? "Salvando..." : "Concluir cadastro"}
             </button>
           </form>
         )}

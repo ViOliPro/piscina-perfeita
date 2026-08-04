@@ -32,5 +32,9 @@ namespace PiscinaPerfeita.Api.Repository.Usuarios
         Task UpdatePasswordResetToken(PasswordResetToken token);
 
         Task<PasswordResetToken?> GetPasswordResetToken(string tokenHash);
+
+        Task CriarConvite(ConviteToken convite);
+        Task UpdateConvite(ConviteToken convite);
+        Task<ConviteToken?> GetConviteByHash(string tokenHash);
     }
 }

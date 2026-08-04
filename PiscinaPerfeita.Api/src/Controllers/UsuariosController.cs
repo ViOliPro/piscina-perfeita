@@ -4,6 +4,7 @@ using PiscinaPerfeita.Api.Authorization;
 using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Helpers.Authenticated;
+using PiscinaPerfeita.Api.Service.Email;
 using PiscinaPerfeita.Api.Service.Usuarios;
 
 namespace PiscinaPerfeita.Api.Controllers
@@ -85,6 +86,43 @@ namespace PiscinaPerfeita.Api.Controllers
             catch (UnauthorizedAccessException ex)
             {
                 return Unauthorized(new { message = ex.Message });
+            }
+        }
+
+        // POST: api/usuarios/convites — gera um convite por link em vez de
+        // cadastrar o usuário direto (mesma regra de permissão do Create:
+        // só um SuperAdmin pode convidar outro SuperAdmin; um Administrador
+        // só convida gente pro seu próprio Local).
+        [HttpPost("convites")]
+        [Authorize(Policy = Policies.GerenciarUsuario)]
+        public async Task<ActionResult<ConviteResponseDto>> CriarConvite(ConviteRequestDto dto)
+        {
+            try
+            {
+                var convite = await _usuariosService.CriarConvite(dto);
+                return Ok(convite);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
+            catch (EmailDeliveryException)
+            {
+                return StatusCode(
+                    502,
+                    new
+                    {
+                        message = "Convite salvo, mas não foi possível enviar o e-mail agora. Tente reenviar mais tarde.",
+                    }
+                );
             }
         }
 

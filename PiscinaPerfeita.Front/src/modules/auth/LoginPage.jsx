@@ -3,14 +3,17 @@
 //
 //  Fluxos:
 //   "login"   → formulário principal (email + senha)
-//   "forgot"  → solicitar redefinição (email)
-//   "reset"   → redefinir senha com token (a implementar no backend)
+//   "forgot"  → solicitar redefinição (email) — EsqueciSenha.jsx
+//   "reset"   → redefinir senha com token da URL — RedefinirSenha.jsx
+//   "convite" → aceitar convite (/completar-cadastro?token=...) — CompletarConvite.jsx
 // ============================================================
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext.jsx";
-import { authService } from "../../config/services.js";
 import { APP_META } from "../../config/index.js";
 import { LogoIcon } from "../../components/ui/Logo.jsx";
+import EsqueciSenha from "./EsqueciSenha.jsx";
+import RedefinirSenha from "./RedefinirSenha.jsx";
+import CompletarConvite from "./CompletarConvite.jsx";
 
 // ----------------------------------------------------------
 // Onda decorativa SVG
@@ -244,207 +247,37 @@ function LoginForm({ onForgot }) {
 }
 
 // ----------------------------------------------------------
-// Formulário Esqueci minha senha
+// Formulário Esqueci minha senha / Redefinir senha
+//
+// CORRIGIDO: removidos os ForgotForm/ResetForm embutidos (que tinham uma
+// mensagem hardcoded dizendo que o backend ainda não existia). Trocados
+// pelos componentes dedicados EsqueciSenha.jsx e RedefinirSenha.jsx, que
+// agora falam com endpoints reais.
 // ----------------------------------------------------------
-function ForgotForm({ onBack }) {
-  const [email,     setEmail]     = useState("");
-  const [loading,   setLoading]   = useState(false);
-  const [sent,      setSent]      = useState(false);
-  const [error,     setError]     = useState(null);
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    try {
-      await authService.forgotPassword({ email });
-      setSent(true);
-    } catch (err) {
-      // Mesmo que o endpoint não exista ainda, exibimos mensagem amigável
-      if (err.message?.includes("404") || err.message?.includes("Failed to fetch")) {
-        setSent(true); // UX: não revela se o e-mail existe ou não
-      } else {
-        setError(err.message);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <div style={{ textAlign: "center", marginBottom: 4 }}>
-        <div style={{ fontSize: 36, marginBottom: 8 }}>🔑</div>
-        <h2 style={{ fontSize: 20, fontWeight: 700, color: "#0A1628" }}>Redefinir senha</h2>
-        <p style={{ fontSize: 13, color: "#6B8CAE", marginTop: 4, lineHeight: 1.5 }}>
-          Informe seu e-mail e enviaremos um link para redefinição.
-        </p>
-      </div>
-
-      {error && <Alert variant="error" message={error} />}
-
-      {sent ? (
-        <>
-          <Alert
-            variant="success"
-            message="Se este e-mail estiver cadastrado, você receberá as instruções em breve. Verifique sua caixa de entrada."
-          />
-          <Alert
-            variant="info"
-            message="⚙️ Funcionalidade em implementação no servidor. Em breve estará disponível."
-          />
-        </>
-      ) : (
-        <Field
-          label="E-mail cadastrado"
-          type="email"
-          value={email}
-          onChange={setEmail}
-          placeholder="seu@email.com.br"
-          autoComplete="email"
-          required
-          disabled={loading}
-        />
-      )}
-
-      {!sent && (
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            background: loading ? "#6B8CAE" : "#2E86AB",
-            color: "#fff", border: "none", borderRadius: 8,
-            padding: "12px 0", fontSize: 14, fontWeight: 600,
-            cursor: loading ? "not-allowed" : "pointer",
-            fontFamily: "inherit", transition: "background .15s",
-          }}
-        >
-          {loading ? "Enviando…" : "Enviar link de redefinição"}
-        </button>
-      )}
-
-      <button
-        type="button"
-        onClick={onBack}
-        style={{
-          background: "none", border: "none", cursor: "pointer",
-          fontSize: 13, color: "#2E86AB", fontFamily: "inherit",
-          display: "flex", alignItems: "center", gap: 4, margin: "0 auto",
-        }}
-      >
-        ← Voltar ao login
-      </button>
-    </form>
-  );
-}
-
-// ----------------------------------------------------------
-// Formulário Redefinir senha (com token da URL)
-// Pronto para receber o token quando o backend for implementado.
-// ----------------------------------------------------------
-function ResetForm({ token, onBack }) {
-  const [password,  setPassword]  = useState("");
-  const [confirm,   setConfirm]   = useState("");
-  const [loading,   setLoading]   = useState(false);
-  const [done,      setDone]      = useState(false);
-  const [error,     setError]     = useState(null);
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    if (password !== confirm) {
-      setError("As senhas não coincidem.");
-      return;
-    }
-    if (password.length < 8) {
-      setError("A senha deve ter pelo menos 8 caracteres.");
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      await authService.resetPassword({ token, newPassword: password });
-      setDone(true);
-    } catch (err) {
-      setError(err.message ?? "Erro ao redefinir a senha.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <div style={{ textAlign: "center", marginBottom: 4 }}>
-        <div style={{ fontSize: 36, marginBottom: 8 }}>🔒</div>
-        <h2 style={{ fontSize: 20, fontWeight: 700, color: "#0A1628" }}>Nova senha</h2>
-        <p style={{ fontSize: 13, color: "#6B8CAE", marginTop: 4 }}>
-          Defina uma nova senha para sua conta.
-        </p>
-      </div>
-
-      {error && <Alert variant="error" message={error} />}
-
-      {done ? (
-        <>
-          <Alert variant="success" message="Senha redefinida com sucesso! Você já pode fazer login." />
-          <button
-            type="button" onClick={onBack}
-            style={{
-              background: "#2E86AB", color: "#fff", border: "none",
-              borderRadius: 8, padding: "12px 0", fontSize: 14,
-              fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
-            }}
-          >
-            Ir para o login
-          </button>
-        </>
-      ) : (
-        <>
-          <Field
-            label="Nova senha"
-            type="password"
-            value={password}
-            onChange={setPassword}
-            placeholder="Mínimo 8 caracteres"
-            autoComplete="new-password"
-            required
-            disabled={loading}
-          />
-          <Field
-            label="Confirmar nova senha"
-            type="password"
-            value={confirm}
-            onChange={setConfirm}
-            placeholder="Repita a senha"
-            autoComplete="new-password"
-            required
-            disabled={loading}
-          />
-          <button
-            type="submit" disabled={loading}
-            style={{
-              background: loading ? "#6B8CAE" : "#2E86AB",
-              color: "#fff", border: "none", borderRadius: 8,
-              padding: "12px 0", fontSize: 14, fontWeight: 600,
-              cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit",
-            }}
-          >
-            {loading ? "Salvando…" : "Redefinir senha"}
-          </button>
-        </>
-      )}
-    </form>
-  );
-}
+// (ResetForm removido — ver RedefinirSenha.jsx)
 
 // ----------------------------------------------------------
 // Componente principal da página de login
 // ----------------------------------------------------------
 export default function LoginPage() {
-  // Detecta token de reset na query string: ?reset_token=...
-  const params     = new URLSearchParams(window.location.search);
-  const resetToken = params.get("reset_token");
+  // Detecta token na query string: ?token=...
+  // (nome alinhado com os links que o backend gera em
+  // UsuarioService.PasswordResetToken/CriarConvite — antes esta página lia
+  // "reset_token", que nunca existia no link real)
+  //
+  // Reset de senha e convite usam o mesmo nome de parâmetro, então
+  // distinguimos pelo path — o app não usa router, mas window.location.pathname
+  // continua disponível normalmente.
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("token");
+  const isConvite = window.location.pathname === "/completar-cadastro";
+  const resetToken = !isConvite ? token : null;
+  const conviteToken = isConvite ? token : null;
 
-  const [view, setView] = useState(resetToken ? "reset" : "login");
+  const [view, setView] = useState(
+    conviteToken ? "convite" : resetToken ? "reset" : "login",
+  );
 
   return (
     <div style={{
@@ -534,8 +367,27 @@ export default function LoginPage() {
 
           {/* Formulário ativo */}
           {view === "login"  && <LoginForm onForgot={() => setView("forgot")} />}
-          {view === "forgot" && <ForgotForm onBack={() => setView("login")} />}
-          {view === "reset"  && <ResetForm token={resetToken} onBack={() => setView("login")} />}
+          {view === "forgot" && <EsqueciSenha onBack={() => setView("login")} />}
+          {view === "reset"  && (
+            <RedefinirSenha
+              token={resetToken}
+              onDone={() => {
+                // Limpa o ?token= da URL pra não cair de novo na tela de
+                // reset se a página recarregar.
+                window.history.replaceState({}, "", window.location.pathname);
+                setView("login");
+              }}
+            />
+          )}
+          {view === "convite" && (
+            <CompletarConvite
+              token={conviteToken}
+              onDone={() => {
+                window.history.replaceState({}, "", "/");
+                setView("login");
+              }}
+            />
+          )}
 
           {/* Rodapé */}
           <div style={{

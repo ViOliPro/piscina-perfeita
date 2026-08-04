@@ -7,4 +7,6 @@ public interface IEmailService
         string destinatarioNome,
         string linkRedefinicao
     );
+
+    Task EnviarConviteAsync(string destinatarioEmail, string linkConvite);
 }
