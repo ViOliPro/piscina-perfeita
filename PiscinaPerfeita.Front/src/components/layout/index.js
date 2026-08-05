@@ -74,4 +74,11 @@ export const NAV = [
     section: "operacional",
     permissions: PERMISSIONS.INVENTARIOS,
   },
+  {
+    id: "hidrometro",
+    label: "Hidrômetro",
+    icon: "🚰",
+    section: "operacional",
+    permissions: PERMISSIONS.HIDROMETRO,
+  },
 ];

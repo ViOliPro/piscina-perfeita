@@ -18,6 +18,7 @@ import Locais from "./modules/locais/Locais.jsx";
 import Depositos from "./modules/depositos/Depositos.jsx";
 import Aplicacoes from "./modules/aplicacoes/Aplicacoes.jsx";
 import ContagemInventario from "./modules/inventario/ContagemInventario.jsx";
+import Hidrometro from "./modules/hidrometro/Hidrometro.jsx";
 import { PERFIS, ROLES } from "./config/index.js";
 import { useState } from "react";
 
@@ -34,6 +35,7 @@ const PAGES = {
   aplicacoes: Aplicacoes,
   inventario: ContagemInventario,
   meuPerfil: MeuPerfil,
+  hidrometro: Hidrometro,
 };
 
 // ----------------------------------------------------------

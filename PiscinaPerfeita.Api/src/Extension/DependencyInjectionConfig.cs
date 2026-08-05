@@ -1,27 +1,30 @@
 ﻿using PiscinaPerfeita.Api.Helpers.Authenticated;
 using PiscinaPerfeita.Api.Repository.Analises;
 using PiscinaPerfeita.Api.Repository.AplicacoesProduto;
+using PiscinaPerfeita.Api.Repository.Depositos;
 using PiscinaPerfeita.Api.Repository.Estoques;
+using PiscinaPerfeita.Api.Repository.Hidrometros;
 using PiscinaPerfeita.Api.Repository.Locais;
 using PiscinaPerfeita.Api.Repository.MovimentacoesEstoque;
 using PiscinaPerfeita.Api.Repository.Piscinas;
 using PiscinaPerfeita.Api.Repository.Produtos;
 using PiscinaPerfeita.Api.Repository.Usuarios;
 using PiscinaPerfeita.Api.Repository.UsuariosLocal;
-using PiscinaPerfeita.Api.Repository.Depositos;
-
+// <summary>
+// Classe responsável por configurar a injeção de dependências para os serviços e repositórios
 using PiscinaPerfeita.Api.Service.Account;
 using PiscinaPerfeita.Api.Service.Analises;
 using PiscinaPerfeita.Api.Service.AplicacoesProduto;
+using PiscinaPerfeita.Api.Service.Depositos;
+using PiscinaPerfeita.Api.Service.Email;
 using PiscinaPerfeita.Api.Service.Estoques;
+using PiscinaPerfeita.Api.Service.Hidrometros;
 using PiscinaPerfeita.Api.Service.Locais;
 using PiscinaPerfeita.Api.Service.MovimentacoesEstoque;
 using PiscinaPerfeita.Api.Service.Piscinas;
 using PiscinaPerfeita.Api.Service.Produtos;
 using PiscinaPerfeita.Api.Service.Usuarios;
 using PiscinaPerfeita.Api.Service.UsuariosLocal;
-using PiscinaPerfeita.Api.Service.Depositos;
-using PiscinaPerfeita.Api.Service.Email;
 
 namespace PiscinaPerfeita.Api.Extension
 {
@@ -41,6 +44,7 @@ namespace PiscinaPerfeita.Api.Extension
             services.AddScoped<ILocalService, LocalService>();
             services.AddScoped<IDepositoService, DepositoService>();
             services.AddScoped<IAplicacaoProdutoService, AplicacaoProdutoService>();
+            services.AddScoped<IHidrometroService, HidrometroService>();
             // ResendEmailService pede um HttpClient no construtor. Sem essa
             // linha, o container de DI não sabe como resolver HttpClient, e
             // isso quebra a resolução de IEmailService — e, por tabela,
@@ -62,6 +66,7 @@ namespace PiscinaPerfeita.Api.Extension
             services.AddScoped<ILocalRepository, LocalRepository>();
             services.AddScoped<IDepositoRepository, DepositoRepository>();
             services.AddScoped<IAplicacaoProdutoRepository, AplicacaoProdutoRepository>();
+            services.AddScoped<IHidrometroRepository, HidrometroRepository>();
 
             // Qualquer outra injeção (Validadores, Helpers, etc) entra aqui embaixo
 
