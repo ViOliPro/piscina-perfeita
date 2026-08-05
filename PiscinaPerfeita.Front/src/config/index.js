@@ -221,6 +221,6 @@ export const THEME = {
 // ----------------------------------------------------------
 export const APP_META = {
   name: import.meta.env.VITE_APP_META_NAME ?? "Piscina Perfeita",
-  version: import.meta.env.VITE_APP_META_VERSION ?? "1.4.3",
-  contact: "compras@piscinaperfeita.com.br",
+  version: import.meta.env.VITE_APP_META_VERSION ?? "1.4.4",
+  contact: "contato@sindprobh.com.br",
 };
