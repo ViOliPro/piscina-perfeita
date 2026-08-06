@@ -1,0 +1,9 @@
+.mainGrid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.mainGridMobile {
+  grid-template-columns: 1fr;
+}
