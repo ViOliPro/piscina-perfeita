@@ -13,15 +13,18 @@ import {
   formatarMetrosCubicos,
   obterOpcoesMes,
 } from "../helpers/hidrometroUtils.js";
+import styles from "./components.module.css";
 
-export default function HidrometroHistorico({ lancamentos, onDelete }) {
+export function HidrometroHistorico({ lancamentos, onDelete }) {
   const [filtroMes, setFiltroMes] = useState("");
 
   const opcoesMes = useMemo(() => obterOpcoesMes(lancamentos), [lancamentos]);
 
   const exibidos = useMemo(() => {
     const filtrados = filtroMes
-      ? lancamentos.filter((item) => item.dataLeitura?.slice(0, 7) === filtroMes)
+      ? lancamentos.filter(
+          (item) => item.dataLeitura?.slice(0, 7) === filtroMes,
+        )
       : lancamentos;
 
     return [...filtrados].sort(
@@ -78,15 +81,17 @@ export default function HidrometroHistorico({ lancamentos, onDelete }) {
       </Toolbar>
 
       <Card title={`Histórico de leituras (${exibidos.length})`} noPadding>
-        <DataTable
-          columns={columns}
-          data={exibidos}
-          emptyMessage={
-            filtroMes
-              ? `Nenhuma leitura encontrada em ${formatarMes(filtroMes)}.`
-              : "Nenhuma leitura de hidrômetro registrada."
-          }
-        />
+        <div className={styles.historicoTableWrap}>
+          <DataTable
+            columns={columns}
+            data={exibidos}
+            emptyMessage={
+              filtroMes
+                ? `Nenhuma leitura encontrada em ${formatarMes(filtroMes)}.`
+                : "Nenhuma leitura de hidrômetro registrada."
+            }
+          />
+        </div>
       </Card>
     </section>
   );

@@ -1,0 +1,49 @@
+/* ============================================================
+   Estilos de TODOS os subcomponentes do módulo Hidrômetro.
+   Prefixo por componente para evitar colisão de classes.
+   ============================================================ */
+
+/* ---------- HidrometroDashboard ---------- */
+.dashboardSection {
+  margin-bottom: 16px;
+}
+
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+/* ---------- HidrometroForm ---------- */
+.formTextarea {
+  resize: vertical;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* Empilha os botões em largura total em telas muito estreitas,
+   melhorando a área de toque no mobile. */
+@media (max-width: 480px) {
+  .formActions {
+    flex-direction: column-reverse;
+  }
+
+  .formActions>button {
+    width: 100%;
+  }
+}
+
+/* ---------- HidrometroHistorico ---------- */
+.historicoTableWrap {
+  /* Rede de segurança: garante rolagem horizontal caso o DataTable
+     compartilhado não trate isso internamente para 5 colunas. */
+  overflow-x: auto;
+}

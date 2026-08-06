@@ -1,0 +1,38 @@
+.appShell {
+  display: flex;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.sidebarDesktop {
+  width: 200px;
+  background: #0a1628;
+  flex-shrink: 0;
+}
+
+.mainColumn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.mainContent {
+  flex: 1;
+  overflow-y: auto;
+  background: #e8f4fd;
+}
+
+.mainContentMobile {
+  /* espaço para a bottom nav em mobile */
+  padding-bottom: 68px;
+}
+
+.contentInner {
+  padding: 24px;
+}
+
+.contentInnerMobile {
+  padding: 14px;
+}

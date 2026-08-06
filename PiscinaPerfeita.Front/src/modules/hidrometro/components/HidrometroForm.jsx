@@ -7,13 +7,9 @@ import {
 } from "../../../components/ui/index.jsx";
 import { inputStyle } from "../../../components/ui/styles.js";
 import { getLocalDateTimeInput } from "../../../utils/getLocalDateTimeInput.js";
+import styles from "./components.module.css";
 
-export default function HidrometroForm({
-  ultimaLeitura,
-  onSubmit,
-  onCancel,
-  loading,
-}) {
+export function HidrometroForm({ ultimaLeitura, onSubmit, onCancel, loading }) {
   const [form, setForm] = useState({
     dataLeitura: getLocalDateTimeInput(),
     leituraAtual: "",
@@ -81,7 +77,11 @@ export default function HidrometroForm({
             step="0.01"
             min="0"
             required
-            placeholder={ultimaLeitura != null ? `Ex.: ${ultimaLeitura + 1}` : "Ex.: 812,40"}
+            placeholder={
+              ultimaLeitura != null
+                ? `Ex.: ${ultimaLeitura + 1}`
+                : "Ex.: 812,40"
+            }
             style={inputStyle}
             value={form.leituraAtual}
             onChange={setCampo("leituraAtual")}
@@ -93,15 +93,21 @@ export default function HidrometroForm({
             rows="3"
             maxLength="500"
             placeholder="Ex.: lavagem da garagem, teste de vazamento..."
-            style={{ ...inputStyle, resize: "vertical" }}
+            style={inputStyle}
+            className={styles.formTextarea}
             value={form.observacoes}
             onChange={setCampo("observacoes")}
           />
         </FormField>
       </FormGrid>
 
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
-        <Button variant="ghost" type="button" onClick={onCancel} disabled={loading}>
+      <div className="pp-stack-actions">
+        <Button
+          variant="ghost"
+          type="button"
+          onClick={onCancel}
+          disabled={loading}
+        >
           Cancelar
         </Button>
         <Button variant="primary" type="submit" disabled={loading}>

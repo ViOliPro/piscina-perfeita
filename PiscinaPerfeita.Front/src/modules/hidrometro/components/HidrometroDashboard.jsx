@@ -4,25 +4,24 @@ import {
   formatarMetrosCubicos,
   formatarNumero,
 } from "../helpers/hidrometroUtils.js";
+import styles from "./components.module.css";
 
-export default function HidrometroDashboard({ dashboard }) {
+export function HidrometroDashboard({ dashboard }) {
   if (!dashboard) {
     return (
       <Card title="Indicadores do hidrômetro">
-        Os indicadores estarão disponíveis quando a API de dashboard for habilitada.
+        Os indicadores estarão disponíveis quando a API de dashboard for
+        habilitada.
       </Card>
     );
   }
 
   return (
-    <section aria-label="Indicadores do hidrômetro" style={{ marginBottom: 16 }}>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-          gap: 12,
-        }}
-      >
+    <section
+      aria-label="Indicadores do hidrômetro"
+      className={styles.dashboardSection}
+    >
+      <div className={styles.dashboardGrid}>
         <KpiCard
           label="Última leitura"
           value={formatarMetrosCubicos(dashboard.ultimaLeitura)}
@@ -31,7 +30,9 @@ export default function HidrometroDashboard({ dashboard }) {
         <KpiCard
           label="Último consumo"
           value={formatarMetrosCubicos(dashboard.ultimoConsumo)}
-          subLabel={dashboard.periodoUltimoConsumo ?? "Desde a leitura anterior"}
+          subLabel={
+            dashboard.periodoUltimoConsumo ?? "Desde a leitura anterior"
+          }
         />
         <KpiCard
           label="Consumo médio"
@@ -46,7 +47,11 @@ export default function HidrometroDashboard({ dashboard }) {
         <KpiCard
           label="Dias sem leitura"
           value={formatarNumero(dashboard.diasSemLeitura, 0)}
-          subLabel={dashboard.diasSemLeitura === 0 ? "Leitura atualizada" : "Desde o último registro"}
+          subLabel={
+            dashboard.diasSemLeitura === 0
+              ? "Leitura atualizada"
+              : "Desde o último registro"
+          }
           subVariant={dashboard.diasSemLeitura > 1 ? "warn" : "ok"}
         />
       </div>

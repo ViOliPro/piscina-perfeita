@@ -33,11 +33,15 @@ export function formatarMes(anoMes) {
 }
 
 export function obterOpcoesMes(lancamentos) {
-  const meses = [...new Set(
-    (lancamentos ?? [])
-      .map((item) => item.dataLeitura?.slice(0, 7))
-      .filter(Boolean),
-  )].sort().reverse();
+  const meses = [
+    ...new Set(
+      (lancamentos ?? [])
+        .map((item) => item.dataLeitura?.slice(0, 7))
+        .filter(Boolean),
+    ),
+  ]
+    .sort()
+    .reverse();
 
   return meses.map((value) => ({ value, label: formatarMes(value) }));
 }
