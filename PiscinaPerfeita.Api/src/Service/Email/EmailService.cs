@@ -25,11 +25,11 @@ public class ResendEmailService : IEmailService
         _http.BaseAddress = new Uri("https://api.resend.com/");
         _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            config["Resend:ApiKey"]
+            config["RESEND__APIKEY"]
         );
         _remetente =
-            config["Resend:Remetente"]
-            ?? throw new InvalidOperationException("Configuração 'Resend:Remetente' ausente.");
+            config["RESEND:REMETENTE"]
+            ?? throw new InvalidOperationException("Configuração 'RESEND:REMETENTE' ausente.");
     }
 
     public async Task EnviarRedefinicaoSenhaAsync(

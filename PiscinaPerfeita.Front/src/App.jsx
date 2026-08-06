@@ -3,7 +3,7 @@
 //  Orquestra autenticação: exibe LoginPage ou AppLayout.
 // ============================================================
 import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
-import { AppLayout } from "./Layout/AppLayout/index.js";
+import { AppLayout } from "./components/layout/AppLayout.jsx";
 import LoginPage from "./modules/auth/LoginPage.jsx";
 import MeuPerfil from "./modules/auth/MeuPerfil.jsx";
 import PrimeiroLocal from "./modules/onboarding/PrimeiroLocal.jsx";
