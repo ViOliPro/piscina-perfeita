@@ -261,12 +261,12 @@ function PedidoOrcamento({ estoques, depositos }) {
 
   function copiar() {
     const linhas = [
-      "#\tProduto\tUnidade\tQtd. solicitada\tValor unit. (R$)\tValor total (R$)\tPrazo entrega",
+      "#\tProduto\tUnidade\tQtd. solicitada",
     ];
     itens.forEach((item, i) => {
       const qtdSugerida = calcularQtdSugerida(item);
       linhas.push(
-        `${String(i + 1).padStart(2, "0")}\t${item.produto?.nome}\t${item.produto?.unidadeMedida}\t${qtdSugerida}\t___\t___\t___`,
+        `${String(i + 1).padStart(2, "0")}\t${item.produto?.nome}\t${item.produto?.unidadeMedida}\t${qtdSugerida}`,
       );
     });
     navigator.clipboard
