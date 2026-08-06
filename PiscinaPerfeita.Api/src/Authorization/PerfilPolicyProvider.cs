@@ -33,6 +33,32 @@ namespace PiscinaPerfeita.Api.Authorization
 
             //POLICY USUARIOLOCAL
             [Policies.GerenciarUsuarioLocal] = [Perfil.Administrador],
+
+            // POLICY MEU USUARIO (para o usuário atualizar seu próprio perfil)
+            [Policies.VisualizarMeuPerfil] =
+            [
+                Perfil.Administrador,
+                Perfil.Operador,
+                Perfil.Visualizador,
+            ],
+            [Policies.AtualizarMeuPerfil] =
+            [
+                Perfil.Administrador,
+                Perfil.Operador,
+                Perfil.Visualizador,
+            ],
+            [Policies.EditarMeuPerfil] =
+            [
+                Perfil.Administrador,
+                Perfil.Operador,
+                Perfil.Visualizador,
+            ],
+            [Policies.DeleteMeuPerfil] =
+            [
+                Perfil.Administrador,
+                Perfil.Operador,
+                Perfil.Visualizador,
+            ],
         };
 
         public Task<AuthorizationPolicy?> GetPolicyAsync(string policyName)

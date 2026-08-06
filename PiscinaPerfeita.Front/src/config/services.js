@@ -37,6 +37,10 @@ import {
   fromApiUsuarioLocal,
   fromApiUsuarioLocalList,
   toApiUsuarioLocal,
+  fromApiDashboardHidrometro,
+  fromApiHidrometro,
+  fromApiHidrometroList,
+  toApiHidrometro,
 } from "./mappers.js";
 
 // ----------------------------------------------------------
@@ -87,6 +91,7 @@ export const authService = {
 
   forgotPassword: (dto) => post(API_ENDPOINTS.forgotPassword, dto),
   resetPassword: (dto) => post(API_ENDPOINTS.resetPassword, dto),
+  completarConvite: (dto) => post(API_ENDPOINTS.completarConvite, dto),
 
   // Troca o Local (condomínio/unidade) ativo do usuário logado e emite um
   // novo token JWT já com o novo local_id no claim. O backend identifica o
@@ -147,6 +152,21 @@ export const usuarioService = {
   atualizar: (id, dto) =>
     put(API_ENDPOINTS.usuarioById(id), toApiUsuario(dto)).then(fromApiUsuario),
   excluir: (id) => del(API_ENDPOINTS.usuarioById(id)),
+
+  // "Meu Perfil" — dados do próprio usuário logado.
+  meuPerfil: () => get(API_ENDPOINTS.meuPerfil).then(fromApiUsuario),
+  atualizarMeuPerfil: (dto) =>
+    put(API_ENDPOINTS.meuPerfil, dto).then(fromApiUsuario),
+
+  // NOTA: ainda não existe endpoint PUT /usuarios/me/senha no backend —
+  // esta chamada vai falhar com 404 até esse endpoint ser implementado
+  // (item "Meu perfil" do roadmap, v1.4.4).
+  alterarSenha: (dto) => put(API_ENDPOINTS.authPasswordSenhaAtualENova, dto),
+
+  // Convite por link — em vez de cadastrar o usuário direto, o backend
+  // gera um token e manda um e-mail; o convidado preenche nome+senha em
+  // /completar-cadastro?token=... (ver CompletarConvite.jsx).
+  criarConvite: (dto) => post(API_ENDPOINTS.criarConvite, dto),
 };
 
 // ----------------------------------------------------------
@@ -215,6 +235,26 @@ export const estoqueService = {
   atualizar: (id, dto) =>
     put(API_ENDPOINTS.estoqueById(id), toApiEstoque(dto)).then(fromApiEstoque),
   excluir: (id) => del(API_ENDPOINTS.estoqueById(id)),
+};
+
+// ----------------------------------------------------------
+// Hidrometros
+// ----------------------------------------------------------
+
+export const hidrometroService = {
+  listar: () => get(API_ENDPOINTS.hidrometros).then(fromApiHidrometroList),
+  buscar: (id) => get(API_ENDPOINTS.hidrometroById(id)).then(fromApiHidrometro),
+  dashboard: () =>
+    get(API_ENDPOINTS.hidrometroDashboard).then(fromApiDashboardHidrometro),
+  criar: (dto) =>
+    post(API_ENDPOINTS.hidrometros, toApiHidrometro(dto)).then(
+      fromApiHidrometro,
+    ),
+  atualizar: (id, dto) =>
+    put(API_ENDPOINTS.hidrometroById(id), toApiHidrometro(dto)).then(
+      fromApiHidrometro,
+    ),
+  excluir: (id) => del(API_ENDPOINTS.hidrometroById(id)),
 };
 
 // ----------------------------------------------------------

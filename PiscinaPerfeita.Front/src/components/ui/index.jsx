@@ -615,6 +615,7 @@ export function KpiCard({ label, value, subLabel, subVariant = "muted" }) {
         background: "var(--surface-1,#F0F7FF)",
         borderRadius: 12,
         padding: "14px 16px",
+        minWidth: 0, // permite encolher dentro do grid pai
       }}
     >
       <div
@@ -625,16 +626,37 @@ export function KpiCard({ label, value, subLabel, subVariant = "muted" }) {
           textTransform: "uppercase",
           letterSpacing: ".5px",
           marginBottom: 4,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
         }}
       >
         {label}
       </div>
-      <div style={{ fontSize: 26, fontWeight: 700, color: "#0A1628" }}>
+      <div
+        style={{
+          fontSize: "clamp(18px, 2.4vw, 26px)", // escala com o espaço em vez de quebrar
+          fontWeight: 700,
+          color: "#0A1628",
+          fontVariantNumeric: "tabular-nums",
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+        title={String(value)} // valor completo acessível via tooltip se truncar
+      >
         {value}
       </div>
       {subLabel && (
         <div
-          style={{ fontSize: 11, marginTop: 3, color: subColors[subVariant] }}
+          style={{
+            fontSize: 11,
+            marginTop: 3,
+            color: subColors[subVariant],
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
         >
           {subLabel}
         </div>

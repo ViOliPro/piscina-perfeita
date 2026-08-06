@@ -76,6 +76,12 @@ export const PERMISSIONS = {
     EDIT: "inventarios.edit",
     DELETE: "inventarios.delete",
   },
+  HIDROMETRO: {
+    VIEW: "hidrometro.view",
+    CREATE: "hidrometro.create",
+    EDIT: "hidrometro.edit",
+    DELETE: "hidrometro.delete",
+  },
   // Permissão transversal (não é um módulo/tela) usada em QUALQUER
   // formulário que tenha um campo de seleção de usuário (ex.: "Responsável"
   // em Estoque, Movimentações). Só Administrador e SuperAdmin enxergam
@@ -109,6 +115,9 @@ export const USER_PERMISSIONS = {
     PERMISSIONS.MOVIMENTACOES.CREATE,
     PERMISSIONS.INVENTARIOS.VIEW,
     PERMISSIONS.INVENTARIOS.CREATE,
+    PERMISSIONS.HIDROMETRO.VIEW,
+    PERMISSIONS.HIDROMETRO.CREATE,
+    PERMISSIONS.HIDROMETRO.EDIT,
   ],
   [PERFIL_LABELS[PERFIS.VISUALIZADOR]]: [
     PERMISSIONS.PISCINAS.VIEW,
@@ -119,6 +128,7 @@ export const USER_PERMISSIONS = {
     PERMISSIONS.ESTOQUES.VIEW,
     PERMISSIONS.MOVIMENTACOES.VIEW,
     PERMISSIONS.INVENTARIOS.VIEW,
+    PERMISSIONS.HIDROMETRO.VIEW,
   ],
 };
 

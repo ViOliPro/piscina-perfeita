@@ -34,5 +34,11 @@
         // policy fosse resolvida — ou seja, a API quebrava (500) na primeira
         // requisição autenticada que passasse por [Authorize(Policy = ...)].
         public const string GerenciarUsuarioLocal = "Perfil:GerenciarUsuarioLocal";
+
+        // POLICY MEU USUARIO (para o usuário atualizar seu próprio perfil)
+        public const string VisualizarMeuPerfil = "Perfil:VisualizarMeuPerfil";
+        public const string AtualizarMeuPerfil = "Perfil:AtualizarMeuPerfil";
+        public const string EditarMeuPerfil = "Perfil:EditarMeuPerfil";
+        public const string DeleteMeuPerfil = "Perfil:DeletarMeuPerfil";
     }
 }

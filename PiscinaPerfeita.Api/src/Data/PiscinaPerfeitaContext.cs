@@ -39,6 +39,9 @@ public partial class PiscinaPerfeitaContext : DbContext
     public virtual DbSet<UsuarioLocal> UsuariosLocal { get; set; }
     public virtual DbSet<Deposito> Depositos { get; set; }
     public virtual DbSet<AplicacaoProduto> AplicacoesProduto { get; set; }
+    public virtual DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+    public virtual DbSet<ConviteToken> ConviteTokens { get; set; }
+    public virtual DbSet<Hidrometro> Hidrometros { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -211,6 +214,58 @@ public partial class PiscinaPerfeitaContext : DbContext
                 .WithMany()
                 .HasForeignKey(a => a.AnaliseId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<PasswordResetToken>(entity =>
+        {
+            entity.ToTable("PasswordResetTokens", "piscina-perfeita");
+            entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.TokenHash).IsRequired();
+            entity.Property(e => e.ExpiraEm).IsRequired();
+            entity.Property(e => e.CriadoEm).HasDefaultValueSql("now() at time zone 'utc'");
+            entity.Property(e => e.UsadoEm).IsRequired(false);
+
+            // Relacionamento com Usuario
+            entity.HasIndex(t => t.TokenHash).IsUnique();
+            entity
+                .HasOne(t => t.Usuario)
+                .WithMany()
+                .HasForeignKey(t => t.UsuarioId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ConviteToken>(entity =>
+        {
+            entity.ToTable("ConviteTokens", "piscina-perfeita");
+            entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.Email).IsRequired();
+            entity.Property(e => e.TokenHash).IsRequired();
+            entity.Property(e => e.ExpiraEm).IsRequired();
+            entity.Property(e => e.CriadoEm).HasDefaultValueSql("now() at time zone 'utc'");
+            entity.Property(e => e.UsadoEm).IsRequired(false);
+
+            // Sem FK: o convidado ainda não é um Usuario quando o convite é
+            // criado, e CriadoPorId é só auditoria (não referenciado em
+            // nenhuma query hoje).
+            entity.HasIndex(t => t.TokenHash).IsUnique();
+        });
+
+        modelBuilder.Entity<Hidrometro>(entity =>
+        {
+            entity.ToTable("Hidrometro", "piscina-perfeita");
+            entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()");
+            entity
+                .Property(e => e.LeituraAtual)
+                .HasColumnName("leituraatual")
+                .HasPrecision(18, 2)
+                .IsRequired();
+            entity
+                .Property(e => e.DataLeitura)
+                .HasColumnName("dataleitura")
+                .HasColumnType("timestamp with time zone")
+                .IsRequired();
+            entity.Property(e => e.Observacoes).HasColumnName("observacoes").HasMaxLength(500);
+            entity.HasIndex(e => new { e.LocalId, e.DataLeitura }).IsUnique();
         });
 
         OnModelCreatingPartial(modelBuilder);

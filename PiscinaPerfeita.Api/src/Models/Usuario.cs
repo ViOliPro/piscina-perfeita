@@ -26,6 +26,9 @@ namespace PiscinaPerfeita.Api.Models
 
         public Role Role { get; set; }
 
+        // Campo para invalidar tokens antigos
+        public string SecurityStamp { get; set; } = Guid.NewGuid().ToString();
+
         [Column("CreatedAt")]
         public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
         public virtual ICollection<Piscina> Piscinas { get; set; } = [];

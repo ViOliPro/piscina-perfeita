@@ -165,6 +165,68 @@ namespace PiscinaPerfeita.Api.Migrations
                     b.ToTable("AplicacoesProduto", "piscina-perfeita");
                 });
 
+            modelBuilder.Entity("PiscinaPerfeita.Api.Models.ConviteToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criadoem")
+                        .HasDefaultValueSql("now() at time zone 'utc'");
+
+                    b.Property<Guid>("CriadoPorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("criadoporid");
+
+                    b.Property<bool>("CriadoPorSuperAdmin")
+                        .HasColumnType("boolean")
+                        .HasColumnName("criadoporsuperadmin");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("email");
+
+                    b.Property<DateTime>("ExpiraEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expiraem");
+
+                    b.Property<Guid?>("LocalId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("localid");
+
+                    b.Property<int>("Perfil")
+                        .HasColumnType("integer")
+                        .HasColumnName("perfil");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer")
+                        .HasColumnName("role");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("tokenhash");
+
+                    b.Property<DateTime?>("UsadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("usadoem");
+
+                    b.HasKey("Id")
+                        .HasName("pk_convitetokens");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("ix_convitetokens_tokenhash");
+
+                    b.ToTable("ConviteTokens", "piscina-perfeita");
+                });
+
             modelBuilder.Entity("PiscinaPerfeita.Api.Models.Deposito", b =>
                 {
                     b.Property<Guid>("Id")
@@ -254,6 +316,42 @@ namespace PiscinaPerfeita.Api.Migrations
                         .HasDatabaseName("ix_estoques_usuarioid");
 
                     b.ToTable("Estoques", "piscina-perfeita");
+                });
+
+            modelBuilder.Entity("PiscinaPerfeita.Api.Models.Hidrometro", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTimeOffset>("DataLeitura")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("dataleitura");
+
+                    b.Property<decimal>("LeituraAtual")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("leituraatual");
+
+                    b.Property<Guid>("LocalId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("localid");
+
+                    b.Property<string>("Observacoes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("observacoes");
+
+                    b.HasKey("Id")
+                        .HasName("pk_hidrometro");
+
+                    b.HasIndex("LocalId", "DataLeitura")
+                        .IsUnique()
+                        .HasDatabaseName("ix_hidrometro_localid_dataleitura");
+
+                    b.ToTable("Hidrometro", "piscina-perfeita");
                 });
 
             modelBuilder.Entity("PiscinaPerfeita.Api.Models.Local", b =>
@@ -374,6 +472,50 @@ namespace PiscinaPerfeita.Api.Migrations
                         .HasDatabaseName("ix_movimentacoes_usuarioid");
 
                     b.ToTable("Movimentacoes", "piscina-perfeita");
+                });
+
+            modelBuilder.Entity("PiscinaPerfeita.Api.Models.PasswordResetToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criadoem")
+                        .HasDefaultValueSql("now() at time zone 'utc'");
+
+                    b.Property<DateTime>("ExpiraEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expiraem");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("tokenhash");
+
+                    b.Property<DateTime?>("UsadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("usadoem");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("usuarioid");
+
+                    b.HasKey("Id")
+                        .HasName("pk_passwordresettokens");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("ix_passwordresettokens_tokenhash");
+
+                    b.HasIndex("UsuarioId")
+                        .HasDatabaseName("ix_passwordresettokens_usuarioid");
+
+                    b.ToTable("PasswordResetTokens", "piscina-perfeita");
                 });
 
             modelBuilder.Entity("PiscinaPerfeita.Api.Models.Piscina", b =>
@@ -502,6 +644,11 @@ namespace PiscinaPerfeita.Api.Migrations
                     b.Property<int>("Role")
                         .HasColumnType("integer")
                         .HasColumnName("role");
+
+                    b.Property<string>("SecurityStamp")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("securitystamp");
 
                     b.Property<string>("SenhaHash")
                         .HasMaxLength(255)
@@ -714,6 +861,18 @@ namespace PiscinaPerfeita.Api.Migrations
                     b.Navigation("Usuario");
                 });
 
+            modelBuilder.Entity("PiscinaPerfeita.Api.Models.Hidrometro", b =>
+                {
+                    b.HasOne("PiscinaPerfeita.Api.Models.Local", "Local")
+                        .WithMany()
+                        .HasForeignKey("LocalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_hidrometro_locais_localid");
+
+                    b.Navigation("Local");
+                });
+
             modelBuilder.Entity("PiscinaPerfeita.Api.Models.MovimentacaoEstoque", b =>
                 {
                     b.HasOne("PiscinaPerfeita.Api.Models.Deposito", "Deposito")
@@ -758,6 +917,18 @@ namespace PiscinaPerfeita.Api.Migrations
                     b.Navigation("Produto");
 
                     b.Navigation("Usuarios");
+                });
+
+            modelBuilder.Entity("PiscinaPerfeita.Api.Models.PasswordResetToken", b =>
+                {
+                    b.HasOne("PiscinaPerfeita.Api.Models.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_passwordresettokens_usuarios_usuarioid");
+
+                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("PiscinaPerfeita.Api.Models.Piscina", b =>

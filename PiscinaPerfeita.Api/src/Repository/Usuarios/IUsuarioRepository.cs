@@ -7,7 +7,7 @@ namespace PiscinaPerfeita.Api.Repository.Usuarios
     {
         Task<List<UsuarioResponseDto>> Show();
 
-        Task<UsuarioResponseDto?> GetById(Guid id);
+        Task<UsuarioResponseDto?> GetByIdDto(Guid id);
 
         //Se o usuario logado for um usuario
         //A lista de usuario lista apenas Usuarios daquele Local
@@ -27,5 +27,14 @@ namespace PiscinaPerfeita.Api.Repository.Usuarios
         Task<Usuario?> GetNameById(Guid id);
 
         Task<Usuario?> GetPasswordById(Guid id);
+        Task<Usuario?> GetById(Guid id);
+        Task PasswordResetToken(PasswordResetToken token);
+        Task UpdatePasswordResetToken(PasswordResetToken token);
+
+        Task<PasswordResetToken?> GetPasswordResetToken(string tokenHash);
+
+        Task CriarConvite(ConviteToken convite);
+        Task UpdateConvite(ConviteToken convite);
+        Task<ConviteToken?> GetConviteByHash(string tokenHash);
     }
 }

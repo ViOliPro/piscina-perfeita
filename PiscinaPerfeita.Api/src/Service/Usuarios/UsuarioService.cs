@@ -1,10 +1,13 @@
-﻿using PiscinaPerfeita.Api.Dtos.Request;
+﻿using System.Security.Cryptography;
+using PiscinaPerfeita.Api.Data;
+using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Helpers.Authenticated;
 using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Repository.Locais;
 using PiscinaPerfeita.Api.Repository.Usuarios;
 using PiscinaPerfeita.Api.Repository.UsuariosLocal;
+using PiscinaPerfeita.Api.Service.Email;
 
 namespace PiscinaPerfeita.Api.Service.Usuarios
 {
@@ -14,12 +17,16 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
         private readonly IUsuarioLocalRepository _usuariosLocalRepository;
         private readonly ILocalRepository _locaisRepository;
         private readonly IAuthenticatedUser _user;
+        private readonly IConfiguration _config;
+        private readonly IEmailService _email;
 
         public UsuarioService(
             IUsuarioRepository usuariosRepository,
             IAuthenticatedUser user,
             IUsuarioLocalRepository usuariosLocalRepository,
-            ILocalRepository locaisRepository
+            ILocalRepository locaisRepository,
+            IConfiguration config,
+            IEmailService email
         )
         {
             _usuariosRepository =
@@ -30,6 +37,8 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             _locaisRepository =
                 locaisRepository ?? throw new ArgumentNullException(nameof(locaisRepository));
             _user = user ?? throw new ArgumentNullException(nameof(user));
+            _config = config ?? throw new ArgumentNullException(nameof(config));
+            _email = email ?? throw new ArgumentNullException(nameof(email));
         }
 
         public async Task<List<UsuarioResponseDto>> Show()
@@ -52,7 +61,7 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
 
         public async Task<UsuarioResponseDto> GetById(Guid id)
         {
-            var usuarioDb = await _usuariosRepository.GetById(id);
+            var usuarioDb = await _usuariosRepository.GetByIdDto(id);
             if (usuarioDb == null)
             {
                 throw new KeyNotFoundException($"Usuario com id {id} não encontrado");
@@ -66,6 +75,19 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             // do usuário fora do escopo do tenant atual. Leitura não altera
             // privilégio, então não bloqueia por causa do Administrador Pai.
             await GarantirUsuarioNoTenantAtual(id, protegerAdministradorPai: false);
+
+            return usuarioDb;
+        }
+
+        public async Task<Usuario?> GetUsuarioByEmail(string email)
+        {
+            var usuarioDb = await _usuariosRepository.GetByEmail(email);
+            if (usuarioDb == null)
+            {
+                return null;
+            }
+
+            //await GarantirUsuarioNoTenantAtual(usuarioDb.Id, protegerAdministradorPai: false);
 
             return usuarioDb;
         }
@@ -107,7 +129,7 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 throw new ArgumentException($"O id informado não pode ser vazio {nameof(id)} .");
             }
 
-            var usuario = await _usuariosRepository.GetById(id);
+            var usuario = await _usuariosRepository.GetByIdDto(id);
             if (usuario == null)
             {
                 throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
@@ -143,6 +165,14 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                     ? BCrypt.Net.BCrypt.HashPassword(dto.SenhaHash)
                     : getPassword?.SenhaHash,
                 Role = dto.Role ?? usuario.Role,
+                // Mantém o SecurityStamp atual (o repositório agora persiste
+                // este campo — sem isso, toda edição feita por um Admin
+                // derrubaria a sessão do usuário editado, já que `new Usuario`
+                // sem valor explícito cai no default do model, um Guid novo).
+                // `usuario` é um UsuarioResponseDto (não tem SecurityStamp);
+                // usamos `getPassword`, que é a entidade completa já buscada
+                // logo acima.
+                SecurityStamp = getPassword?.SecurityStamp ?? Guid.NewGuid().ToString(),
             };
 
             await _usuariosRepository.Update(id, usuarioDb);
@@ -264,7 +294,8 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                     // quando isso acontece já no cadastro (LocalId + Perfil
                     // Administrador informados juntos), esse vínculo nasce
                     // como o Administrador Pai daquele Local.
-                    EhAdministradorPai = dto.LocalId.HasValue && perfilAtribuido == Perfil.Administrador,
+                    EhAdministradorPai =
+                        dto.LocalId.HasValue && perfilAtribuido == Perfil.Administrador,
                 };
 
                 await _usuariosLocalRepository.Create(novoUsuarioLocal);
@@ -301,6 +332,321 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             var local = await _locaisRepository.GetById(localId);
             if (local == null)
                 throw new KeyNotFoundException($"Local com id {localId} não encontrado.");
+        }
+
+        // Listar dados do perfil logado
+        public async Task<UsuarioResponseDto?> GetMeuPerfil()
+        {
+            var usuarioLogado = await _user.GetCurrentUser();
+            if (usuarioLogado == null)
+                return null;
+
+            var userId = usuarioLogado.UserId;
+            if (userId == null)
+                return null;
+
+            var usuarioDb = await _usuariosRepository.GetById(userId.Value);
+
+            if (usuarioDb == null)
+                return null;
+
+            return new UsuarioResponseDto
+            {
+                Id = usuarioDb.Id,
+                Nome = usuarioDb.Nome,
+                Email = usuarioDb.Email ?? string.Empty,
+                Cpf = usuarioDb.Cpf ?? string.Empty,
+                Role = usuarioDb.Role,
+                CreatedAt = usuarioDb.CreatedAt,
+                LocalId = usuarioDb.LocalId,
+            };
+        }
+
+        // Atualizar dados do perfil logado
+        public async Task<UsuarioResponseDto> UpdateMyProfileAsync(UsuarioRequestUpdateDto dto)
+        {
+            var usuarioLogado = await _user.GetCurrentUser();
+            if (usuarioLogado == null)
+                throw new KeyNotFoundException("Usuário não encontrado.");
+
+            var userId = usuarioLogado.UserId;
+            if (userId == null)
+                throw new KeyNotFoundException("ID do usuário não encontrado.");
+
+            var usuarioDb = await _usuariosRepository.GetById(userId.Value);
+            if (usuarioDb == null)
+                throw new KeyNotFoundException("Usuário não encontrado.");
+
+            var emailJaExiste = await _usuariosRepository.GetByEmail(dto.Email ?? string.Empty);
+            if (emailJaExiste != null && emailJaExiste.Id != usuarioDb.Id)
+                throw new InvalidOperationException(
+                    "Já existe um usuário com este e-mail cadastrado."
+                );
+
+            if (
+                !string.IsNullOrWhiteSpace(dto.Email)
+                && !dto.Email.Equals(usuarioDb.Email, StringComparison.OrdinalIgnoreCase)
+            )
+            {
+                usuarioDb.SecurityStamp = Guid.NewGuid().ToString(); // Atualiza o SecurityStamp para invalidar tokens antigos
+            }
+
+            // Atualizar os dados do usuário
+            var newUsuario = new Usuario
+            {
+                Nome = !string.IsNullOrEmpty(dto.Nome) ? dto.Nome : usuarioDb.Nome,
+                Email = !string.IsNullOrEmpty(dto.Email) ? dto.Email : usuarioDb.Email,
+                Cpf = !string.IsNullOrEmpty(dto.Cpf) ? dto.Cpf : usuarioDb.Cpf,
+                Role = usuarioDb.Role, // O usuário não pode alterar sua própria role
+                SecurityStamp = usuarioDb.SecurityStamp, // Mantém o SecurityStamp atual, a menos que o e-mail seja alterado
+            };
+
+            await _usuariosRepository.Update(userId.Value, newUsuario);
+
+            return new UsuarioResponseDto
+            {
+                Id = usuarioDb.Id,
+                Nome = usuarioDb.Nome,
+                Email = usuarioDb.Email ?? string.Empty,
+                Cpf = usuarioDb.Cpf ?? string.Empty,
+                LocalId = usuarioDb.LocalId,
+            };
+        }
+
+        public async Task<string?> PasswordResetToken(string email)
+        {
+            var usuario = await _usuariosRepository.GetByEmail(email);
+            if (usuario == null)
+                throw new KeyNotFoundException($"Usuário com email {email} não encontrado.");
+
+            var tokenBytes = RandomNumberGenerator.GetBytes(32);
+            var token = Convert
+                .ToBase64String(tokenBytes)
+                .Replace("+", "-")
+                .Replace("/", "_")
+                .TrimEnd('='); // base64url
+
+            var resetToken = new PasswordResetToken
+            {
+                Id = Guid.NewGuid(),
+                UsuarioId = usuario.Id,
+                TokenHash = HashToken(token),
+                ExpiraEm = DateTime.UtcNow.AddHours(1),
+            };
+
+            await _usuariosRepository.PasswordResetToken(resetToken);
+
+            var link = $"{_config["Frontend:BaseUrl"]}/redefinir-senha?token={token}";
+
+            return link;
+        }
+
+        public async Task UpdatePasswordResetToken(RedefinirSenhaRequestDto data)
+        {
+            var hash = HashToken(data.Token);
+
+            var resetToken = await _usuariosRepository.GetPasswordResetToken(hash);
+
+            // CORRIGIDO: antes, um token inválido/expirado/usado disparava um
+            // INSERT esquisito (_usuariosRepository.PasswordResetToken, que é
+            // o método de CRIAR token, não de validar) e o código continuava
+            // adiante mesmo assim — como os campos abaixo usam `?.`, tudo
+            // virava no-op silencioso e o método retornava sem erro nenhum
+            // pro chamador. Agora falha de verdade com uma mensagem clara.
+            if (
+                resetToken is null
+                || resetToken.UsadoEm is not null
+                || resetToken.ExpiraEm < DateTime.UtcNow
+            )
+                throw new InvalidOperationException("Link inválido ou expirado.");
+
+            if (!ValidarForcaSenha(data.NovaSenha, out var motivo))
+                throw new InvalidOperationException($"Senha inválida: {motivo}");
+
+            resetToken.Usuario.SenhaHash = BCrypt.Net.BCrypt.HashPassword(data.NovaSenha);
+            resetToken.Usuario.SecurityStamp = Guid.NewGuid().ToString(); // Atualiza o SecurityStamp para invalidar tokens antigos
+            resetToken.UsadoEm = DateTime.UtcNow;
+
+            await _usuariosRepository.Update(resetToken.Usuario.Id, resetToken.Usuario);
+            await _usuariosRepository.UpdatePasswordResetToken(resetToken);
+        }
+
+        public async Task EsqueciSenha(EsqueciSenhaRequestDto dto)
+        {
+            var usuario = await _usuariosRepository.GetByEmail(dto.Email);
+            if (usuario is null)
+                return;
+
+            var linkPasswordResetToken = await PasswordResetToken(usuario.Email);
+
+            await _email.EnviarRedefinicaoSenhaAsync(
+                usuario.Email,
+                usuario.Nome,
+                linkPasswordResetToken
+            );
+        }
+
+        public async Task<PasswordResetToken?> GetPasswordResetTokenByHash(string tokenHash)
+        {
+            var token = await _usuariosRepository.GetPasswordResetToken(tokenHash);
+            return token;
+        }
+
+        public async Task<ConviteResponseDto> CriarConvite(ConviteRequestDto dto)
+        {
+            var existente = await _usuariosRepository.GetByEmail(dto.Email);
+            if (existente != null)
+                throw new InvalidOperationException("Já existe um usuário com este e-mail.");
+
+            var usuarioLogado = await _user.GetCurrentUser();
+
+            // Mesma regra do cadastro direto: só um SuperAdmin pode convidar
+            // outro SuperAdmin (ver ValidarPermissaoCadastro).
+            if (usuarioLogado.Role != Role.SuperAdmin && dto.Role == Role.SuperAdmin)
+                throw new InvalidOperationException(
+                    "Você não tem permissão para esse convite, contate um administrador"
+                );
+
+            Guid? localId;
+            Perfil perfilAtribuido;
+            var criadoPorSuperAdmin = usuarioLogado.Role == Role.SuperAdmin;
+
+            if (criadoPorSuperAdmin)
+            {
+                // Mesma regra de CriarUsuarioLocal: o SuperAdmin decide
+                // livremente. LocalId pode ficar em aberto — o convidado
+                // vira Administrador sem Local e, ao aceitar o convite e
+                // logar, cai no fluxo de criar o primeiro Local (PrimeiroLocal.jsx).
+                if (dto.LocalId.HasValue)
+                    await GarantirLocalExiste(dto.LocalId.Value);
+
+                localId = dto.LocalId;
+                perfilAtribuido = dto.Perfil ?? Perfil.Administrador;
+            }
+            else
+            {
+                // Um Administrador só convida gente pro seu próprio Local —
+                // nunca aceita um LocalId arbitrário vindo do request (mesma
+                // proteção contra vazamento entre tenants de CriarUsuarioLocal).
+                if (usuarioLogado.LocalId == null)
+                    throw new InvalidOperationException(
+                        "Você precisa estar vinculado a um Local para convidar usuários."
+                    );
+
+                localId = usuarioLogado.LocalId;
+                perfilAtribuido = dto.Perfil ?? Perfil.Visualizador;
+            }
+
+            var tokenBytes = RandomNumberGenerator.GetBytes(32);
+            var token = Convert
+                .ToBase64String(tokenBytes)
+                .Replace("+", "-")
+                .Replace("/", "_")
+                .TrimEnd('=');
+
+            var convite = new ConviteToken
+            {
+                Id = Guid.NewGuid(),
+                Email = dto.Email,
+                Role = dto.Role,
+                Perfil = perfilAtribuido,
+                LocalId = localId,
+                CriadoPorId = usuarioLogado.UserId ?? Guid.Empty,
+                CriadoPorSuperAdmin = criadoPorSuperAdmin,
+                TokenHash = HashToken(token),
+                ExpiraEm = DateTime.UtcNow.AddHours(48),
+            };
+
+            await _usuariosRepository.CriarConvite(convite);
+
+            var link = $"{_config["Frontend:BaseUrl"]}/completar-cadastro?token={token}";
+
+            // Diferente do "esqueci senha" (onde escondemos falha de e-mail
+            // por segurança, pra não confirmar quais e-mails existem), aqui
+            // é uma ação explícita do Admin — faz sentido ele saber que o
+            // e-mail não saiu, então deixamos a exceção subir pro controller.
+            await _email.EnviarConviteAsync(dto.Email, link);
+
+            return new ConviteResponseDto { Email = dto.Email, ExpiraEm = convite.ExpiraEm };
+        }
+
+        public async Task CompletarConvite(CompletarConviteRequestDto dto)
+        {
+            var hash = HashToken(dto.Token);
+            var convite = await _usuariosRepository.GetConviteByHash(hash);
+
+            if (convite is null || convite.UsadoEm is not null || convite.ExpiraEm < DateTime.UtcNow)
+                throw new InvalidOperationException("Convite inválido ou expirado.");
+
+            // Alguém pode ter se cadastrado com este e-mail por outro caminho
+            // entre o convite ser criado e ser aceito — checagem de corrida.
+            var existente = await _usuariosRepository.GetByEmail(convite.Email);
+            if (existente != null)
+                throw new InvalidOperationException("Já existe um usuário com este e-mail.");
+
+            if (!ValidarForcaSenha(dto.Senha, out var motivo))
+                throw new InvalidOperationException($"Senha inválida: {motivo}");
+
+            var novoUsuario = new Usuario
+            {
+                Nome = dto.Nome,
+                Email = convite.Email,
+                Cpf = dto.Cpf,
+                SenhaHash = BCrypt.Net.BCrypt.HashPassword(dto.Senha),
+                Role = convite.Role,
+            };
+
+            await _usuariosRepository.Create(novoUsuario);
+
+            var usuarioLocal = new UsuarioLocal
+            {
+                UsuarioId = novoUsuario.Id,
+                LocalId = convite.LocalId,
+                Perfil = convite.Perfil,
+                // Só reproduz Administrador Pai quando o convite (a) veio de
+                // um SuperAdmin e (b) já tinha LocalId + Perfil Administrador
+                // definidos juntos — mesma condição de CriarUsuarioLocal.
+                EhAdministradorPai =
+                    convite.CriadoPorSuperAdmin
+                    && convite.LocalId.HasValue
+                    && convite.Perfil == Perfil.Administrador,
+            };
+
+            await _usuariosLocalRepository.Create(usuarioLocal);
+
+            convite.UsadoEm = DateTime.UtcNow;
+            await _usuariosRepository.UpdateConvite(convite);
+        }
+
+        private static string HashToken(string token)
+        {
+            // Guarda hash do token, não o token puro — se o banco vazar, o token
+            // (que por 1h vale como reset de senha) não fica reutilizável.
+            var bytes = System.Security.Cryptography.SHA256.HashData(
+                System.Text.Encoding.UTF8.GetBytes(token)
+            );
+            return Convert.ToHexString(bytes);
+        }
+
+        private static bool ValidarForcaSenha(string senha, out string motivo)
+        {
+            if (senha.Length < 8)
+            {
+                motivo = "A senha precisa ter ao menos 8 caracteres.";
+                return false;
+            }
+            if (!senha.Any(char.IsUpper))
+            {
+                motivo = "A senha precisa de uma letra maiúscula.";
+                return false;
+            }
+            if (!senha.Any(char.IsDigit))
+            {
+                motivo = "A senha precisa de um número.";
+                return false;
+            }
+            motivo = "";
+            return true;
         }
     }
 }

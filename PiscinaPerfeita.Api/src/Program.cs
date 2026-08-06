@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Reflection;
+using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -55,6 +56,52 @@ builder
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidateAudience = true,
             ValidAudience = builder.Configuration["Jwt:Audience"],
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero, // Sem tolerância de tempo (pra não aceitar tokens expirados)
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var userIdClaim = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var securityStampClaim = context.Principal?.FindFirst("security_stamp")?.Value;
+
+                if (string.IsNullOrWhiteSpace(userIdClaim) || string.IsNullOrWhiteSpace(securityStampClaim))
+                {
+                    context.Fail("Token inválido: ID do usuário ou security_stamp ausente.");
+                    return;
+                }
+
+                // Recuperamos o DbContext (já que a injeção está certa)
+                var dbContext = context.HttpContext.RequestServices.GetRequiredService<PiscinaPerfeitaContext>();
+
+                if (!Guid.TryParse(userIdClaim, out var userId))
+                {
+                    context.Fail("Token inválido: ID do usuário mal formatado.");
+                    return;
+                }
+
+                // CÓDIGO CORRIGIDO: Em vez de FindAsync (que traz o usuário inteiro e joga no ChangeTracker), 
+                // fazemos um Select() apenas do campo que importa. Muito mais leve para o banco.
+                var currentStamp = await dbContext.Usuarios
+                    .AsNoTracking()
+                    .Where(u => u.Id == userId)
+                    .Select(u => u.SecurityStamp)
+                    .FirstOrDefaultAsync();
+
+                if (currentStamp == null)
+                {
+                    context.Fail("Token inválido: Usuário não encontrado.");
+                    return;
+                }
+
+                if (currentStamp != securityStampClaim)
+                {
+                    // Isso invalida o token antigo na hora!
+                    context.Fail("Token invalidado devido a alterações na conta.");
+                    return;
+                }
+            }
         };
     });
 

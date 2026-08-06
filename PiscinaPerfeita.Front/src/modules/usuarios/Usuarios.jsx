@@ -51,6 +51,7 @@ function UsuarioForm({ initial, onSubmit, onCancel, loading }) {
           senha: "",
         }
       : {
+          modo: "completo", // "completo" | "convite"
           nome: "",
           email: "",
           role: String(ROLES.USER),
@@ -61,9 +62,25 @@ function UsuarioForm({ initial, onSubmit, onCancel, loading }) {
         },
   );
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+  const ehConvite = !isEdit && form.modo === "convite";
 
   function handleSubmit(e) {
     e.preventDefault();
+
+    if (ehConvite) {
+      // Convite por link: quem convida só decide e-mail/papel/perfil/local —
+      // nome e senha ficam por conta de quem aceita o convite
+      // (ver CompletarConvite.jsx).
+      onSubmit({
+        email: form.email,
+        role: parseInt(form.role),
+        perfil: parseInt(form.perfil),
+        localId: form.localId || undefined,
+        __convite: true,
+      });
+      return;
+    }
+
     const dto = {
       nome: form.nome,
       email: form.email,
@@ -83,16 +100,32 @@ function UsuarioForm({ initial, onSubmit, onCancel, loading }) {
   return (
     <form onSubmit={handleSubmit}>
       <FormGrid>
-        <FormField label="Nome completo *" fullWidth>
-          <input
-            required
-            type="text"
-            placeholder="Nome do usuário"
-            style={inputStyle}
-            value={form.nome}
-            onChange={set("nome")}
-          />
-        </FormField>
+        {!isEdit && (
+          <FormField label="Como cadastrar *" fullWidth>
+            <select
+              style={inputStyle}
+              value={form.modo}
+              onChange={set("modo")}
+            >
+              <option value="completo">Cadastro completo (defino a senha)</option>
+              <option value="convite">
+                Convite por link (a pessoa define nome e senha)
+              </option>
+            </select>
+          </FormField>
+        )}
+        {!ehConvite && (
+          <FormField label="Nome completo *" fullWidth>
+            <input
+              required={!ehConvite}
+              type="text"
+              placeholder="Nome do usuário"
+              style={inputStyle}
+              value={form.nome}
+              onChange={set("nome")}
+            />
+          </FormField>
+        )}
         <FormField label="E-mail *" fullWidth>
           <input
             required
@@ -103,7 +136,7 @@ function UsuarioForm({ initial, onSubmit, onCancel, loading }) {
             onChange={set("email")}
           />
         </FormField>
-        {!isEdit && (
+        {!isEdit && !ehConvite && (
           <FormField label="CPF">
             <input
               type="text"
@@ -114,23 +147,25 @@ function UsuarioForm({ initial, onSubmit, onCancel, loading }) {
             />
           </FormField>
         )}
-        <FormField
-          label={
-            isEdit ? "Nova senha (deixe em branco para manter)" : "Senha *"
-          }
-        >
-          <input
-            type="password"
-            required={!isEdit}
-            minLength={8}
-            placeholder={
-              isEdit ? "Nova senha (opcional)" : "Mínimo 8 caracteres"
+        {!ehConvite && (
+          <FormField
+            label={
+              isEdit ? "Nova senha (deixe em branco para manter)" : "Senha *"
             }
-            style={inputStyle}
-            value={form.senha}
-            onChange={set("senha")}
-          />
-        </FormField>
+          >
+            <input
+              type="password"
+              required={!isEdit}
+              minLength={8}
+              placeholder={
+                isEdit ? "Nova senha (opcional)" : "Mínimo 8 caracteres"
+              }
+              style={inputStyle}
+              value={form.senha}
+              onChange={set("senha")}
+            />
+          </FormField>
+        )}
         <FormField label="Papel *">
           <select
             required
@@ -544,6 +579,15 @@ export default function Usuarios() {
         setUsuarios((prev) =>
           prev.map((u) => (u.id === atualizado.id ? atualizado : u)),
         );
+      } else if (dto.__convite) {
+        const { __convite, ...conviteDto } = dto;
+        const resultado = await usuarioService.criarConvite(conviteDto);
+        setModal({ open: false, editing: null });
+        alert(
+          `Convite enviado para ${resultado.email}. O link expira em 48 horas.`,
+        );
+        setSaving(false);
+        return;
       } else {
         const novo = await usuarioService.criar(dto);
         setUsuarios((prev) => [novo, ...prev]);

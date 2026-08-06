@@ -7,16 +7,22 @@
 # ============================================================
 
 # ---- Build stage ----
+# ---- Build stage ----
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Copia primeiro só o .csproj para aproveitar o cache de camadas do Docker:
-# "dotnet restore" só roda de novo quando as dependências mudam, não a cada
-# alteração de código-fonte.
-COPY *.csproj ./
-RUN dotnet restore
+# 1. Copia o arquivo da solução (ou projeto) mantendo a estrutura
+COPY src/PiscinaPerfeita.Api.csproj src/
+COPY src/PiscinaPerfeita.Api.slnx src/
 
+# 2. Faz o restore especificando o caminho da solução ou do projeto
+RUN dotnet restore src/PiscinaPerfeita.Api.csproj
+
+# 3. Copia todo o código-fonte a partir da raiz do contexto
 COPY . .
+
+# 4. Entra na pasta do projeto e compila
+WORKDIR /src/src
 RUN dotnet publish -c Release -o /app/publish --no-restore
 
 # ---- Runtime stage ----

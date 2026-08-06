@@ -3,7 +3,9 @@
    ============================================================ */
 
 /* Reset mínimo */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -12,28 +14,28 @@
 /* Variáveis de tema — modo claro */
 :root {
   /* Paleta Piscina Perfeita */
-  --pp-deep:    #0A1628;
-  --pp-mid:     #1E3A5F;
-  --pp-water:   #2E86AB;
-  --pp-sky:     #5BC0EB;
-  --pp-foam:    #E8F4FD;
-  --pp-ice:     #F0F7FF;
-  --pp-muted:   #6B8CAE;
-  --pp-low:     #E74C3C;
-  --pp-ok:      #27AE60;
-  --pp-warn:    #F39C12;
+  --pp-deep: #0A1628;
+  --pp-mid: #1E3A5F;
+  --pp-water: #2E86AB;
+  --pp-sky: #5BC0EB;
+  --pp-foam: #E8F4FD;
+  --pp-ice: #F0F7FF;
+  --pp-muted: #6B8CAE;
+  --pp-low: #E74C3C;
+  --pp-ok: #27AE60;
+  --pp-warn: #F39C12;
 
   /* Superfícies */
-  --surface-0:  #E8F4FD;
-  --surface-1:  #F0F7FF;
-  --surface-2:  #FFFFFF;
+  --surface-0: #E8F4FD;
+  --surface-1: #F0F7FF;
+  --surface-2: #FFFFFF;
 
   /* Bordas */
-  --border:        rgba(30, 58, 95, 0.10);
+  --border: rgba(30, 58, 95, 0.10);
   --border-strong: rgba(30, 58, 95, 0.22);
 
   /* Texto */
-  --text-primary:   #0A1628;
+  --text-primary: #0A1628;
   --text-secondary: #6B8CAE;
 
   /* Tipografia */
@@ -62,7 +64,9 @@ body {
 }
 
 /* Inputs — fonte ≥ 16px evita zoom automático no iOS */
-input, select, textarea {
+input,
+select,
+textarea {
   font-size: max(16px, 1em);
 }
 
@@ -71,12 +75,36 @@ input, select, textarea {
   -webkit-tap-highlight-color: transparent;
 }
 
+.pp-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.pp-kpi-grid>* {
+  min-width: 0;
+}
+
 /* Scrollbar personalizada (desktop) */
 @media (hover: hover) {
-  ::-webkit-scrollbar        { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track  { background: var(--pp-foam); }
-  ::-webkit-scrollbar-thumb  { background: var(--pp-muted); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--pp-water); }
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--pp-foam);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--pp-muted);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--pp-water);
+  }
 }
 
 /* Foco visível para acessibilidade */
@@ -87,12 +115,21 @@ input, select, textarea {
 
 /* Animações globais */
 @keyframes pp-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes pp-fade-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0);   }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .page-enter {
@@ -100,23 +137,62 @@ input, select, textarea {
 }
 
 /* Utilitários */
-.text-muted  { color: var(--text-secondary); }
-.text-ok     { color: var(--pp-ok); }
-.text-warn   { color: var(--pp-warn); }
-.text-bad    { color: var(--pp-low); }
-.text-water  { color: var(--pp-water); }
+.text-muted {
+  color: var(--text-secondary);
+}
+
+.text-ok {
+  color: var(--pp-ok);
+}
+
+.text-warn {
+  color: var(--pp-warn);
+}
+
+.text-bad {
+  color: var(--pp-low);
+}
+
+.text-water {
+  color: var(--pp-water);
+}
+
+/* Empilha ações (botões, etc.) em telas estreitas — breakpoint padrão do app */
+.pp-stack-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 480px) {
+  .pp-stack-actions {
+    flex-direction: column-reverse;
+  }
+
+  .pp-stack-actions>* {
+    width: 100%;
+  }
+}
 
 /* Print */
 @media print {
+
   /* Esconde a navegação do app (sidebar desktop, topbar e bottom nav mobile) */
-  .pp-sidebar, .pp-topbar, .pp-bottom-nav,
-  nav, button:not(.print-include), .toolbar {
+  .pp-sidebar,
+  .pp-topbar,
+  .pp-bottom-nav,
+  nav,
+  button:not(.print-include),
+  .toolbar {
     display: none !important;
   }
 
   /* O shell trava altura em 100dvh e overflow:hidden pra funcionar como app;
      na impressão isso corta o conteúdo que passa da altura da tela. */
-  .pp-app-shell, .pp-main-col, .pp-main {
+  .pp-app-shell,
+  .pp-main-col,
+  .pp-main {
     height: auto !important;
     overflow: visible !important;
     display: block !important;

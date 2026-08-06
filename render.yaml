@@ -1,16 +1,11 @@
 # ============================================================
 #   PiscinaPerfeita — Render Blueprint
 # ============================================================
-
-# ============================================================
-#   PiscinaPerfeita — Render Blueprint
-# ============================================================
-
 databases:
   - name: piscina-perfeita-db
     databaseName: piscina_perfeita
     user: piscina
-    plan: free # troque para "starter" (ou maior) antes de ter usuários reais
+    plan: free
 
 services:
   # ------------------------------------------------------------
@@ -19,51 +14,68 @@ services:
   - type: web
     name: piscina-perfeita-api
     runtime: docker
-    dockerContext: ./PiscinaPerfeita.Api/src
-    dockerfilePath: ./PiscinaPerfeita.Api/src/Dockerfile
-    plan: free # plano starter evita a hibernação do backend (.NET demora um pouco no cold start)
+    dockerContext: ./PiscinaPerfeita.Api
+    dockerfilePath: ./PiscinaPerfeita.Api/Dockerfile
+    plan: free
     healthCheckPath: /health
     envVars:
-      # Monta a Connection String diretamente usando as propriedades nativas do banco do Render
       - key: ConnectionStrings__DefaultConnection
         sync: false
 
       - key: Jwt__Key
-        generateValue: true # Render gera uma chave segura de forma aleatória
+        generateValue: true
       - key: Jwt__Issuer
         value: PiscinaPerfeita
       - key: Jwt__Audience
         value: PiscinaPerfeita
 
-      # Usuário SuperAdmin (configuração inicial)
       - key: ADMIN_NAME
         value: Admin
       - key: ADMIN_EMAIL
-        sync: false # Render solicita este valor no painel durante o primeiro sync
-
+        sync: false
       - key: ADMIN_PASSWORD
         sync: false
-
       - key: ADMIN_CPF
         value: ""
 
+      # Antes: hardcoded. Agora aponta pra URL pública real do front,
+      # atualizando sozinho se o Render mudar o subdomínio.
       - key: Cors__AllowedOrigins
-        value: "https://piscina-perfeita-front-roel.onrender.com"
+        fromService:
+          name: piscina-perfeita-front
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
+
+      - key: RESEND__APIKEY
+        sync: false
+      - key: RESEND__REMETENTE
+        sync: false
+
+      - key: Frontend__BaseUrl
+        fromService:
+          name: piscina-perfeita-front
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
 
   # ------------------------------------------------------------
-  # Front (React/Vite) — Static Site (Distribuído via CDN global)
+  # Front (React/Vite) — Static Site
   # ------------------------------------------------------------
   - type: web
     runtime: static
     name: piscina-perfeita-front
     rootDir: ./PiscinaPerfeita.Front
-    buildCommand: yarn install --frozen-lockfile && yarn build
+    # Monta VITE_API_BASE_URL em tempo de build concatenando "/api"
+    # na URL pública real da API (render.yaml não permite interpolação
+    # direta dentro de envVars, então isso é feito aqui no shell).
+    buildCommand: yarn install --frozen-lockfile && VITE_API_BASE_URL="${API_PUBLIC_URL}/api" yarn build
     staticPublishPath: ./dist
     envVars:
-      - key: VITE_API_BASE_URL
-        value: "https://piscina-perfeita-api-roel.onrender.com/api"
+      - key: API_PUBLIC_URL
+        fromService:
+          name: piscina-perfeita-api
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
     routes:
-      # SPA fallback para evitar erros de 404 ao atualizar páginas internas (F5)
       - type: rewrite
         source: /*
         destination: /index.html

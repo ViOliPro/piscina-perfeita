@@ -5,6 +5,7 @@
 import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
 import { AppLayout } from "./components/layout/AppLayout.jsx";
 import LoginPage from "./modules/auth/LoginPage.jsx";
+import MeuPerfil from "./modules/auth/MeuPerfil.jsx";
 import PrimeiroLocal from "./modules/onboarding/PrimeiroLocal.jsx";
 import Dashboard from "./modules/dashboard/Dashboard.jsx";
 import Analises from "./modules/analises/Analises.jsx";
@@ -17,6 +18,7 @@ import Locais from "./modules/locais/Locais.jsx";
 import Depositos from "./modules/depositos/Depositos.jsx";
 import Aplicacoes from "./modules/aplicacoes/Aplicacoes.jsx";
 import ContagemInventario from "./modules/inventario/ContagemInventario.jsx";
+import Hidrometro from "./modules/hidrometro/Hidrometro.jsx";
 import { PERFIS, ROLES } from "./config/index.js";
 import { useState } from "react";
 
@@ -32,6 +34,8 @@ const PAGES = {
   depositos: Depositos,
   aplicacoes: Aplicacoes,
   inventario: ContagemInventario,
+  meuPerfil: MeuPerfil,
+  hidrometro: Hidrometro,
 };
 
 // ----------------------------------------------------------
@@ -44,7 +48,16 @@ function AuthenticatedApp() {
   // do botão "Registrar aplicação" em uma Análise (ver Analises.jsx).
   const [prefillAplicacao, setPrefillAplicacao] = useState(null);
 
-  if (!isAuthenticated) return <LoginPage />;
+  // CORRIGIDO: se o link de redefinição/convite (?token=...) for aberto num
+  // navegador onde já existe uma sessão válida (ex.: computador
+  // compartilhado, ou a pessoa nem tinha esquecido a senha e só queria
+  // trocar por segurança), o gate original (`if (!isAuthenticated)`) pulava
+  // direto pro Dashboard e o token na URL era ignorado silenciosamente.
+  // Cobre tanto /redefinir-senha?token=... quanto /completar-cadastro?token=...
+  // (LoginPage.jsx distingue os dois pelo path).
+  const hasAuthToken = new URLSearchParams(window.location.search).has("token");
+
+  if (!isAuthenticated || hasAuthToken) return <LoginPage />;
 
   // Um Administrador criado sem nenhum Local vinculado (ex.: síndico
   // profissional recém-cadastrado) precisa criar seu primeiro condomínio

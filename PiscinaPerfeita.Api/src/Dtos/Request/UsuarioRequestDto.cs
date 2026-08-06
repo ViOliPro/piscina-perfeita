@@ -33,10 +33,20 @@ namespace PiscinaPerfeita.Api.Dtos.Request
         [EmailAddress(ErrorMessage = "O campo Email deve ser um endereço de e-mail válido.")]
         public string? Email { get; set; } = string.Empty;
 
+        public string Cpf { get; set; } = string.Empty;
+
         [MaxLength(30, ErrorMessage = "O campo Senha nao pode ultrapassar 30 caracteres.")]
         [DataType(DataType.Password)]
         [DisplayName("Password")]
         public string? SenhaHash { get; set; } = string.Empty;
         public Role? Role { get; set; }
+    }
+
+    public class AlterarSenhaRequestUpdateDto
+    {
+        [MaxLength(30, ErrorMessage = "O campo Senha nao pode ultrapassar 30 caracteres.")]
+        [DataType(DataType.Password)]
+        [DisplayName("Password")]
+        public string? SenhaHash { get; set; } = string.Empty;
     }
 }

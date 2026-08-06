@@ -13,8 +13,12 @@ export const API_ENDPOINTS = {
   // Autenticação  (AccountController → api/account/...)
   login: `${API_BASE_URL}/account/login`,
   switchLocal: `${API_BASE_URL}/account/SwitchLocal`,
-  forgotPassword: `${API_BASE_URL}/account/forgot-password`, // a implementar no backend
-  resetPassword: `${API_BASE_URL}/account/reset-password`, // a implementar no backend
+  forgotPassword: `${API_BASE_URL}/account/esqueci-senha`,
+  resetPassword: `${API_BASE_URL}/account/redefinir-senha`,
+  completarConvite: `${API_BASE_URL}/account/completar-convite`,
+  authPasswordSenhaAtualENova: `${API_BASE_URL}/usuarios/me/senha`,
+  meuPerfil: `${API_BASE_URL}/usuarios/me`,
+  criarConvite: `${API_BASE_URL}/usuarios/convites`,
 
   // Usuários
   usuarios: `${API_BASE_URL}/usuarios`,
@@ -55,6 +59,11 @@ export const API_ENDPOINTS = {
   // Locais (condomínios/unidades)
   locais: `${API_BASE_URL}/locais`,
   localById: (id) => `${API_BASE_URL}/locais/${id}`,
+  hidrometroDashboard: `${API_BASE_URL}/hidrometros/dashboard`,
+
+  // Hidrometros
+  hidrometros: `${API_BASE_URL}/hidrometros`,
+  hidrometroById: (id) => `${API_BASE_URL}/hidrometros/${id}`,
 
   // Vínculos Usuário ↔ Local (UsuariosLocaisController)
   usuariosLocais: `${API_BASE_URL}/usuarioslocais`,

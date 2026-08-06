@@ -71,7 +71,7 @@ public class UsuarioRepository : IUsuarioRepository
         return usuarioDto;
     }
 
-    public async Task<UsuarioResponseDto?> GetById(Guid id)
+    public async Task<UsuarioResponseDto?> GetByIdDto(Guid id)
     {
         var usuarioDto = await _context
             .Usuarios.Where(u => u.Id == id)
@@ -109,6 +109,12 @@ public class UsuarioRepository : IUsuarioRepository
         user.Email = usuario.Email;
         user.SenhaHash = usuario.SenhaHash;
         user.Role = usuario.Role;
+        // CORRIGIDO: SecurityStamp nunca era persistido aqui, então trocar de
+        // e-mail (UpdateMyProfileAsync) ou redefinir senha (UpdatePasswordResetToken)
+        // rotacionava o valor em memória mas o JWT antigo continuava válido
+        // pra sempre — o middleware que compara security_stamp nunca via a
+        // mudança. Callers que não querem rotacionar devem passar o stamp atual.
+        user.SecurityStamp = usuario.SecurityStamp;
 
         await _context.SaveChangesAsync();
     }
@@ -143,7 +149,10 @@ public class UsuarioRepository : IUsuarioRepository
 
     public async Task<Usuario?> GetByEmail(string email)
     {
-        var user = await _context.Usuarios.Where(u => u.Email == email).FirstOrDefaultAsync();
+        var user = await _context
+            .Usuarios.IgnoreQueryFilters()
+            .Where(u => u.Email == email)
+            .FirstOrDefaultAsync();
 
         return user;
     }
@@ -160,5 +169,65 @@ public class UsuarioRepository : IUsuarioRepository
         var user = await _context.Usuarios.Where(u => u.Id == id).FirstOrDefaultAsync();
 
         return user ?? null;
+    }
+
+    public async Task<Usuario?> GetById(Guid id)
+    {
+        var usuarioDto = await _context
+            .Usuarios.Where(u => u.Id == id)
+            .Select(u => new Usuario
+            {
+                Id = u.Id,
+                Nome = u.Nome,
+                Email = u.Email ?? string.Empty,
+                Cpf = u.Cpf ?? string.Empty,
+                CreatedAt = u.CreatedAt,
+                Role = u.Role,
+                SecurityStamp = u.SecurityStamp,
+            })
+            .FirstOrDefaultAsync();
+
+        return usuarioDto ?? null;
+    }
+
+    public async Task PasswordResetToken(PasswordResetToken token)
+    {
+        _context.PasswordResetTokens.Add(token);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<PasswordResetToken?> GetPasswordResetToken(string tokenHash)
+    {
+        var token = await _context
+            .PasswordResetTokens.IgnoreQueryFilters()
+            .Include(t => t.Usuario)
+            .FirstOrDefaultAsync(t => t.TokenHash == tokenHash);
+
+        return token;
+    }
+
+    public async Task UpdatePasswordResetToken(PasswordResetToken token)
+    {
+        _context.PasswordResetTokens.Update(token);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task CriarConvite(ConviteToken convite)
+    {
+        _context.ConviteTokens.Add(convite);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<ConviteToken?> GetConviteByHash(string tokenHash)
+    {
+        return await _context
+            .ConviteTokens.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(t => t.TokenHash == tokenHash);
+    }
+
+    public async Task UpdateConvite(ConviteToken convite)
+    {
+        _context.ConviteTokens.Update(convite);
+        await _context.SaveChangesAsync();
     }
 }
