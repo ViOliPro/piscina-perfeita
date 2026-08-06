@@ -9,36 +9,6 @@
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5258/api";
 
-// Acrescentar estas funções ao seu services/usuarioService.js (ou similar)
-// já existente — mantendo o padrão de vocês de mapear PascalCase<->camelCase
-// via mappers.js antes de expor pro componente.
-/*import { api } from "./apiClient"; // ajuste para o client axios/fetch já usado no projeto
-import { mapUsuarioFromApi } from "./mappers"; // reaproveita o mapper já existente
-
-export async function buscarMeuPerfil() {
-  const { data } = await api.get("/usuarios/me");
-  return mapUsuarioFromApi(data);
-}
-
-export async function atualizarMeuPerfil({ nome, email }) {
-  const { data } = await api.put("/usuarios/me", { nome, email });
-  return mapUsuarioFromApi(data);
-}
-
-export async function alterarSenha({ senhaAtual, novaSenha }) {
-  await api.put("/usuarios/me/senha", { senhaAtual, novaSenha });
-}
-
-export async function solicitarRedefinicaoSenha({ email }) {
-  // Sempre retorna sucesso no backend independente do e-mail existir,
-  // pra não vazar quais e-mails estão cadastrados (ver README do backend).
-  await api.post("/auth/esqueci-senha", { email });
-}
-
-export async function redefinirSenha({ token, novaSenha }) {
-  await api.post("/auth/redefinir-senha", { token, novaSenha });
-}
- */
 export const API_ENDPOINTS = {
   // Autenticação  (AccountController → api/account/...)
   login: `${API_BASE_URL}/account/login`,
@@ -89,6 +59,11 @@ export const API_ENDPOINTS = {
   // Locais (condomínios/unidades)
   locais: `${API_BASE_URL}/locais`,
   localById: (id) => `${API_BASE_URL}/locais/${id}`,
+  hidrometroDashboard: `${API_BASE_URL}/hidrometros/dashboard`,
+
+  // Hidrometros
+  hidrometros: `${API_BASE_URL}/hidrometros`,
+  hidrometroById: (id) => `${API_BASE_URL}/hidrometros/${id}`,
 
   // Vínculos Usuário ↔ Local (UsuariosLocaisController)
   usuariosLocais: `${API_BASE_URL}/usuarioslocais`,

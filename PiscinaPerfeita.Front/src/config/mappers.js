@@ -602,3 +602,50 @@ export function toApiAplicacaoProduto({
     Observacoes: observacoes || null,
   };
 }
+
+// ----------------------------------------------------------
+// Hidrometro (medidor de consumo de água)
+// ----------------------------------------------------------
+
+export function fromApiHidrometro(raw) {
+  if (!raw) return null;
+
+  return {
+    id: field(raw, "id", "Id"),
+    leituraAtual: field(raw, "leituraAtual", "LeituraAtual") ?? null,
+    consumo: field(raw, "consumo", "Consumo") ?? null,
+    dataLeitura: field(raw, "dataLeitura", "DataLeitura") ?? null,
+    observacoes: field(raw, "observacoes", "Observacoes") ?? "",
+  };
+}
+
+export function fromApiHidrometroList(rawList) {
+  return (rawList ?? []).map(fromApiHidrometro);
+}
+
+export function fromApiDashboardHidrometro(raw) {
+  if (!raw) return null;
+
+  return {
+    ultimaLeitura: field(raw, "ultimaLeitura", "UltimaLeitura") ?? null,
+    dataUltimaLeitura:
+      field(raw, "dataUltimaLeitura", "DataUltimaLeitura") ?? null,
+    ultimoConsumo: field(raw, "ultimoConsumo", "UltimoConsumo") ?? null,
+    consumoMedio: field(raw, "consumoMedio", "ConsumoMedio") ?? null,
+    consumoMes: field(raw, "consumoMes", "ConsumoMes") ?? null,
+    diasSemLeitura: field(raw, "diasSemLeitura", "DiasSemLeitura") ?? null,
+    periodoUltimoConsumo:
+      field(raw, "periodoUltimoConsumo", "PeriodoUltimoConsumo") ?? null,
+    periodoMedia: field(raw, "periodoMedia", "PeriodoMedia") ?? null,
+    mesReferencia: field(raw, "mesReferencia", "MesReferencia") ?? null,
+  };
+}
+
+export function toApiHidrometro({ leituraAtual, dataLeitura, observacoes }) {
+  return {
+    LeituraAtual: Number(leituraAtual),
+    // datetime-local não tem offset; a API deve normalizar no contrato DateTimeOffset.
+    DataLeitura: dataLeitura,
+    Observacoes: observacoes || null,
+  };
+}

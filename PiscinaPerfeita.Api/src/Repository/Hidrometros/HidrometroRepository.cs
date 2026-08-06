@@ -1,92 +1,61 @@
-﻿using Microsoft.EntityFrameworkCore;
-using PiscinaPerfeita.Api.Dtos.Response;
+using Microsoft.EntityFrameworkCore;
+using PiscinaPerfeita.Api.Data;
 using PiscinaPerfeita.Api.Models;
 
 namespace PiscinaPerfeita.Api.Repository.Hidrometros;
 
 public class HidrometroRepository : IHidrometroRepository
 {
-    private readonly Data.PiscinaPerfeitaContext _context;
+    private readonly PiscinaPerfeitaContext _context;
 
-    public HidrometroRepository(Data.PiscinaPerfeitaContext context)
+    public HidrometroRepository(PiscinaPerfeitaContext context) => _context = context;
+
+    public Task<List<Hidrometro>> ListarOrdenadoAsync(CancellationToken cancellationToken = default) =>
+        _context.Hidrometros
+            .AsNoTracking()
+            .OrderBy(item => item.DataLeitura)
+            .ThenBy(item => item.Id)
+            .ToListAsync(cancellationToken);
+
+    public Task<Hidrometro?> BuscarPorIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+        _context.Hidrometros.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+    public Task<Hidrometro?> BuscarAnteriorAsync(DateTimeOffset dataLeitura, Guid? ignorarId = null, CancellationToken cancellationToken = default)
     {
-        _context = context ?? throw new ArgumentNullException(nameof(context));
+        var query = _context.Hidrometros.Where(item => item.DataLeitura < dataLeitura);
+        if (ignorarId.HasValue) query = query.Where(item => item.Id != ignorarId.Value);
+        return query.OrderByDescending(item => item.DataLeitura).FirstOrDefaultAsync(cancellationToken);
     }
 
-    public async Task<List<HidrometroResponseDto>> Show(
-        DateTimeOffset? dataInicio = null,
-        DateTimeOffset? dataFim = null
-    )
+    public Task<Hidrometro?> BuscarProximoAsync(DateTimeOffset dataLeitura, Guid? ignorarId = null, CancellationToken cancellationToken = default)
     {
-        var query = _context.Hidrometros.AsNoTracking().AsQueryable();
-
-        // Início do mês atual como padrão caso não receba parâmetro
-        if (!dataInicio.HasValue)
-        {
-            var agora = DateTimeOffset.UtcNow;
-            dataInicio = new DateTimeOffset(agora.Year, agora.Month, 1, 0, 0, 0, agora.Offset);
-        }
-
-        query = query.Where(a => a.CriadoEm >= dataInicio.Value);
-
-        if (dataFim.HasValue)
-        {
-            query = query.Where(a => a.CriadoEm <= dataFim.Value);
-        }
-
-        return await query
-            .OrderByDescending(a => a.CriadoEm)
-            .Select(a => new HidrometroResponseDto
-            {
-                Id = a.Id,
-                CriadoEm = a.CriadoEm,
-                Consumo = a.Consumo ?? 0,
-            })
-            .ToListAsync();
+        var query = _context.Hidrometros.Where(item => item.DataLeitura > dataLeitura);
+        if (ignorarId.HasValue) query = query.Where(item => item.Id != ignorarId.Value);
+        return query.OrderBy(item => item.DataLeitura).FirstOrDefaultAsync(cancellationToken);
     }
 
-    public async Task<HidrometroResponseDto?> GetById(Guid id)
+    public Task<bool> ExisteNaDataAsync(DateTimeOffset dataLeitura, Guid? ignorarId = null, CancellationToken cancellationToken = default)
     {
-        var hidrometro = await _context
-            .Hidrometros.Where(e => e.Id == id)
-            .Select(a => new HidrometroResponseDto
-            {
-                Id = a.Id,
-                CriadoEm = a.CriadoEm,
-                Consumo = a.Consumo ?? 0,
-            })
-            .FirstOrDefaultAsync();
-
-        return hidrometro ?? null;
+        var query = _context.Hidrometros.Where(item => item.DataLeitura == dataLeitura);
+        if (ignorarId.HasValue) query = query.Where(item => item.Id != ignorarId.Value);
+        return query.AnyAsync(cancellationToken);
     }
 
-    public async Task Create(Hidrometro hidrometro)
+    public async Task CriarAsync(Hidrometro hidrometro, CancellationToken cancellationToken = default)
     {
-        _context.Hidrometros.Add(hidrometro);
-        await _context.SaveChangesAsync();
+        await _context.Hidrometros.AddAsync(hidrometro, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task Update(Guid id, Hidrometro hidro)
+    public async Task AtualizarAsync(Hidrometro hidrometro, CancellationToken cancellationToken = default)
     {
-        var hidrometroToUpdate = await _context.Hidrometros.FindAsync(id);
-        if (hidrometroToUpdate == null)
-            throw new KeyNotFoundException($"Hidrometro com ID {id} não encontrado.");
-
-        hidrometroToUpdate.Consumo = hidro.Consumo;
-        hidrometroToUpdate.CriadoEm = hidro.CriadoEm;
-
-        await _context.SaveChangesAsync();
+        _context.Hidrometros.Update(hidrometro);
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task Delete(Guid id)
+    public async Task ExcluirAsync(Hidrometro hidrometro, CancellationToken cancellationToken = default)
     {
-        var hidrometro = await _context.Hidrometros.FirstOrDefaultAsync(a => a.Id == id);
-        if (hidrometro == null)
-        {
-            throw new KeyNotFoundException($"Hidrometro com ID {id} não encontrado.");
-        }
-
-        _context.Remove(hidrometro);
-        await _context.SaveChangesAsync();
+        _context.Hidrometros.Remove(hidrometro);
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }

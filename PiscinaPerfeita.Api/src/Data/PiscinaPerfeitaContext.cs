@@ -254,9 +254,18 @@ public partial class PiscinaPerfeitaContext : DbContext
         {
             entity.ToTable("Hidrometro", "piscina-perfeita");
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()");
-            entity.Property(e => e.CriadoEm).HasDefaultValueSql("now() at time zone 'utc'");
-            entity.Property(e => e.Consumo).IsRequired(false);
-
+            entity
+                .Property(e => e.LeituraAtual)
+                .HasColumnName("leituraatual")
+                .HasPrecision(18, 2)
+                .IsRequired();
+            entity
+                .Property(e => e.DataLeitura)
+                .HasColumnName("dataleitura")
+                .HasColumnType("timestamp with time zone")
+                .IsRequired();
+            entity.Property(e => e.Observacoes).HasColumnName("observacoes").HasMaxLength(500);
+            entity.HasIndex(e => new { e.LocalId, e.DataLeitura }).IsUnique();
         });
 
         OnModelCreatingPartial(modelBuilder);

@@ -1,11 +1,14 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
-namespace PiscinaPerfeita.Api.Dtos.Request
+namespace PiscinaPerfeita.Api.Dtos.Request;
+
+public class HidrometroRequestDto
 {
-    public class HidrometroRequestDto
-    {
-        [Required(ErrorMessage = "O PH deve estar entre 0 e 14.")]
-        public float Consumo { get; set; }
-        public DateTimeOffset? CriadoEm { get; set; } = DateTimeOffset.UtcNow;
-    }
+    public decimal LeituraAtual { get; set; }
+
+    [Required(ErrorMessage = "A data e hora da leitura são obrigatórias.")]
+    public DateTimeOffset DataLeitura { get; set; }
+
+    [StringLength(500, ErrorMessage = "As observações podem ter no máximo 500 caracteres.")]
+    public string? Observacoes { get; set; }
 }

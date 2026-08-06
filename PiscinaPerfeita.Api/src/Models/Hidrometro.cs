@@ -1,20 +1,25 @@
-﻿using PiscinaPerfeita.Api.Models.Interfaces;
+using PiscinaPerfeita.Api.Models.Interfaces;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PiscinaPerfeita.Api.Models
+namespace PiscinaPerfeita.Api.Models;
+
+public class Hidrometro : IBelongsToLocal
 {
-    public class Hidrometro:IBelongsToLocal
-    {
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        [Key]
-        public Guid Id { get; set; }
-        public Guid LocalId { get; set; }
-        public float ? Consumo { get; set; }
-        public DateTimeOffset CriadoEm { get; set; } = DateTimeOffset.UtcNow;
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public Guid Id { get; set; }
 
-        [ForeignKey(nameof(LocalId))]
-        public virtual Local Local { get; set; } = null!;
+    public Guid LocalId { get; set; }
 
-    }
+    [Range(0, double.MaxValue)]
+    public decimal LeituraAtual { get; set; }
+
+    public DateTimeOffset DataLeitura { get; set; }
+
+    [MaxLength(500)]
+    public string? Observacoes { get; set; }
+
+    [ForeignKey(nameof(LocalId))]
+    public virtual Local Local { get; set; } = null!;
 }

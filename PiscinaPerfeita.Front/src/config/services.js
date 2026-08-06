@@ -37,6 +37,10 @@ import {
   fromApiUsuarioLocal,
   fromApiUsuarioLocalList,
   toApiUsuarioLocal,
+  fromApiDashboardHidrometro,
+  fromApiHidrometro,
+  fromApiHidrometroList,
+  toApiHidrometro,
 } from "./mappers.js";
 
 // ----------------------------------------------------------
@@ -151,7 +155,8 @@ export const usuarioService = {
 
   // "Meu Perfil" — dados do próprio usuário logado.
   meuPerfil: () => get(API_ENDPOINTS.meuPerfil).then(fromApiUsuario),
-  atualizarMeuPerfil: (dto) => put(API_ENDPOINTS.meuPerfil, dto).then(fromApiUsuario),
+  atualizarMeuPerfil: (dto) =>
+    put(API_ENDPOINTS.meuPerfil, dto).then(fromApiUsuario),
 
   // NOTA: ainda não existe endpoint PUT /usuarios/me/senha no backend —
   // esta chamada vai falhar com 404 até esse endpoint ser implementado
@@ -230,6 +235,26 @@ export const estoqueService = {
   atualizar: (id, dto) =>
     put(API_ENDPOINTS.estoqueById(id), toApiEstoque(dto)).then(fromApiEstoque),
   excluir: (id) => del(API_ENDPOINTS.estoqueById(id)),
+};
+
+// ----------------------------------------------------------
+// Hidrometros
+// ----------------------------------------------------------
+
+export const hidrometroService = {
+  listar: () => get(API_ENDPOINTS.hidrometros).then(fromApiHidrometroList),
+  buscar: (id) => get(API_ENDPOINTS.hidrometroById(id)).then(fromApiHidrometro),
+  dashboard: () =>
+    get(API_ENDPOINTS.hidrometroDashboard).then(fromApiDashboardHidrometro),
+  criar: (dto) =>
+    post(API_ENDPOINTS.hidrometros, toApiHidrometro(dto)).then(
+      fromApiHidrometro,
+    ),
+  atualizar: (id, dto) =>
+    put(API_ENDPOINTS.hidrometroById(id), toApiHidrometro(dto)).then(
+      fromApiHidrometro,
+    ),
+  excluir: (id) => del(API_ENDPOINTS.hidrometroById(id)),
 };
 
 // ----------------------------------------------------------
