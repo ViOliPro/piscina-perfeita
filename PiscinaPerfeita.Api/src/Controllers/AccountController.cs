@@ -44,9 +44,11 @@ namespace PiscinaPerfeita.Api.Controllers
                 var res = await _accountService.Login(req);
                 return Ok(res);
             }
-            catch (Exception ex)
+            catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (Exception)
             {
-                return BadRequest(new { message = ex.Message });
+                return StatusCode(500, new { message = "Ocorreu um erro ao processar o login." });
             }
         }
 
@@ -66,23 +68,18 @@ namespace PiscinaPerfeita.Api.Controllers
                 var res = await _accountService.SwitchLocal(userId, newLocalId);
                 return Ok(res);
             }
-            catch (KeyNotFoundException ex)
+            catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (Exception)
             {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
+                return StatusCode(500, new { message = "Ocorreu um erro ao processar o login." });
             }
         }
 
         // POST /api/auth/esqueci-senha
         [HttpPost("esqueci-senha")]
         [AllowAnonymous]
+        [EnableRateLimiting("auth-sensitive")]
         public async Task<IActionResult> EsqueciSenha([FromBody] EsqueciSenhaRequestDto dto)
         {
             // Sempre responde 200 igual, exista ou não o e-mail, e mesmo que o
@@ -111,6 +108,7 @@ namespace PiscinaPerfeita.Api.Controllers
         // POST /api/auth/redefinir-senha
         [HttpPost("redefinir-senha")]
         [AllowAnonymous]
+        [EnableRateLimiting("auth-sensitive")]
         public async Task<IActionResult> RedefinirSenha([FromBody] RedefinirSenhaRequestDto dto)
         {
             // CORRIGIDO: antes só validávamos o token e retornávamos sucesso
@@ -136,6 +134,7 @@ namespace PiscinaPerfeita.Api.Controllers
         // POST /api/account/completar-convite
         [HttpPost("completar-convite")]
         [AllowAnonymous]
+        [EnableRateLimiting("auth-sensitive")]
         public async Task<IActionResult> CompletarConvite([FromBody] CompletarConviteRequestDto dto)
         {
             try

@@ -217,17 +217,12 @@ namespace PiscinaPerfeita.Api.Service.Account
             if (vinculos == null || vinculos.Count == 0)
                 throw new KeyNotFoundException("Este usuário não está vinculado a nenhum local!");
 
-            Guid? localIdAtivo;
-            if (vinculos.Count > 1)
-                localIdAtivo = usuario.UltimoLocalId ?? usuario.LocalId ?? vinculos[0].LocalId;
-            else
-                localIdAtivo = vinculos[0].LocalId;
+            var vinculoAtivo = vinculos.FirstOrDefault(v => v.LocalId == usuario.UltimoLocalId)
+                ?? vinculos.FirstOrDefault(v => v.LocalId == usuario.LocalId)
+                ?? vinculos[0];
 
-            var perfilAtivo =
-                vinculos.FirstOrDefault(v => v.LocalId == localIdAtivo)?.Perfil
-                ?? vinculos[0].Perfil;
+            return (vinculoAtivo.LocalId, vinculoAtivo.Perfil);
 
-            return (localIdAtivo, perfilAtivo);
         }
 
         // Simplificado: criação síncrona do token em memória
@@ -258,7 +253,7 @@ namespace PiscinaPerfeita.Api.Service.Account
                         ), // Emissão
                     }
                 ),
-                Expires = DateTime.UtcNow.AddHours(8),
+                Expires = DateTime.UtcNow.AddHours(1),
                 SigningCredentials = new SigningCredentials(
                     new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
                     SecurityAlgorithms.HmacSha256

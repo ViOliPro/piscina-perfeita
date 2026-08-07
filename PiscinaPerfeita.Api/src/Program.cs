@@ -12,6 +12,7 @@ using Microsoft.OpenApi;
 using PiscinaPerfeita.Api.Authorization;
 using PiscinaPerfeita.Api.Data;
 using PiscinaPerfeita.Api.Extension;
+using System.Threading.RateLimiting;
 
 // 1. Inicializa o builder e carrega as variáveis de ambiente IMEDIATAMENTE
 var builder = WebApplication.CreateBuilder(args);
@@ -248,20 +249,42 @@ builder.Services.AddCors(options =>
 
 // Rate limiting — hoje o login não tinha nenhum limite de tentativas.
 // Em Development o limite é bem mais alto pra não travar os testes manuais.
+
 var loginPermitLimit = builder.Environment.IsDevelopment() ? 1000 : 5;
+var authSensitivePermitLimit = builder.Environment.IsDevelopment() ? 1000 : 10;
 
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
-    options.AddFixedWindowLimiter(
-        "login",
-        limiterOptions =>
-        {
-            limiterOptions.Window = TimeSpan.FromMinutes(1);
-            limiterOptions.PermitLimit = loginPermitLimit;
-            limiterOptions.QueueLimit = 0;
-        }
+    // Partitionado por IP — cada IP tem sua própria janela, então um
+    // atacante só se limita a si mesmo, não trava o login de todo mundo.
+    options.AddPolicy("login", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                Window = TimeSpan.FromMinutes(1),
+                PermitLimit = loginPermitLimit,
+                QueueLimit = 0,
+            }
+        )
+    );
+
+    // Endpoints sensíveis e anônimos que não passam por "login": protege
+    // esqueci-senha (email bombing / gasto de cota do Resend),
+    // redefinir-senha e completar-convite (brute-force de token) contra
+    // abuso não autenticado. Também por IP.
+    options.AddPolicy("auth-sensitive", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                Window = TimeSpan.FromMinutes(1),
+                PermitLimit = authSensitivePermitLimit,
+                QueueLimit = 0,
+            }
+        )
     );
 });
 
