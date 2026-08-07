@@ -24,8 +24,15 @@ public class ResendEmailService : IEmailService
             "Bearer",
             config["RESEND__APIKEY"]
         );
-        Console.WriteLine($"ResendEmailService: APIKEY={config["RESEND__APIKEY"]}");
-        Console.WriteLine($"ResendEmailService: REMETENTE={config["RESEND__REMETENTE"]}");
+        Console.WriteLine(
+            $"_________________________________________ResendEmailService: APIKEY={config["RESEND__APIKEY"]}"
+        );
+        Console.WriteLine(
+            $"_________________________________________ResendEmailService: REMETENTE={config["RESEND__REMETENTE"]}"
+        );
+        Console.WriteLine(
+            $"_________________________________________ResendEmailService: REMETENTE={config["RESEND:REMETENTE"]}"
+        );
         _remetente =
             config["RESEND__REMETENTE"]
             ?? throw new InvalidOperationException("Configuração 'RESEND__REMETENTE' ausente!.");
