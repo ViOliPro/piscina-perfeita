@@ -28,8 +28,8 @@ public class ResendEmailService : IEmailService
             config["RESEND__APIKEY"]
         );
         _remetente =
-            config["RESEND:REMETENTE"]
-            ?? throw new InvalidOperationException("Configuração 'RESEND:REMETENTE' ausente.");
+            config["RESEND__REMETENTE"]
+            ?? throw new InvalidOperationException("Configuração 'RESEND__REMETENTE' ausente.");
     }
 
     public async Task EnviarRedefinicaoSenhaAsync(
