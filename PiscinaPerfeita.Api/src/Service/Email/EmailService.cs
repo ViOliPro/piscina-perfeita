@@ -2,7 +2,6 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 
-
 namespace PiscinaPerfeita.Api.Service.Email;
 
 /// <summary>
@@ -17,8 +16,6 @@ public class ResendEmailService : IEmailService
     private readonly HttpClient _http;
     private readonly string _remetente; // ex.: "PiscinaPerfeita <naoresponda@seudominio.com>"
 
-    
-
     public ResendEmailService(HttpClient http, IConfiguration config)
     {
         _http = http;
@@ -27,9 +24,11 @@ public class ResendEmailService : IEmailService
             "Bearer",
             config["RESEND__APIKEY"]
         );
+        Console.WriteLine($"ResendEmailService: APIKEY={config["RESEND__APIKEY"]}");
+        Console.WriteLine($"ResendEmailService: REMETENTE={config["RESEND__REMETENTE"]}");
         _remetente =
-            config["RESEND:REMETENTE"]
-            ?? throw new InvalidOperationException("Configuração 'RESEND:REMETENTE' ausente.");
+            config["RESEND__REMETENTE"]
+            ?? throw new InvalidOperationException("Configuração 'RESEND__REMETENTE' ausente!.");
     }
 
     public async Task EnviarRedefinicaoSenhaAsync(
@@ -92,8 +91,12 @@ public class ResendEmailService : IEmailService
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"_____________________________________________________________{response}");
-            Console.WriteLine($"_____________________________________________________________{body}");
+            Console.WriteLine(
+                $"_____________________________________________________________{response}"
+            );
+            Console.WriteLine(
+                $"_____________________________________________________________{body}"
+            );
             throw new EmailDeliveryException($"Resend retornou {response.StatusCode}: {body}");
         }
     }

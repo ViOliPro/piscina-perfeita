@@ -66,7 +66,7 @@ namespace PiscinaPerfeita.Api.Service.Account
                         Email = usuario.Email ?? string.Empty,
                         LocalId = Guid.Empty,
                         Role = usuario.Role,
-                        Perfil = null,
+                        Perfil = Perfil.Administrador,
                     },
                 };
             }
@@ -127,7 +127,7 @@ namespace PiscinaPerfeita.Api.Service.Account
                         Email = usuario.Email ?? string.Empty,
                         LocalId = Guid.Empty,
                         Role = usuario.Role,
-                        Perfil = null,
+                        Perfil = Perfil.Administrador,
                     },
                 };
             }
