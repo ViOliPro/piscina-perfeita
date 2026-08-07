@@ -15,7 +15,7 @@ jobs:
 
       - name: Validar Build da imagem Docker
         run: |
-          docker build -f ./PiscinaPerfeita.Api/src/Dockerfile -t piscina-api:test .
+          docker build -f ./PiscinaPerfeita.Api/Dockerfile -t piscina-api:test .
 
       - name: Disparar Deploy no Render (API)
         run: |
