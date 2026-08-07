@@ -22,19 +22,11 @@ public class ResendEmailService : IEmailService
         _http.BaseAddress = new Uri("https://api.resend.com/");
         _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            config["RESEND__APIKEY"]
+            config["RESEND:APIKEY"]
         );
-        Console.WriteLine(
-            $"_________________________________________ResendEmailService: APIKEY={config["RESEND__APIKEY"]}"
-        );
-        Console.WriteLine(
-            $"_________________________________________ResendEmailService: REMETENTE={config["RESEND__REMETENTE"]}"
-        );
-        Console.WriteLine(
-            $"_________________________________________ResendEmailService: REMETENTE={config["RESEND:REMETENTE"]}"
-        );
+
         _remetente =
-            config["RESEND__REMETENTE"]
+            config["RESEND:REMETENTE"]
             ?? throw new InvalidOperationException("Configuração 'RESEND__REMETENTE' ausente!.");
     }
 
