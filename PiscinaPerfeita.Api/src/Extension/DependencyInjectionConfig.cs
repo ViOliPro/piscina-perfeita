@@ -45,15 +45,11 @@ namespace PiscinaPerfeita.Api.Extension
             services.AddScoped<IDepositoService, DepositoService>();
             services.AddScoped<IAplicacaoProdutoService, AplicacaoProdutoService>();
             services.AddScoped<IHidrometroService, HidrometroService>();
-            // ResendEmailService pede um HttpClient no construtor. Sem essa
-            // linha, o container de DI não sabe como resolver HttpClient, e
-            // isso quebra a resolução de IEmailService — e, por tabela,
-            // qualquer coisa que dependa de IUsuarioService (incluindo o
-            // login), já que UsuarioService também depende de IEmailService.
             services.AddHttpClient();
             services.AddScoped<IEmailService, ResendEmailService>();
             //Autheticated
             services.AddScoped<IAuthenticatedUser, AuthenticatedUser>();
+            services.AddScoped<ITokenService, TokenService>();
 
             // 2. Registre aqui todos os seus Repositories
             services.AddScoped<IUsuarioRepository, UsuarioRepository>();

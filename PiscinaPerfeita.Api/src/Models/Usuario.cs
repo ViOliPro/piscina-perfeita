@@ -26,6 +26,8 @@ namespace PiscinaPerfeita.Api.Models
 
         public Role Role { get; set; }
 
+        public bool LoginGoogle { get; set; } = false;
+
         // Campo para invalidar tokens antigos
         public string SecurityStamp { get; set; } = Guid.NewGuid().ToString();
 

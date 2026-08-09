@@ -1,4 +1,5 @@
 ﻿using System.Security.Cryptography;
+using Microsoft.EntityFrameworkCore;
 using PiscinaPerfeita.Api.Data;
 using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
@@ -87,8 +88,6 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 return null;
             }
 
-            //await GarantirUsuarioNoTenantAtual(usuarioDb.Id, protegerAdministradorPai: false);
-
             return usuarioDb;
         }
 
@@ -137,8 +136,6 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
 
             var getPassword = await _usuariosRepository.GetPasswordById(id);
 
-            // Mesma regra do Create: sem essa checagem, qualquer usuário autenticado
-            // podia fazer PUT no próprio id com Role=SuperAdmin e se auto-promover.
             var usuarioLogado = await _user.GetCurrentUser();
             if (dto.Role.HasValue)
             {
@@ -148,13 +145,9 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 );
             }
 
-            // CORRIGIDO: mesmo IDOR do GetById — faltava garantir que o
-            // usuário editado pertence ao tenant do Administrador logado.
-            // A proteção extra do Administrador Pai só entra quando a
-            // chamada tenta mexer em Role (privilégio); edição básica de
-            // nome/email/senha continua permitida por outro Administrador
-            // do mesmo tenant.
             await GarantirUsuarioNoTenantAtual(id, protegerAdministradorPai: dto.Role.HasValue);
+
+            var roleMudou = dto.Role.HasValue && dto.Role.Value != usuario.Role;
 
             var usuarioDb = new Usuario
             {
@@ -165,14 +158,9 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                     ? BCrypt.Net.BCrypt.HashPassword(dto.SenhaHash)
                     : getPassword?.SenhaHash,
                 Role = dto.Role ?? usuario.Role,
-                // Mantém o SecurityStamp atual (o repositório agora persiste
-                // este campo — sem isso, toda edição feita por um Admin
-                // derrubaria a sessão do usuário editado, já que `new Usuario`
-                // sem valor explícito cai no default do model, um Guid novo).
-                // `usuario` é um UsuarioResponseDto (não tem SecurityStamp);
-                // usamos `getPassword`, que é a entidade completa já buscada
-                // logo acima.
-                SecurityStamp = getPassword?.SecurityStamp ?? Guid.NewGuid().ToString(),
+                SecurityStamp = roleMudou
+                    ? Guid.NewGuid().ToString()
+                    : (getPassword?.SecurityStamp ?? Guid.NewGuid().ToString()),
             };
 
             await _usuariosRepository.Update(id, usuarioDb);
@@ -575,7 +563,11 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             var hash = HashToken(dto.Token);
             var convite = await _usuariosRepository.GetConviteByHash(hash);
 
-            if (convite is null || convite.UsadoEm is not null || convite.ExpiraEm < DateTime.UtcNow)
+            if (
+                convite is null
+                || convite.UsadoEm is not null
+                || convite.ExpiraEm < DateTime.UtcNow
+            )
                 throw new InvalidOperationException("Convite inválido ou expirado.");
 
             // Alguém pode ter se cadastrado com este e-mail por outro caminho
@@ -647,6 +639,78 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             }
             motivo = "";
             return true;
+        }
+
+        public async Task<Usuario?> ObterOuVincularPorEmailGoogleAsync(string email)
+        {
+            var usuarioExistente = await _usuariosRepository.GetByEmail(email);
+            if (usuarioExistente is null)
+                return null;
+
+            if (!usuarioExistente.LoginGoogle)
+                await _usuariosRepository.MarcarLoginGoogle(usuarioExistente.Id);
+
+            return usuarioExistente;
+        }
+
+        public async Task<bool> ExisteConviteAtivoAsync(string email)
+        {
+            var convite = await _usuariosRepository.GetConviteAtivoByEmail(email);
+            return convite is not null;
+        }
+
+        public async Task<Usuario?> CompletarConviteGoogleAsync(
+            string email,
+            string nome,
+            string? cpf
+        )
+        {
+            // Corrida: o usuário pode ter completado o cadastro por outro caminho
+            // (link do convite por e-mail) entre a checagem em AutenticarAsync e
+            // esta chamada — trata como login normal em vez de duplicar conta.
+            var usuarioExistente = await _usuariosRepository.GetByEmail(email);
+            if (usuarioExistente != null)
+            {
+                if (!usuarioExistente.LoginGoogle)
+                    await _usuariosRepository.MarcarLoginGoogle(usuarioExistente.Id);
+
+                return usuarioExistente;
+            }
+
+            var convite = await _usuariosRepository.GetConviteAtivoByEmail(email);
+            if (convite is null)
+                return null; // convite expirou/foi usado nesse intervalo
+
+            var novoUsuario = new Usuario
+            {
+                Nome = nome,
+                Email = email,
+                Cpf = cpf,
+                SenhaHash = null,
+                LoginGoogle = true,
+                Role = convite.Role,
+                SecurityStamp = Guid.NewGuid().ToString(),
+            };
+
+            await _usuariosRepository.Create(novoUsuario);
+
+            var usuarioLocal = new UsuarioLocal
+            {
+                UsuarioId = novoUsuario.Id,
+                LocalId = convite.LocalId,
+                Perfil = convite.Perfil,
+                EhAdministradorPai =
+                    convite.CriadoPorSuperAdmin
+                    && convite.LocalId.HasValue
+                    && convite.Perfil == Perfil.Administrador,
+            };
+
+            await _usuariosLocalRepository.Create(usuarioLocal);
+
+            convite.UsadoEm = DateTime.UtcNow;
+            await _usuariosRepository.UpdateConvite(convite);
+
+            return novoUsuario;
         }
     }
 }

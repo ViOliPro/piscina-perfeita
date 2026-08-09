@@ -36,5 +36,11 @@ namespace PiscinaPerfeita.Api.Repository.Usuarios
         Task CriarConvite(ConviteToken convite);
         Task UpdateConvite(ConviteToken convite);
         Task<ConviteToken?> GetConviteByHash(string tokenHash);
+        Task RotateSecurityStamp(Guid id);
+
+        Task<ConviteToken?> GetConviteAtivoByEmail(string email);
+
+        // IUsuarioRepository.cs
+        Task MarcarLoginGoogle(Guid id);
     }
 }
