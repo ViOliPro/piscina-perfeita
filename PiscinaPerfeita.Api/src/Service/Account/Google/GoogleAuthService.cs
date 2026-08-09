@@ -1,4 +1,5 @@
-﻿using PiscinaPerfeita.Api.Service.Usuarios;
+﻿using PiscinaPerfeita.Api.Dtos.Response;
+using PiscinaPerfeita.Api.Service.Usuarios;
 
 namespace PiscinaPerfeita.Api.Service.Account.Google
 {
@@ -35,7 +36,16 @@ namespace PiscinaPerfeita.Api.Service.Account.Google
             if (usuario is not null)
             {
                 var resultado = await _tokenService.GerarTokenAsync(usuario);
-                return AuthResult.Ok(resultado.AccessToken);
+                var userDto = new UserResponseDto
+                {
+                    UserId = usuario.Id,
+                    Nome = usuario.Nome ?? string.Empty,
+                    Email = usuario.Email ?? string.Empty,
+                    LocalId = resultado.LocalId,
+                    Role = usuario.Role,
+                    Perfil = resultado.Perfil,
+                };
+                return AuthResult.Ok(resultado.AccessToken, userDto);
             }
 
             if (await _usuarioService.ExisteConviteAtivoAsync(payload.Email))
@@ -74,7 +84,16 @@ namespace PiscinaPerfeita.Api.Service.Account.Google
             }
 
             var resultado = await _tokenService.GerarTokenAsync(usuario);
-            return AuthResult.Ok(resultado.AccessToken);
+            var userDto = new UserResponseDto
+            {
+                UserId = usuario.Id,
+                Nome = usuario.Nome ?? string.Empty,
+                Email = usuario.Email ?? string.Empty,
+                LocalId = resultado.LocalId,
+                Role = usuario.Role,
+                Perfil = resultado.Perfil,
+            };
+            return AuthResult.Ok(resultado.AccessToken, userDto);
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace PiscinaPerfeita.Api.Service.Account.Google
+﻿using PiscinaPerfeita.Api.Dtos.Response;
+
+namespace PiscinaPerfeita.Api.Service.Account.Google
 {
     // Auth/Google/IGoogleAuthService.cs
     public interface IGoogleAuthService
@@ -18,10 +20,17 @@
     {
         public bool Sucesso { get; init; }
         public string? Token { get; init; }
+        public UserResponseDto? User { get; init; }
         public string? Mensagem { get; init; }
         public AuthErro? Erro { get; init; }
 
-        public static AuthResult Ok(string token) => new() { Sucesso = true, Token = token };
+        public static AuthResult Ok(string token, UserResponseDto user) =>
+            new()
+            {
+                Sucesso = true,
+                Token = token,
+                User = user,
+            };
 
         public static AuthResult Falha(AuthErro erro, string mensagem) =>
             new()

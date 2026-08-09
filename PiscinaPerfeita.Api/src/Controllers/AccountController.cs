@@ -164,23 +164,31 @@ namespace PiscinaPerfeita.Api.Controllers
         [HttpPost("google")]
         [AllowAnonymous]
         [EnableRateLimiting("auth-sensitive")]
-        public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
+        public async Task<ActionResult<AccountResponseDto>> GoogleLogin(
+            [FromBody] GoogleLoginRequest request
+        )
         {
             var resultado = await _googleAuthService.AutenticarAsync(request.IdToken);
-
             if (!resultado.Sucesso)
                 return Unauthorized(
-                    new { erro = resultado.Erro.ToString(), mensagem = resultado.Mensagem }
+                    new { message = resultado.Mensagem, erro = resultado.Erro.ToString() }
                 );
 
-            return Ok(new { token = resultado.Token });
+            return Ok(
+                new AccountResponseDto
+                {
+                    AccessToken = resultado.Token!,
+                    TokenType = "Bearer",
+                    expiresIn = 3600,
+                    User = resultado.User!,
+                }
+            );
         }
 
-        // AccountController.cs
         [HttpPost("google/completar-convite")]
         [AllowAnonymous]
         [EnableRateLimiting("auth-sensitive")]
-        public async Task<IActionResult> GoogleCompletarConvite(
+        public async Task<ActionResult<AccountResponseDto>> GoogleCompletarConvite(
             [FromBody] CompletarConviteGoogleRequest request
         )
         {
@@ -188,13 +196,20 @@ namespace PiscinaPerfeita.Api.Controllers
                 request.IdToken,
                 request.Cpf
             );
-
             if (!resultado.Sucesso)
                 return Unauthorized(
-                    new { erro = resultado.Erro.ToString(), mensagem = resultado.Mensagem }
+                    new { message = resultado.Mensagem, erro = resultado.Erro.ToString() }
                 );
 
-            return Ok(new { token = resultado.Token });
+            return Ok(
+                new AccountResponseDto
+                {
+                    AccessToken = resultado.Token!,
+                    TokenType = "Bearer",
+                    expiresIn = 3600,
+                    User = resultado.User!,
+                }
+            );
         }
     }
 }
