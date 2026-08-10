@@ -1,13 +1,14 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Google.Apis.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Helpers.Authenticated;
 using PiscinaPerfeita.Api.Service.Account;
+using PiscinaPerfeita.Api.Service.Account.Google;
 using PiscinaPerfeita.Api.Service.Email;
 using PiscinaPerfeita.Api.Service.Usuarios;
-
 
 namespace PiscinaPerfeita.Api.Controllers
 {
@@ -18,11 +19,13 @@ namespace PiscinaPerfeita.Api.Controllers
         private readonly IAccountService _accountService;
         private readonly IAuthenticatedUser _authenticatedUser;
         private readonly IUsuarioService _usuarioService;
+        private readonly IGoogleAuthService _googleAuthService;
 
         public AccountController(
             IAccountService accountService,
             IAuthenticatedUser authenticatedUser,
-            IUsuarioService usuarioService
+            IUsuarioService usuarioService,
+            IGoogleAuthService googleAuthService
         )
         {
             _accountService =
@@ -31,6 +34,8 @@ namespace PiscinaPerfeita.Api.Controllers
                 authenticatedUser ?? throw new ArgumentNullException(nameof(authenticatedUser));
             _usuarioService =
                 usuarioService ?? throw new ArgumentNullException(nameof(usuarioService));
+            _googleAuthService =
+                googleAuthService ?? throw new ArgumentNullException(nameof(googleAuthService));
         }
 
         // Login
@@ -44,8 +49,14 @@ namespace PiscinaPerfeita.Api.Controllers
                 var res = await _accountService.Login(req);
                 return Ok(res);
             }
-            catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
-            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
             catch (Exception)
             {
                 return StatusCode(500, new { message = "Ocorreu um erro ao processar o login." });
@@ -68,8 +79,14 @@ namespace PiscinaPerfeita.Api.Controllers
                 var res = await _accountService.SwitchLocal(userId, newLocalId);
                 return Ok(res);
             }
-            catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
-            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
             catch (Exception)
             {
                 return StatusCode(500, new { message = "Ocorreu um erro ao processar o login." });
@@ -82,14 +99,6 @@ namespace PiscinaPerfeita.Api.Controllers
         [EnableRateLimiting("auth-sensitive")]
         public async Task<IActionResult> EsqueciSenha([FromBody] EsqueciSenhaRequestDto dto)
         {
-            // Sempre responde 200 igual, exista ou não o e-mail, e mesmo que o
-            // envio do e-mail falhe — impede que alguém descubra quais e-mails
-            // estão cadastrados (ou que o Resend está fora do ar).
-            //
-            // CORRIGIDO: antes chamávamos _usuarioService.PasswordResetToken()
-            // direto, que só gera e salva o token — o e-mail nunca era
-            // disparado. EsqueciSenha() é o método que gera o token E chama
-            // o EmailService.
             try
             {
                 await _usuarioService.EsqueciSenha(dto);
@@ -100,9 +109,7 @@ namespace PiscinaPerfeita.Api.Controllers
                 // que o e-mail pode não ter chegado; a resposta continua neutra.
             }
 
-            return Ok(
-                new { message = "Se o e-mail existir, você receberá um link em instantes." }
-            );
+            return Ok(new { message = "Se o e-mail existir, você receberá um link em instantes." });
         }
 
         // POST /api/auth/redefinir-senha
@@ -152,6 +159,57 @@ namespace PiscinaPerfeita.Api.Controllers
             {
                 return StatusCode(500, new { error = "Ocorreu um erro ao concluir o cadastro." });
             }
+        }
+
+        [HttpPost("google")]
+        [AllowAnonymous]
+        [EnableRateLimiting("auth-sensitive")]
+        public async Task<ActionResult<AccountResponseDto>> GoogleLogin(
+            [FromBody] GoogleLoginRequest request
+        )
+        {
+            var resultado = await _googleAuthService.AutenticarAsync(request.IdToken);
+            if (!resultado.Sucesso)
+                return Unauthorized(
+                    new { message = resultado.Mensagem, erro = resultado.Erro.ToString() }
+                );
+
+            return Ok(
+                new AccountResponseDto
+                {
+                    AccessToken = resultado.Token!,
+                    TokenType = "Bearer",
+                    expiresIn = 3600,
+                    User = resultado.User!,
+                }
+            );
+        }
+
+        [HttpPost("google/completar-convite")]
+        [AllowAnonymous]
+        [EnableRateLimiting("auth-sensitive")]
+        public async Task<ActionResult<AccountResponseDto>> GoogleCompletarConvite(
+            [FromBody] CompletarConviteGoogleRequest request
+        )
+        {
+            var resultado = await _googleAuthService.CompletarCadastroAsync(
+                request.IdToken,
+                request.Cpf
+            );
+            if (!resultado.Sucesso)
+                return Unauthorized(
+                    new { message = resultado.Mensagem, erro = resultado.Erro.ToString() }
+                );
+
+            return Ok(
+                new AccountResponseDto
+                {
+                    AccessToken = resultado.Token!,
+                    TokenType = "Bearer",
+                    expiresIn = 3600,
+                    User = resultado.User!,
+                }
+            );
         }
     }
 }

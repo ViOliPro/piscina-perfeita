@@ -230,4 +230,46 @@ public class UsuarioRepository : IUsuarioRepository
         _context.ConviteTokens.Update(convite);
         await _context.SaveChangesAsync();
     }
+
+    // Rotaciona o SecurityStamp isoladamente — usado sempre que uma mudança
+    // de permissão (Perfil/Role) precisa invalidar tokens já emitidos, sem
+    // depender de o caller montar um objeto Usuario completo (evita o mesmo
+    // bug que o UpdateUltimoLocal corrigiu: zerar campos por reconstrução
+    // incompleta do objeto).
+    public async Task RotateSecurityStamp(Guid id)
+    {
+        var user = await _context.Usuarios.FindAsync(id);
+        if (user == null)
+            throw new KeyNotFoundException($"Usuário com ID {id} não encontrado.");
+
+        user.SecurityStamp = Guid.NewGuid().ToString();
+
+        await _context.SaveChangesAsync();
+    }
+
+    // Busca o convite mais recente e ainda válido (não usado, não expirado)
+    // para um e-mail. A validação de "ainda vale" fica aqui na query mesmo
+    // (diferente de GetConviteByHash, que devolve cru pro Service decidir)
+    // porque aqui o caller só precisa saber "existe convite utilizável?" —
+    // não há fluxo que precise inspecionar um convite expirado por e-mail.
+    // IgnoreQueryFilters pelo mesmo motivo de GetByEmail: chamado durante
+    // login, antes de qualquer contexto de tenant/JWT existir.
+    public async Task<ConviteToken?> GetConviteAtivoByEmail(string email)
+    {
+        return await _context
+            .ConviteTokens.IgnoreQueryFilters()
+            .Where(c => c.Email == email && c.UsadoEm == null && c.ExpiraEm > DateTime.UtcNow)
+            .OrderByDescending(c => c.ExpiraEm)
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task MarcarLoginGoogle(Guid id)
+    {
+        var user = await _context.Usuarios.FindAsync(id);
+        if (user == null)
+            throw new KeyNotFoundException($"Usuário com ID {id} não encontrado.");
+
+        user.LoginGoogle = true;
+        await _context.SaveChangesAsync();
+    }
 }

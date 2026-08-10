@@ -13,6 +13,7 @@ using PiscinaPerfeita.Api.Repository.UsuariosLocal;
 // <summary>
 // Classe responsável por configurar a injeção de dependências para os serviços e repositórios
 using PiscinaPerfeita.Api.Service.Account;
+using PiscinaPerfeita.Api.Service.Account.Google;
 using PiscinaPerfeita.Api.Service.Analises;
 using PiscinaPerfeita.Api.Service.AplicacoesProduto;
 using PiscinaPerfeita.Api.Service.Depositos;
@@ -45,15 +46,13 @@ namespace PiscinaPerfeita.Api.Extension
             services.AddScoped<IDepositoService, DepositoService>();
             services.AddScoped<IAplicacaoProdutoService, AplicacaoProdutoService>();
             services.AddScoped<IHidrometroService, HidrometroService>();
-            // ResendEmailService pede um HttpClient no construtor. Sem essa
-            // linha, o container de DI não sabe como resolver HttpClient, e
-            // isso quebra a resolução de IEmailService — e, por tabela,
-            // qualquer coisa que dependa de IUsuarioService (incluindo o
-            // login), já que UsuarioService também depende de IEmailService.
             services.AddHttpClient();
             services.AddScoped<IEmailService, ResendEmailService>();
             //Autheticated
             services.AddScoped<IAuthenticatedUser, AuthenticatedUser>();
+            services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<IGoogleAuthService, GoogleAuthService>();
+            services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
 
             // 2. Registre aqui todos os seus Repositories
             services.AddScoped<IUsuarioRepository, UsuarioRepository>();

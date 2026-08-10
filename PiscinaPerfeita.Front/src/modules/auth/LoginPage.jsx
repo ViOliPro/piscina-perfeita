@@ -14,14 +14,26 @@ import { LogoIcon } from "../../components/ui/Logo.jsx";
 import EsqueciSenha from "./EsqueciSenha.jsx";
 import RedefinirSenha from "./RedefinirSenha.jsx";
 import CompletarConvite from "./CompletarConvite.jsx";
+import { GoogleLogin } from "@react-oauth/google";
+import CompletarCadastroGoogle from "./CompletarCadastroGoogle.jsx";
 
 // ----------------------------------------------------------
 // Onda decorativa SVG
 // ----------------------------------------------------------
 function WaveSVG() {
   return (
-    <svg viewBox="0 0 1200 120" preserveAspectRatio="none"
-      style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: 80, display: "block" }}>
+    <svg
+      viewBox="0 0 1200 120"
+      preserveAspectRatio="none"
+      style={{
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        width: "100%",
+        height: 80,
+        display: "block",
+      }}
+    >
       <path
         d="M0,40 C150,80 350,0 600,40 C850,80 1050,0 1200,40 L1200,120 L0,120 Z"
         fill="rgba(94,192,235,0.15)"
@@ -39,12 +51,12 @@ function WaveSVG() {
 // ----------------------------------------------------------
 function Bubbles() {
   const bubbles = [
-    { size: 60,  left: "8%",  delay: 0,    duration: 7  },
-    { size: 30,  left: "20%", delay: 1.5,  duration: 5  },
-    { size: 80,  left: "75%", delay: 0.5,  duration: 9  },
-    { size: 20,  left: "88%", delay: 2,    duration: 6  },
-    { size: 45,  left: "55%", delay: 3,    duration: 8  },
-    { size: 15,  left: "40%", delay: 0.8,  duration: 4  },
+    { size: 60, left: "8%", delay: 0, duration: 7 },
+    { size: 30, left: "20%", delay: 1.5, duration: 5 },
+    { size: 80, left: "75%", delay: 0.5, duration: 9 },
+    { size: 20, left: "88%", delay: 2, duration: 6 },
+    { size: 45, left: "55%", delay: 3, duration: 8 },
+    { size: 15, left: "40%", delay: 0.8, duration: 4 },
   ];
 
   return (
@@ -57,18 +69,21 @@ function Bubbles() {
         }
       `}</style>
       {bubbles.map((b, i) => (
-        <div key={i} style={{
-          position: "absolute",
-          bottom: `${10 + i * 8}%`,
-          left: b.left,
-          width: b.size,
-          height: b.size,
-          borderRadius: "50%",
-          border: "1.5px solid rgba(94,192,235,0.4)",
-          background: "rgba(94,192,235,0.06)",
-          animation: `pp-bubble ${b.duration}s ease-in-out ${b.delay}s infinite`,
-          pointerEvents: "none",
-        }} />
+        <div
+          key={i}
+          style={{
+            position: "absolute",
+            bottom: `${10 + i * 8}%`,
+            left: b.left,
+            width: b.size,
+            height: b.size,
+            borderRadius: "50%",
+            border: "1.5px solid rgba(94,192,235,0.4)",
+            background: "rgba(94,192,235,0.06)",
+            animation: `pp-bubble ${b.duration}s ease-in-out ${b.delay}s infinite`,
+            pointerEvents: "none",
+          }}
+        />
       ))}
     </>
   );
@@ -77,11 +92,22 @@ function Bubbles() {
 // ----------------------------------------------------------
 // Campo de input reutilizável interno
 // ----------------------------------------------------------
-function Field({ label, type = "text", value, onChange, placeholder, autoComplete, required, disabled }) {
+function Field({
+  label,
+  type = "text",
+  value,
+  onChange,
+  placeholder,
+  autoComplete,
+  required,
+  disabled,
+}) {
   const [focused, setFocused] = useState(false);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      <label style={{ fontSize: 12, fontWeight: 600, color: "#1E3A5F" }}>{label}</label>
+      <label style={{ fontSize: 12, fontWeight: 600, color: "#1E3A5F" }}>
+        {label}
+      </label>
       <input
         type={type}
         value={value}
@@ -103,7 +129,7 @@ function Field({ label, type = "text", value, onChange, placeholder, autoComplet
           outline: "none",
           transition: "border-color .15s, box-shadow .15s",
           boxShadow: focused ? "0 0 0 3px rgba(46,134,171,.12)" : "none",
-          opacity: disabled ? .6 : 1,
+          opacity: disabled ? 0.6 : 1,
         }}
       />
     </div>
@@ -116,18 +142,40 @@ function Field({ label, type = "text", value, onChange, placeholder, autoComplet
 function Alert({ variant, message }) {
   if (!message) return null;
   const styles = {
-    error:   { bg: "rgba(231,76,60,.08)",  border: "rgba(231,76,60,.3)",  color: "#c0392b", icon: "⚠️" },
-    success: { bg: "rgba(39,174,96,.08)",  border: "rgba(39,174,96,.3)",  color: "#1a7a43", icon: "✅" },
-    info:    { bg: "rgba(46,134,171,.08)", border: "rgba(46,134,171,.3)", color: "#1a5f80", icon: "ℹ️" },
+    error: {
+      bg: "rgba(231,76,60,.08)",
+      border: "rgba(231,76,60,.3)",
+      color: "#c0392b",
+      icon: "⚠️",
+    },
+    success: {
+      bg: "rgba(39,174,96,.08)",
+      border: "rgba(39,174,96,.3)",
+      color: "#1a7a43",
+      icon: "✅",
+    },
+    info: {
+      bg: "rgba(46,134,171,.08)",
+      border: "rgba(46,134,171,.3)",
+      color: "#1a5f80",
+      icon: "ℹ️",
+    },
   };
   const s = styles[variant] ?? styles.info;
   return (
-    <div style={{
-      background: s.bg, border: `0.5px solid ${s.border}`,
-      borderRadius: 8, padding: "10px 14px",
-      fontSize: 13, color: s.color,
-      display: "flex", alignItems: "flex-start", gap: 8,
-    }}>
+    <div
+      style={{
+        background: s.bg,
+        border: `0.5px solid ${s.border}`,
+        borderRadius: 8,
+        padding: "10px 14px",
+        fontSize: 13,
+        color: s.color,
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 8,
+      }}
+    >
       <span>{s.icon}</span>
       <span>{message}</span>
     </div>
@@ -138,8 +186,8 @@ function Alert({ variant, message }) {
 // Formulário de Login
 // ----------------------------------------------------------
 function LoginForm({ onForgot }) {
-  const { login, loading, error, setError } = useAuth();
-  const [email,    setEmail]    = useState("");
+  const { login, loginGoogle, loading, error, setError } = useAuth();
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
 
@@ -149,100 +197,184 @@ function LoginForm({ onForgot }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <div style={{ textAlign: "center", marginBottom: 4 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 700, color: "#0A1628" }}>Bem-vindo de volta</h2>
-        <p style={{ fontSize: 13, color: "#6B8CAE", marginTop: 4 }}>
-          Acesse sua conta para continuar
-        </p>
-      </div>
+    <div>
+      <form
+        onSubmit={handleSubmit}
+        style={{ display: "flex", flexDirection: "column", gap: 16 }}
+      >
+        <div style={{ textAlign: "center", marginBottom: 4 }}>
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: "#0A1628" }}>
+            Bem-vindo de volta
+          </h2>
+          <p style={{ fontSize: 13, color: "#6B8CAE", marginTop: 4 }}>
+            Acesse sua conta para continuar
+          </p>
+        </div>
 
-      {error && <Alert variant="error" message={error} />}
+        {error && <Alert variant="error" message={error} />}
 
-      <Field
-        label="E-mail"
-        type="email"
-        value={email}
-        onChange={(v) => { setEmail(v); setError(null); }}
-        placeholder="seu@email.com.br"
-        autoComplete="email"
-        required
-        disabled={loading}
-      />
+        <Field
+          label="E-mail"
+          type="email"
+          value={email}
+          onChange={(v) => {
+            setEmail(v);
+            setError(null);
+          }}
+          placeholder="seu@email.com.br"
+          autoComplete="email"
+          required
+          disabled={loading}
+        />
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <label style={{ fontSize: 12, fontWeight: 600, color: "#1E3A5F" }}>Senha</label>
-          <button
-            type="button"
-            onClick={onForgot}
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <div
             style={{
-              background: "none", border: "none", cursor: "pointer",
-              fontSize: 12, color: "#2E86AB", fontFamily: "inherit",
-              padding: 0,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
             }}
           >
-            Esqueci minha senha
-          </button>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#1E3A5F" }}>
+              Senha
+            </label>
+            <button
+              type="button"
+              onClick={onForgot}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontSize: 12,
+                color: "#2E86AB",
+                fontFamily: "inherit",
+                padding: 0,
+              }}
+            >
+              Esqueci minha senha
+            </button>
+          </div>
+          <div style={{ position: "relative" }}>
+            <input
+              type={showPass ? "text" : "password"}
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError(null);
+              }}
+              placeholder="••••••••"
+              autoComplete="current-password"
+              required
+              disabled={loading}
+              style={{
+                border: "1.5px solid #c8dce8",
+                borderRadius: 8,
+                padding: "10px 40px 10px 12px",
+                fontSize: 14,
+                background: "#fff",
+                color: "#0A1628",
+                fontFamily: "inherit",
+                outline: "none",
+                width: "100%",
+                opacity: loading ? 0.6 : 1,
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPass((s) => !s)}
+              style={{
+                position: "absolute",
+                right: 10,
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "#6B8CAE",
+                fontSize: 16,
+                padding: 0,
+                lineHeight: 1,
+              }}
+              aria-label={showPass ? "Ocultar senha" : "Mostrar senha"}
+            >
+              {showPass ? "🙈" : "👁️"}
+            </button>
+          </div>
         </div>
-        <div style={{ position: "relative" }}>
-          <input
-            type={showPass ? "text" : "password"}
-            value={password}
-            onChange={(e) => { setPassword(e.target.value); setError(null); }}
-            placeholder="••••••••"
-            autoComplete="current-password"
-            required
-            disabled={loading}
-            style={{
-              border: "1.5px solid #c8dce8", borderRadius: 8,
-              padding: "10px 40px 10px 12px", fontSize: 14,
-              background: "#fff", color: "#0A1628",
-              fontFamily: "inherit", outline: "none", width: "100%",
-              opacity: loading ? .6 : 1,
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => setShowPass((s) => !s)}
-            style={{
-              position: "absolute", right: 10, top: "50%",
-              transform: "translateY(-50%)",
-              background: "none", border: "none", cursor: "pointer",
-              color: "#6B8CAE", fontSize: 16, padding: 0, lineHeight: 1,
-            }}
-            aria-label={showPass ? "Ocultar senha" : "Mostrar senha"}
-          >
-            {showPass ? "🙈" : "👁️"}
-          </button>
-        </div>
-      </div>
 
-      <button
-        type="submit"
-        disabled={loading}
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            background: loading ? "#6B8CAE" : "#2E86AB",
+            color: "#fff",
+            border: "none",
+            borderRadius: 8,
+            padding: "12px 0",
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: loading ? "not-allowed" : "pointer",
+            fontFamily: "inherit",
+            transition: "background .15s",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            marginTop: 4,
+          }}
+        >
+          {loading ? (
+            <>
+              <span
+                style={{
+                  width: 16,
+                  height: 16,
+                  border: "2px solid rgba(255,255,255,.4)",
+                  borderTopColor: "#fff",
+                  borderRadius: "50%",
+                  animation: "pp-spin .7s linear infinite",
+                  display: "inline-block",
+                }}
+              />
+              Entrando…
+            </>
+          ) : (
+            "Entrar"
+          )}
+        </button>
+      </form>
+
+      <div
         style={{
-          background: loading ? "#6B8CAE" : "#2E86AB",
-          color: "#fff", border: "none", borderRadius: 8,
-          padding: "12px 0", fontSize: 14, fontWeight: 600,
-          cursor: loading ? "not-allowed" : "pointer",
-          fontFamily: "inherit", transition: "background .15s",
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-          marginTop: 4,
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          margin: "18px 0",
         }}
       >
-        {loading ? (
-          <>
-            <span style={{
-              width: 16, height: 16, border: "2px solid rgba(255,255,255,.4)",
-              borderTopColor: "#fff", borderRadius: "50%",
-              animation: "pp-spin .7s linear infinite", display: "inline-block",
-            }} />
-            Entrando…
-          </>
-        ) : "Entrar"}
-      </button>
-    </form>
+        <div style={{ flex: 1, height: 1, background: "#e3edf3" }} />
+        <span style={{ fontSize: 11, color: "#6B8CAE" }}>ou</span>
+        <div style={{ flex: 1, height: 1, background: "#e3edf3" }} />
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <GoogleLogin
+          onSuccess={async (credentialResponse) => {
+            const idToken = credentialResponse.credential;
+            const resultado = await loginGoogle(idToken);
+            if (resultado.convitePendente) {
+              onConvitePendente?.(idToken);
+            }
+            // Sucesso: sessão já salva pelo AuthContext, o app troca de tela
+            // sozinho. Falha "normal": o erro já aparece no Alert acima,
+            // igual ao login por e-mail/senha.
+          }}
+          onError={() =>
+            setError("Não foi possível entrar com o Google agora.")
+          }
+        />
+      </div>
+    </div>
   );
 }
 
@@ -279,12 +411,18 @@ export default function LoginPage() {
     conviteToken ? "convite" : resetToken ? "reset" : "login",
   );
 
+  const [googleIdToken, setGoogleIdToken] = useState(null);
   return (
-    <div style={{
-      minHeight: "100vh", display: "flex",
-      background: "linear-gradient(160deg, #0A1628 0%, #1E3A5F 50%, #2E86AB 100%)",
-      position: "relative", overflow: "hidden",
-    }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        background:
+          "linear-gradient(160deg, #0A1628 0%, #1E3A5F 50%, #2E86AB 100%)",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
       <style>{`
         @keyframes pp-spin { to { transform: rotate(360deg); } }
         @keyframes pp-card-in {
@@ -297,12 +435,18 @@ export default function LoginPage() {
       <WaveSVG />
 
       {/* Painel esquerdo — branding */}
-      <div style={{
-        flex: 1, display: "flex", flexDirection: "column",
-        alignItems: "center", justifyContent: "center",
-        padding: "40px 60px", color: "#fff",
-        position: "relative", zIndex: 1,
-      }}
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "40px 60px",
+          color: "#fff",
+          position: "relative",
+          zIndex: 1,
+        }}
         className="login-brand-panel"
       >
         {/* Logo / ícone */}
@@ -310,29 +454,60 @@ export default function LoginPage() {
           <LogoIcon height={64} />
         </div>
 
-        <h1 style={{
-          fontSize: 38, fontWeight: 800, margin: "0 0 10px",
-          letterSpacing: "-0.5px", lineHeight: 1.1,
-        }}>
-          Piscina<br />Perfeita
+        <h1
+          style={{
+            fontSize: 38,
+            fontWeight: 800,
+            margin: "0 0 10px",
+            letterSpacing: "-0.5px",
+            lineHeight: 1.1,
+          }}
+        >
+          Piscina
+          <br />
+          Perfeita
         </h1>
-        <p style={{ fontSize: 15, opacity: .75, maxWidth: 300, textAlign: "center", lineHeight: 1.6 }}>
-          Gestão integrada de piscinas, análises de qualidade e controle de estoque.
+        <p
+          style={{
+            fontSize: 15,
+            opacity: 0.75,
+            maxWidth: 300,
+            textAlign: "center",
+            lineHeight: 1.6,
+          }}
+        >
+          Gestão integrada de piscinas, análises de qualidade e controle de
+          estoque.
         </p>
 
-        <div style={{ marginTop: 40, display: "flex", flexDirection: "column", gap: 16, width: "100%", maxWidth: 280 }}>
+        <div
+          style={{
+            marginTop: 40,
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+            width: "100%",
+            maxWidth: 280,
+          }}
+        >
           {[
             { icon: "🧪", text: "Análises de pH, cloro e temperatura" },
             { icon: "📦", text: "Controle de estoque e movimentações" },
             { icon: "📊", text: "Dashboard com indicadores em tempo real" },
           ].map((item) => (
-            <div key={item.text} style={{
-              display: "flex", alignItems: "center", gap: 12,
-              background: "rgba(255,255,255,.06)", borderRadius: 10,
-              padding: "10px 14px",
-            }}>
+            <div
+              key={item.text}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                background: "rgba(255,255,255,.06)",
+                borderRadius: 10,
+                padding: "10px 14px",
+              }}
+            >
               <span style={{ fontSize: 20 }}>{item.icon}</span>
-              <span style={{ fontSize: 13, opacity: .85 }}>{item.text}</span>
+              <span style={{ fontSize: 13, opacity: 0.85 }}>{item.text}</span>
             </div>
           ))}
         </div>
@@ -342,38 +517,65 @@ export default function LoginPage() {
       <div
         className="login-form-panel"
         style={{
-          width: "100%", maxWidth: 420, display: "flex", alignItems: "center",
-          justifyContent: "center", padding: 32,
-          position: "relative", zIndex: 1,
+          width: "100%",
+          maxWidth: 420,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 32,
+          position: "relative",
+          zIndex: 1,
         }}
       >
-        <div style={{
-          background: "#fff", borderRadius: 16, padding: "36px 32px",
-          width: "100%", boxShadow: "0 24px 64px rgba(0,0,0,.25)",
-          animation: "pp-card-in .3s ease-out",
-        }}>
+        <div
+          style={{
+            background: "#fff",
+            borderRadius: 16,
+            padding: "36px 32px",
+            width: "100%",
+            boxShadow: "0 24px 64px rgba(0,0,0,.25)",
+            animation: "pp-card-in .3s ease-out",
+          }}
+        >
           {/* Cabeçalho do card */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 28 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              marginBottom: 28,
+            }}
+          >
             <LogoIcon height={38} />
             <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#0A1628" }}>{APP_META.name}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#0A1628" }}>
+                {APP_META.name}
+              </div>
               <div style={{ fontSize: 11, color: "#6B8CAE" }}>
-                {view === "login"  && "Acesso ao sistema"}
+                {view === "login" && "Acesso ao sistema"}
                 {view === "forgot" && "Recuperação de acesso"}
-                {view === "reset"  && "Redefinição de senha"}
+                {view === "reset" && "Redefinição de senha"}
               </div>
             </div>
           </div>
 
           {/* Formulário ativo */}
-          {view === "login"  && <LoginForm onForgot={() => setView("forgot")} />}
-          {view === "forgot" && <EsqueciSenha onBack={() => setView("login")} />}
-          {view === "reset"  && (
+          {view === "login" && (
+            <LoginForm
+              onForgot={() => setView("forgot")}
+              onConvitePendente={(idToken) => {
+                setGoogleIdToken(idToken);
+                setView("convite-google");
+              }}
+            />
+          )}
+          {view === "forgot" && (
+            <EsqueciSenha onBack={() => setView("login")} />
+          )}
+          {view === "reset" && (
             <RedefinirSenha
               token={resetToken}
               onDone={() => {
-                // Limpa o ?token= da URL pra não cair de novo na tela de
-                // reset se a página recarregar.
                 window.history.replaceState({}, "", window.location.pathname);
                 setView("login");
               }}
@@ -388,13 +590,27 @@ export default function LoginPage() {
               }}
             />
           )}
+          {view === "convite-google" && (
+            <CompletarCadastroGoogle
+              idToken={googleIdToken}
+              onVoltar={() => {
+                setGoogleIdToken(null);
+                setView("login");
+              }}
+            />
+          )}
 
           {/* Rodapé */}
-          <div style={{
-            marginTop: 24, paddingTop: 16,
-            borderTop: "0.5px solid rgba(30,58,95,.1)",
-            textAlign: "center", fontSize: 11, color: "#6B8CAE",
-          }}>
+          <div
+            style={{
+              marginTop: 24,
+              paddingTop: 16,
+              borderTop: "0.5px solid rgba(30,58,95,.1)",
+              textAlign: "center",
+              fontSize: 11,
+              color: "#6B8CAE",
+            }}
+          >
             {APP_META.name} v{APP_META.version}
           </div>
         </div>

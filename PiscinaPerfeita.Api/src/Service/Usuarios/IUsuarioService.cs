@@ -27,5 +27,13 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
 
         Task<ConviteResponseDto> CriarConvite(ConviteRequestDto dto);
         Task CompletarConvite(CompletarConviteRequestDto dto);
+
+        // Google Auth
+        Task<Usuario?> ObterOuVincularPorEmailGoogleAsync(string email);
+
+        // Usado pelo AutenticarAsync pra decidir entre "acesso bloqueado" e
+        // "tem convite, redireciona pra completar cadastro".
+        Task<bool> ExisteConviteAtivoAsync(string email);
+        Task<Usuario?> CompletarConviteGoogleAsync(string email, string nome, string? cpf);
     }
 }

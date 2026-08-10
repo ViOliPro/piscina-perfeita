@@ -41,6 +41,8 @@ import {
   fromApiHidrometro,
   fromApiHidrometroList,
   toApiHidrometro,
+  toApiGoogleLogin,
+  toApiCompletarConviteGoogle,
 } from "./mappers.js";
 
 // ----------------------------------------------------------
@@ -59,7 +61,11 @@ async function request(url, options = {}) {
 
   if (!res.ok) {
     const erro = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(erro.message ?? `Erro ${res.status}`);
+    const error = new Error(erro.message ?? `Erro ${res.status}`);
+    // Código estruturado (ex: "ConvitePendente") — hoje só o fluxo do
+    // Google usa, mas fica disponível pra qualquer chamada que precisar.
+    if (erro.erro) error.codigo = erro.erro;
+    throw error;
   }
   if (res.status === 204) return null;
   return res.json();
@@ -89,14 +95,25 @@ export const authService = {
     return fromApiAuth(await res.json());
   },
 
+  // Login com Google: o backend agora devolve o mesmo formato do login
+  // normal (AccountResponseDto), então reaproveita fromApiAuth.
+  loginGoogle: (idToken) =>
+    post(API_ENDPOINTS.loginGoogle, toApiGoogleLogin({ idToken })).then(
+      fromApiAuth,
+    ),
+
+  // Completa o cadastro quando há convite ativo pro e-mail do Google —
+  // reenvia o mesmo idToken (o backend revalida) + Cpf opcional.
+  completarConviteGoogle: (idToken, cpf) =>
+    post(
+      API_ENDPOINTS.completarConviteGoogle,
+      toApiCompletarConviteGoogle({ idToken, cpf }),
+    ).then(fromApiAuth),
+
   forgotPassword: (dto) => post(API_ENDPOINTS.forgotPassword, dto),
   resetPassword: (dto) => post(API_ENDPOINTS.resetPassword, dto),
   completarConvite: (dto) => post(API_ENDPOINTS.completarConvite, dto),
 
-  // Troca o Local (condomínio/unidade) ativo do usuário logado e emite um
-  // novo token JWT já com o novo local_id no claim. O backend identifica o
-  // usuário pelo token (Authorization header) — não é mais necessário (nem
-  // aceito) enviar o userId no corpo da requisição.
   switchLocal: (newLocalId) =>
     post(`${API_ENDPOINTS.switchLocal}?newLocalId=${newLocalId}`).then(
       fromApiAuth,

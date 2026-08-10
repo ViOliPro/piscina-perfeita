@@ -7,7 +7,6 @@ import path from "path";
 
 export default defineConfig({
   plugins: [react()],
-
   resolve: {
     alias: {
       // "@/config"     → src/config/index.js
@@ -22,6 +21,7 @@ export default defineConfig({
 
   server: {
     port: 5173,
+    headers: { "Cross-Origin-Opener-Policy": "same-origin-allow-popups" },
     proxy: {
       // Todas as chamadas /api/* são redirecionadas para o backend ASP.NET Core
       "/api": {

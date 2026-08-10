@@ -12,6 +12,8 @@ export const API_BASE_URL =
 export const API_ENDPOINTS = {
   // Autenticação  (AccountController → api/account/...)
   login: `${API_BASE_URL}/account/login`,
+  loginGoogle: `${API_BASE_URL}/account/google`,
+  completarConviteGoogle: `${API_BASE_URL}/account/google/completar-convite`,
   switchLocal: `${API_BASE_URL}/account/SwitchLocal`,
   forgotPassword: `${API_BASE_URL}/account/esqueci-senha`,
   resetPassword: `${API_BASE_URL}/account/redefinir-senha`,

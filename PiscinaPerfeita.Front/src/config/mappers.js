@@ -649,3 +649,19 @@ export function toApiHidrometro({ leituraAtual, dataLeitura, observacoes }) {
     Observacoes: observacoes || null,
   };
 }
+
+/**
+ * GoogleLoginRequest
+ */
+export function toApiGoogleLogin({ idToken }) {
+  return { IdToken: idToken };
+}
+
+/**
+ * CompletarConviteGoogleRequest — Cpf é opcional por enquanto.
+ */
+export function toApiCompletarConviteGoogle({ idToken, cpf }) {
+  const dto = { IdToken: idToken };
+  if (cpf) dto.Cpf = cpf;
+  return dto;
+}

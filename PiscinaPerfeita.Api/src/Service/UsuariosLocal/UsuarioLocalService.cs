@@ -3,6 +3,7 @@ using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Helpers.Authenticated;
 using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Repository.Locais;
+using PiscinaPerfeita.Api.Repository.Usuarios;
 using PiscinaPerfeita.Api.Repository.UsuariosLocal;
 
 namespace PiscinaPerfeita.Api.Service.UsuariosLocal
@@ -11,11 +12,13 @@ namespace PiscinaPerfeita.Api.Service.UsuariosLocal
     {
         private readonly IUsuarioLocalRepository _usuariosLocalRepository;
         private readonly ILocalRepository _locaisRepository;
+        private readonly IUsuarioRepository _usuarioRepository;
         private readonly IAuthenticatedUser _user;
 
         public UsuarioLocalService(
             IUsuarioLocalRepository usuariosRepository,
             ILocalRepository locaisRepository,
+            IUsuarioRepository usuarioRepository,
             IAuthenticatedUser user
         )
         {
@@ -23,6 +26,7 @@ namespace PiscinaPerfeita.Api.Service.UsuariosLocal
                 usuariosRepository ?? throw new ArgumentNullException(nameof(usuariosRepository));
             _locaisRepository =
                 locaisRepository ?? throw new ArgumentNullException(nameof(locaisRepository));
+            _usuarioRepository = usuarioRepository ?? throw new ArgumentNullException(nameof(usuarioRepository));
             _user = user ?? throw new ArgumentNullException(nameof(user));
         }
 
@@ -121,18 +125,26 @@ namespace PiscinaPerfeita.Api.Service.UsuariosLocal
             if (localId.HasValue)
                 await GarantirLocalExiste(localId.Value);
 
+            var perfilMudou = usuario.Perfil != dto.Perfil;
+
             var newUser = new UsuarioLocal
             {
                 UsuarioId = dto.UsuarioId,
                 LocalId = localId,
                 Perfil = dto.Perfil,
-                // Preserva o status de Administrador Pai já existente — essa
-                // rota nunca cria nem remove esse status (só o SuperAdmin
-                // altera isso, e não por aqui).
                 EhAdministradorPai = usuario.EhAdministradorPai,
             };
 
             await _usuariosLocalRepository.Update(id, newUser);
+
+            // Mudou o Perfil (nível de permissão) desse vínculo — invalida
+            // imediatamente qualquer token já emitido pra esse usuário, forçando
+            // relogin. Sem isso, um rebaixamento (ex: Operador virando
+            // Visualizador) só teria efeito quando o token expirasse (até 1h) ou
+            // o usuário trocasse de Local manualmente.
+
+            if(perfilMudou)
+                await _usuarioRepository.RotateSecurityStamp(dto.UsuarioId);
 
             return new UsuarioLocalResponseDto
             {
@@ -148,9 +160,10 @@ namespace PiscinaPerfeita.Api.Service.UsuariosLocal
 
         public async Task Delete(Guid id)
         {
-            await GarantirPodeGerenciarVinculo(id);
+            var usuario = await GarantirPodeGerenciarVinculo(id);
 
             await _usuariosLocalRepository.Delete(id);
+            await _usuarioRepository.RotateSecurityStamp(usuario.UsuarioId);
         }
 
         // SuperAdmin sempre pode. Um Administrador comum só pode gerenciar
