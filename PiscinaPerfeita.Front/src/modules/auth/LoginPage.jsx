@@ -15,6 +15,7 @@ import EsqueciSenha from "./EsqueciSenha.jsx";
 import RedefinirSenha from "./RedefinirSenha.jsx";
 import CompletarConvite from "./CompletarConvite.jsx";
 import { GoogleLogin } from "@react-oauth/google";
+import CompletarCadastroGoogle from "./CompletarCadastroGoogle.jsx";
 
 // ----------------------------------------------------------
 // Onda decorativa SVG
@@ -185,7 +186,7 @@ function Alert({ variant, message }) {
 // Formulário de Login
 // ----------------------------------------------------------
 function LoginForm({ onForgot }) {
-  const { login, loading, error, setError } = useAuth();
+  const { login, loginGoogle, loading, error, setError } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
@@ -343,18 +344,36 @@ function LoginForm({ onForgot }) {
         </button>
       </form>
 
-      <GoogleLogin
-        onSuccess={async (credentialResponse) => {
-          const res = await fetch(`${API_URL}/auth/google`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ idToken: credentialResponse.credential }),
-          });
-          const data = await res.json();
-          // mesmo tratamento que seu login atual: salvar token, redirecionar
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          margin: "18px 0",
         }}
-        onError={() => console.log("Falha no login Google")}
-      />
+      >
+        <div style={{ flex: 1, height: 1, background: "#e3edf3" }} />
+        <span style={{ fontSize: 11, color: "#6B8CAE" }}>ou</span>
+        <div style={{ flex: 1, height: 1, background: "#e3edf3" }} />
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <GoogleLogin
+          onSuccess={async (credentialResponse) => {
+            const idToken = credentialResponse.credential;
+            const resultado = await loginGoogle(idToken);
+            if (resultado.convitePendente) {
+              onConvitePendente?.(idToken);
+            }
+            // Sucesso: sessão já salva pelo AuthContext, o app troca de tela
+            // sozinho. Falha "normal": o erro já aparece no Alert acima,
+            // igual ao login por e-mail/senha.
+          }}
+          onError={() =>
+            setError("Não foi possível entrar com o Google agora.")
+          }
+        />
+      </div>
     </div>
   );
 }
@@ -392,6 +411,7 @@ export default function LoginPage() {
     conviteToken ? "convite" : resetToken ? "reset" : "login",
   );
 
+  const [googleIdToken, setGoogleIdToken] = useState(null);
   return (
     <div
       style={{
@@ -540,7 +560,15 @@ export default function LoginPage() {
           </div>
 
           {/* Formulário ativo */}
-          {view === "login" && <LoginForm onForgot={() => setView("forgot")} />}
+          {view === "login" && (
+            <LoginForm
+              onForgot={() => setView("forgot")}
+              onConvitePendente={(idToken) => {
+                setGoogleIdToken(idToken);
+                setView("convite-google");
+              }}
+            />
+          )}
           {view === "forgot" && (
             <EsqueciSenha onBack={() => setView("login")} />
           )}
@@ -548,8 +576,6 @@ export default function LoginPage() {
             <RedefinirSenha
               token={resetToken}
               onDone={() => {
-                // Limpa o ?token= da URL pra não cair de novo na tela de
-                // reset se a página recarregar.
                 window.history.replaceState({}, "", window.location.pathname);
                 setView("login");
               }}
@@ -560,6 +586,15 @@ export default function LoginPage() {
               token={conviteToken}
               onDone={() => {
                 window.history.replaceState({}, "", "/");
+                setView("login");
+              }}
+            />
+          )}
+          {view === "convite-google" && (
+            <CompletarCadastroGoogle
+              idToken={googleIdToken}
+              onVoltar={() => {
+                setGoogleIdToken(null);
                 setView("login");
               }}
             />

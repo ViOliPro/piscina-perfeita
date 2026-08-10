@@ -35,6 +35,8 @@ public class TokenService : ITokenService
 
     public async Task<AuthTokenResult> GerarTokenAsync(Usuario usuario)
     {
+        await GarantirSecurityStampAsync(usuario);
+
         if (usuario.Role == Role.SuperAdmin)
             return await EmitirVerTodosAsync(usuario);
 
@@ -50,6 +52,8 @@ public class TokenService : ITokenService
 
     public async Task<AuthTokenResult> GerarTokenParaLocalAsync(Usuario usuario, Guid? newLocalId)
     {
+        await GarantirSecurityStampAsync(usuario);
+
         if (newLocalId == null)
         {
             if (usuario.Role != Role.SuperAdmin)
@@ -150,5 +154,21 @@ public class TokenService : ITokenService
         var token = tokenHandler.CreateToken(tokenDescriptor);
 
         return tokenHandler.WriteToken(token);
+    }
+
+    // Defensivo: contas que ficaram sem SecurityStamp (por um bug antigo de
+    // criação/update, ou por qualquer caminho novo que esqueça de setar) nunca
+    // deveriam gerar um token com o claim vazio — isso quebra TODA requisição
+    // seguinte, porque o middleware de validação nunca bate token vazio com o
+    // que está gravado. Em vez de travar o login, rotaciona aqui e segue.
+    private async Task GarantirSecurityStampAsync(Usuario usuario)
+    {
+        if (!string.IsNullOrEmpty(usuario.SecurityStamp))
+            return;
+
+        await _usuarioRepository.RotateSecurityStamp(usuario.Id);
+        // usuario é a mesma instância rastreada pelo RotateSecurityStamp (mesmo
+        // DbContext, mesmo Id) — a propriedade já reflete o novo valor depois
+        // da chamada, sem precisar recarregar do banco.
     }
 }

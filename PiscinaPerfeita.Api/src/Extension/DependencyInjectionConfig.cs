@@ -13,6 +13,7 @@ using PiscinaPerfeita.Api.Repository.UsuariosLocal;
 // <summary>
 // Classe responsável por configurar a injeção de dependências para os serviços e repositórios
 using PiscinaPerfeita.Api.Service.Account;
+using PiscinaPerfeita.Api.Service.Account.Google;
 using PiscinaPerfeita.Api.Service.Analises;
 using PiscinaPerfeita.Api.Service.AplicacoesProduto;
 using PiscinaPerfeita.Api.Service.Depositos;
@@ -50,6 +51,8 @@ namespace PiscinaPerfeita.Api.Extension
             //Autheticated
             services.AddScoped<IAuthenticatedUser, AuthenticatedUser>();
             services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<IGoogleAuthService, GoogleAuthService>();
+            services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
 
             // 2. Registre aqui todos os seus Repositories
             services.AddScoped<IUsuarioRepository, UsuarioRepository>();

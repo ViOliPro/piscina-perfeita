@@ -75,6 +75,8 @@ services:
       Resend__ApiKey: ${RESEND__APIKEY:?defina RESEND__APIKEY no .env}
       Resend__Remetente: ${RESEND__REMETENTE:?defina RESEND__REMETENTE no .env}
       Frontend__BaseUrl: ${FRONTEND_BASE_URL:?defina FRONTEND_BASE_URL no .env}
+      # Login Google Id
+      Google:ClientId: ${Google__ClientId:?defina Google__ClientId no .env}
     # Sem "ports": a API só é acessível de dentro da rede do Docker agora
     # (via Nginx do front, que já faz proxy de /api e /health) — ninguém
     # de fora bate direto na porta 10000.
@@ -98,6 +100,9 @@ services:
     depends_on:
       api:
         condition: service_healthy
+    environment:
+      # Login Google Id
+      VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:?defina VITE_GOOGLE_CLIENT_ID no .env}
     # Idem: sem "ports" — só o Caddy fala com o front, por dentro da rede
     # do Docker. Quem acessa de fora é sempre via HTTPS no Caddy.
     expose:

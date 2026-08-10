@@ -55,6 +55,8 @@ function readSession() {
 // ----------------------------------------------------------
 // Context
 // ----------------------------------------------------------
+// ... (mantenha os imports e os helpers de storage iguais acima)
+
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
@@ -70,7 +72,6 @@ export function AuthProvider({ children }) {
     setError(null);
     try {
       const res = await authService.login({ email, password });
-      // Normaliza para camelCase (a API pode retornar AccessToken ou accessToken)
       const accessToken = res.accessToken ?? res.AccessToken;
       const expiresIn = res.expiresIn ?? res.ExpiresIn ?? 28800;
       const userPayload = res.user ?? res.User;
@@ -87,6 +88,45 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  // Login com Google
+  const loginGoogle = useCallback(async (idToken) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await authService.loginGoogle(idToken);
+      saveSession(res.accessToken, res.user, res.expiresIn);
+      setToken(res.accessToken);
+      setUser(res.user);
+      return { ok: true };
+    } catch (err) {
+      if (err.codigo === "ConvitePendente") {
+        return { ok: false, convitePendente: true };
+      }
+      setError(err.message ?? "Erro ao fazer login com Google.");
+      return { ok: false };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Completa o cadastro do convite ativo via Google
+  const completarConviteGoogle = useCallback(async (idToken, cpf) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await authService.completarConviteGoogle(idToken, cpf);
+      saveSession(res.accessToken, res.user, res.expiresIn);
+      setToken(res.accessToken);
+      setUser(res.user);
+      return true;
+    } catch (err) {
+      setError(err.message ?? "Não foi possível concluir seu cadastro agora.");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // Logout — limpa sessão local
   const logout = useCallback(() => {
     clearSession();
@@ -95,9 +135,7 @@ export function AuthProvider({ children }) {
     setError(null);
   }, []);
 
-  // Troca o Local (condomínio/unidade) ativo — usada quando o usuário tem
-  // vínculo com mais de um Local e precisa alternar entre eles.
-  // Emite um novo token JWT (com o novo local_id) e atualiza a sessão.
+  // Troca o Local ativo
   const switchLocal = useCallback(async (newLocalId) => {
     setLoading(true);
     setError(null);
@@ -129,6 +167,8 @@ export function AuthProvider({ children }) {
         isAuthenticated,
         loading,
         error,
+        loginGoogle,
+        completarConviteGoogle,
         login,
         logout,
         switchLocal,
@@ -140,7 +180,7 @@ export function AuthProvider({ children }) {
   );
 }
 
-// Hook de conveniência
+// Custom Hooks (devem ficar fora de AuthProvider)
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth deve ser usado dentro de <AuthProvider>");
@@ -149,6 +189,5 @@ export function useAuth() {
 
 export function useCan(requiredPermission) {
   const { user } = useAuth();
-
   return can(requiredPermission, user);
 }
