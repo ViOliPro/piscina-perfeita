@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Security.Claims;
 using System.Text;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Localization;
@@ -12,7 +13,6 @@ using Microsoft.OpenApi;
 using PiscinaPerfeita.Api.Authorization;
 using PiscinaPerfeita.Api.Data;
 using PiscinaPerfeita.Api.Extension;
-using System.Threading.RateLimiting;
 
 // 1. Inicializa o builder e carrega as variáveis de ambiente IMEDIATAMENTE
 var builder = WebApplication.CreateBuilder(args);
@@ -67,14 +67,18 @@ builder
                 var userIdClaim = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var securityStampClaim = context.Principal?.FindFirst("security_stamp")?.Value;
 
-                if (string.IsNullOrWhiteSpace(userIdClaim) || string.IsNullOrWhiteSpace(securityStampClaim))
+                if (
+                    string.IsNullOrWhiteSpace(userIdClaim)
+                    || string.IsNullOrWhiteSpace(securityStampClaim)
+                )
                 {
                     context.Fail("Token inválido: ID do usuário ou security_stamp ausente.");
                     return;
                 }
 
                 // Recuperamos o DbContext (já que a injeção está certa)
-                var dbContext = context.HttpContext.RequestServices.GetRequiredService<PiscinaPerfeitaContext>();
+                var dbContext =
+                    context.HttpContext.RequestServices.GetRequiredService<PiscinaPerfeitaContext>();
 
                 if (!Guid.TryParse(userIdClaim, out var userId))
                 {
@@ -82,10 +86,10 @@ builder
                     return;
                 }
 
-                // CÓDIGO CORRIGIDO: Em vez de FindAsync (que traz o usuário inteiro e joga no ChangeTracker), 
+                // CÓDIGO CORRIGIDO: Em vez de FindAsync (que traz o usuário inteiro e joga no ChangeTracker),
                 // fazemos um Select() apenas do campo que importa. Muito mais leve para o banco.
-                var currentStamp = await dbContext.Usuarios
-                    .AsNoTracking()
+                var currentStamp = await dbContext
+                    .Usuarios.AsNoTracking()
                     .Where(u => u.Id == userId)
                     .Select(u => u.SecurityStamp)
                     .FirstOrDefaultAsync();
@@ -102,7 +106,7 @@ builder
                     context.Fail("Token invalidado devido a alterações na conta.");
                     return;
                 }
-            }
+            },
         };
     });
 
@@ -224,6 +228,26 @@ if (string.IsNullOrWhiteSpace(allowedOrigins) && !builder.Environment.IsDevelopm
     );
 }
 
+// AllowCredentials() é obrigatório pro cookie httpOnly do refresh token
+// atravessar domínios diferentes, e o navegador rejeita AllowCredentials()
+// combinado com AllowAnyOrigin() — por isso a origem explícita passa a ser
+// necessária mesmo em Development. Sem Cors:AllowedOrigins configurado, cai
+// num default local (o Vite com HTTPS que já configuramos).
+var origins = string.IsNullOrWhiteSpace(allowedOrigins)
+    ? new[] { "https://localhost:5173" }
+    : allowedOrigins.Split(
+        ',',
+        StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
+    );
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(
+        "AppCors",
+        policy => policy.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod().AllowCredentials()
+    );
+});
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(
@@ -259,32 +283,36 @@ builder.Services.AddRateLimiter(options =>
 
     // Partitionado por IP — cada IP tem sua própria janela, então um
     // atacante só se limita a si mesmo, não trava o login de todo mundo.
-    options.AddPolicy("login", context =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-            factory: _ => new FixedWindowRateLimiterOptions
-            {
-                Window = TimeSpan.FromMinutes(1),
-                PermitLimit = loginPermitLimit,
-                QueueLimit = 0,
-            }
-        )
+    options.AddPolicy(
+        "login",
+        context =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    Window = TimeSpan.FromMinutes(1),
+                    PermitLimit = loginPermitLimit,
+                    QueueLimit = 0,
+                }
+            )
     );
 
     // Endpoints sensíveis e anônimos que não passam por "login": protege
     // esqueci-senha (email bombing / gasto de cota do Resend),
     // redefinir-senha e completar-convite (brute-force de token) contra
     // abuso não autenticado. Também por IP.
-    options.AddPolicy("auth-sensitive", context =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-            factory: _ => new FixedWindowRateLimiterOptions
-            {
-                Window = TimeSpan.FromMinutes(1),
-                PermitLimit = authSensitivePermitLimit,
-                QueueLimit = 0,
-            }
-        )
+    options.AddPolicy(
+        "auth-sensitive",
+        context =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    Window = TimeSpan.FromMinutes(1),
+                    PermitLimit = authSensitivePermitLimit,
+                    QueueLimit = 0,
+                }
+            )
     );
 });
 

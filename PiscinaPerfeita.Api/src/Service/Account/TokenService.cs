@@ -1,8 +1,11 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using PiscinaPerfeita.Api.Helpers.Security;
 using PiscinaPerfeita.Api.Models;
+using PiscinaPerfeita.Api.Repository;
 using PiscinaPerfeita.Api.Repository.Locais;
 using PiscinaPerfeita.Api.Repository.Usuarios;
 using PiscinaPerfeita.Api.Repository.UsuariosLocal;
@@ -14,12 +17,16 @@ public class TokenService : ITokenService
     private readonly IUsuarioRepository _usuarioRepository;
     private readonly IUsuarioLocalRepository _usuarioLocalRepository;
     private readonly ILocalRepository _localRepository;
+    private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly IConfiguration _configuration;
+
+    private const int RefreshTokenDiasValidade = 30;
 
     public TokenService(
         IUsuarioRepository usuarioRepository,
         IUsuarioLocalRepository usuarioLocalRepository,
         ILocalRepository localRepository,
+        IRefreshTokenRepository refreshTokenRepository,
         IConfiguration configuration
     )
     {
@@ -30,6 +37,9 @@ public class TokenService : ITokenService
             ?? throw new ArgumentNullException(nameof(usuarioLocalRepository));
         _localRepository =
             localRepository ?? throw new ArgumentNullException(nameof(localRepository));
+        _refreshTokenRepository =
+            refreshTokenRepository
+            ?? throw new ArgumentNullException(nameof(refreshTokenRepository));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
 
@@ -43,8 +53,11 @@ public class TokenService : ITokenService
         var (localId, perfil) = await ResolverVinculoPadraoAsync(usuario);
         await _usuarioRepository.UpdateUltimoLocal(usuario.Id, localId ?? Guid.Empty);
 
+        var refreshToken = await GerarRefreshTokenAsync(usuario.Id);
+
         return new AuthTokenResult(
             CriarToken(usuario, localId?.ToString() ?? string.Empty, perfil),
+            refreshToken,
             localId ?? Guid.Empty,
             perfil
         );
@@ -84,8 +97,11 @@ public class TokenService : ITokenService
 
         await _usuarioRepository.UpdateUltimoLocal(usuario.Id, newLocalId.Value);
 
+        var refreshToken = await GerarRefreshTokenAsync(usuario.Id);
+
         return new AuthTokenResult(
             CriarToken(usuario, newLocalId.Value.ToString(), perfilAtivo),
+            refreshToken,
             newLocalId.Value,
             perfilAtivo
         );
@@ -94,8 +110,11 @@ public class TokenService : ITokenService
     private async Task<AuthTokenResult> EmitirVerTodosAsync(Usuario usuario)
     {
         await _usuarioRepository.UpdateUltimoLocal(usuario.Id, Guid.Empty);
+        var refreshToken = await GerarRefreshTokenAsync(usuario.Id);
+
         return new AuthTokenResult(
             CriarToken(usuario, Guid.Empty.ToString(), Perfil.Administrador),
+            refreshToken,
             Guid.Empty,
             Perfil.Administrador
         );
@@ -134,12 +153,12 @@ public class TokenService : ITokenService
                     new Claim("local_id", stringLocalId),
                     new Claim("perfil", perfil.ToString()),
                     new Claim("security_stamp", usuario.SecurityStamp ?? string.Empty),
-                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // ID Único do Token
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                     new Claim(
                         JwtRegisteredClaimNames.Iat,
                         DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
                         ClaimValueTypes.Integer64
-                    ), // Emissão
+                    ),
                 }
             ),
             Expires = DateTime.UtcNow.AddHours(1),
@@ -152,23 +171,51 @@ public class TokenService : ITokenService
         };
 
         var token = tokenHandler.CreateToken(tokenDescriptor);
-
         return tokenHandler.WriteToken(token);
     }
 
-    // Defensivo: contas que ficaram sem SecurityStamp (por um bug antigo de
-    // criação/update, ou por qualquer caminho novo que esqueça de setar) nunca
-    // deveriam gerar um token com o claim vazio — isso quebra TODA requisição
-    // seguinte, porque o middleware de validação nunca bate token vazio com o
-    // que está gravado. Em vez de travar o login, rotaciona aqui e segue.
     private async Task GarantirSecurityStampAsync(Usuario usuario)
     {
         if (!string.IsNullOrEmpty(usuario.SecurityStamp))
             return;
 
         await _usuarioRepository.RotateSecurityStamp(usuario.Id);
-        // usuario é a mesma instância rastreada pelo RotateSecurityStamp (mesmo
-        // DbContext, mesmo Id) — a propriedade já reflete o novo valor depois
-        // da chamada, sem precisar recarregar do banco.
+    }
+
+    private async Task<string> GerarRefreshTokenAsync(Guid usuarioId)
+    {
+        var rawToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+
+        await _refreshTokenRepository.Create(
+            new RefreshToken
+            {
+                Id = Guid.NewGuid(),
+                UsuarioId = usuarioId,
+                TokenHash = TokenHasher.Hash(rawToken),
+                CreatedAt = DateTime.UtcNow,
+                ExpiraEm = DateTime.UtcNow.AddDays(RefreshTokenDiasValidade),
+            }
+        );
+
+        return rawToken;
+    }
+
+    public async Task<Usuario?> ValidarERotacionarRefreshTokenAsync(string rawToken)
+    {
+        var hash = TokenHasher.Hash(rawToken);
+        var token = await _refreshTokenRepository.GetByHash(hash);
+
+        if (token is null || token.RevogadoEm != null || token.ExpiraEm < DateTime.UtcNow)
+            return null;
+
+        await _refreshTokenRepository.Revoke(token.Id);
+        return await _usuarioRepository.GetById(token.UsuarioId);
+    }
+
+    public async Task RevogarRefreshTokenAsync(string rawToken)
+    {
+        var token = await _refreshTokenRepository.GetByHash(TokenHasher.Hash(rawToken));
+        if (token is not null && token.RevogadoEm is null)
+            await _refreshTokenRepository.Revoke(token.Id);
     }
 }

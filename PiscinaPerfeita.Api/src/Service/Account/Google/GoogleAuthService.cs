@@ -45,7 +45,7 @@ namespace PiscinaPerfeita.Api.Service.Account.Google
                     Role = usuario.Role,
                     Perfil = resultado.Perfil,
                 };
-                return AuthResult.Ok(resultado.AccessToken, userDto);
+                return AuthResult.Ok(resultado.AccessToken, resultado.RefreshToken, userDto);
             }
 
             if (await _usuarioService.ExisteConviteAtivoAsync(payload.Email))
@@ -93,7 +93,7 @@ namespace PiscinaPerfeita.Api.Service.Account.Google
                 Role = usuario.Role,
                 Perfil = resultado.Perfil,
             };
-            return AuthResult.Ok(resultado.AccessToken, userDto);
+            return AuthResult.Ok(resultado.AccessToken, resultado.RefreshToken, userDto);
         }
     }
 }

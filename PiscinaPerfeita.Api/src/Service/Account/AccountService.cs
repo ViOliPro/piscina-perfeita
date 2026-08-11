@@ -17,24 +17,37 @@ namespace PiscinaPerfeita.Api.Service.Account
             _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
         }
 
-        public async Task<AccountResponseDto> Login(AccountRequestDto request)
+        public async Task<LoginResult> Login(AccountRequestDto request)
         {
             var usuario = await ValidacaoDadosLogin(request);
             VerifyPasswordCheck(request.Password, usuario.SenhaHash);
 
             var resultado = await _tokenService.GerarTokenAsync(usuario);
-            return MontarResponse(usuario, resultado);
+            return new LoginResult(MontarResponse(usuario, resultado), resultado.RefreshToken);
         }
 
-        public async Task<AccountResponseDto> SwitchLocal(Guid userId, Guid? newLocalId)
+        public async Task<LoginResult> SwitchLocal(Guid userId, Guid? newLocalId)
         {
             var usuario = await _usuarioRepository.GetPasswordById(userId);
             if (usuario == null)
                 throw new KeyNotFoundException("Usuário não encontrado.");
 
             var resultado = await _tokenService.GerarTokenParaLocalAsync(usuario, newLocalId);
-            return MontarResponse(usuario, resultado);
+            return new LoginResult(MontarResponse(usuario, resultado), resultado.RefreshToken);
         }
+
+        public async Task<LoginResult> Refresh(string rawRefreshToken)
+        {
+            var usuario = await _tokenService.ValidarERotacionarRefreshTokenAsync(rawRefreshToken);
+            if (usuario is null)
+                throw new UnauthorizedAccessException("Sessão expirada. Faça login novamente.");
+
+            var resultado = await _tokenService.GerarTokenAsync(usuario);
+            return new LoginResult(MontarResponse(usuario, resultado), resultado.RefreshToken);
+        }
+
+        public Task RevogarRefreshToken(string rawRefreshToken) =>
+            _tokenService.RevogarRefreshTokenAsync(rawRefreshToken);
 
         private static AccountResponseDto MontarResponse(
             Usuario usuario,

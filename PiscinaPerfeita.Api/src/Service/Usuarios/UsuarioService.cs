@@ -4,6 +4,7 @@ using PiscinaPerfeita.Api.Data;
 using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Helpers.Authenticated;
+using PiscinaPerfeita.Api.Helpers.Security;
 using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Repository.Locais;
 using PiscinaPerfeita.Api.Repository.Usuarios;
@@ -418,7 +419,7 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             {
                 Id = Guid.NewGuid(),
                 UsuarioId = usuario.Id,
-                TokenHash = HashToken(token),
+                TokenHash = TokenHasher.Hash(token),
                 ExpiraEm = DateTime.UtcNow.AddHours(1),
             };
 
@@ -431,7 +432,7 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
 
         public async Task UpdatePasswordResetToken(RedefinirSenhaRequestDto data)
         {
-            var hash = HashToken(data.Token);
+            var hash = TokenHasher.Hash(data.Token);
 
             var resetToken = await _usuariosRepository.GetPasswordResetToken(hash);
 
@@ -541,7 +542,7 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 LocalId = localId,
                 CriadoPorId = usuarioLogado.UserId ?? Guid.Empty,
                 CriadoPorSuperAdmin = criadoPorSuperAdmin,
-                TokenHash = HashToken(token),
+                TokenHash = TokenHasher.Hash(token),
                 ExpiraEm = DateTime.UtcNow.AddHours(48),
             };
 
@@ -560,7 +561,7 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
 
         public async Task CompletarConvite(CompletarConviteRequestDto dto)
         {
-            var hash = HashToken(dto.Token);
+            var hash = TokenHasher.Hash(dto.Token);
             var convite = await _usuariosRepository.GetConviteByHash(hash);
 
             if (
@@ -608,16 +609,6 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
 
             convite.UsadoEm = DateTime.UtcNow;
             await _usuariosRepository.UpdateConvite(convite);
-        }
-
-        private static string HashToken(string token)
-        {
-            // Guarda hash do token, não o token puro — se o banco vazar, o token
-            // (que por 1h vale como reset de senha) não fica reutilizável.
-            var bytes = System.Security.Cryptography.SHA256.HashData(
-                System.Text.Encoding.UTF8.GetBytes(token)
-            );
-            return Convert.ToHexString(bytes);
         }
 
         private static bool ValidarForcaSenha(string senha, out string motivo)

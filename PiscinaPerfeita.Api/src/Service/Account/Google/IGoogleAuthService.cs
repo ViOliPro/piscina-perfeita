@@ -20,15 +20,17 @@ namespace PiscinaPerfeita.Api.Service.Account.Google
     {
         public bool Sucesso { get; init; }
         public string? Token { get; init; }
+        public string? RefreshToken { get; init; }
         public UserResponseDto? User { get; init; }
         public string? Mensagem { get; init; }
         public AuthErro? Erro { get; init; }
 
-        public static AuthResult Ok(string token, UserResponseDto user) =>
+        public static AuthResult Ok(string token, string RefreshToken, UserResponseDto user) =>
             new()
             {
                 Sucesso = true,
                 Token = token,
+                RefreshToken = RefreshToken,
                 User = user,
             };
 

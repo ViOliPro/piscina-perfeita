@@ -42,6 +42,7 @@ public partial class PiscinaPerfeitaContext : DbContext
     public virtual DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
     public virtual DbSet<ConviteToken> ConviteTokens { get; set; }
     public virtual DbSet<Hidrometro> Hidrometros { get; set; }
+    public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -266,6 +267,37 @@ public partial class PiscinaPerfeitaContext : DbContext
                 .IsRequired();
             entity.Property(e => e.Observacoes).HasColumnName("observacoes").HasMaxLength(500);
             entity.HasIndex(e => new { e.LocalId, e.DataLeitura }).IsUnique();
+        });
+
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.ToTable("RefreshToken", "piscina-perfeita");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.UsuarioId).HasColumnName("usuario_id").IsRequired();
+
+            entity
+                .Property(e => e.TokenHash)
+                .HasColumnName("tokenhash")
+                .IsRequired()
+                .HasMaxLength(256);
+
+            entity
+                .Property(e => e.CreatedAt)
+                .HasColumnName("created_at")
+                .HasDefaultValueSql("now()")
+                .IsRequired();
+
+            entity.Property(e => e.ExpiraEm).HasColumnName("expira_em").IsRequired();
+            entity.Property(e => e.RevogadoEm).HasColumnName("revogado_em").IsRequired(false);
+            entity
+                .HasOne(e => e.Usuario)
+                .WithMany() // Adicione .WithMany(u => u.RefreshTokens) se houver uma coleção na classe Usuario
+                .HasForeignKey(e => e.UsuarioId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => e.TokenHash).IsUnique();
+            entity.HasIndex(e => e.UsuarioId);
         });
 
         OnModelCreatingPartial(modelBuilder);
