@@ -48,9 +48,53 @@ import {
 // ----------------------------------------------------------
 // Helper base
 // ----------------------------------------------------------
-async function request(url, options = {}) {
+let refreshPromise = null;
+let onSessaoRenovada = null;
+let onSessaoExpirada = null;
+
+export function registrarSessaoHandlers(handlers) {
+  onSessaoRenovada = handlers.onSessaoRenovada;
+  onSessaoExpirada = handlers.onSessaoExpirada;
+
+  // Retorna uma função para desinscrever/limpar os handlers
+  return () => {
+    onSessaoRenovada = null;
+    onSessaoExpirada = null;
+  };
+}
+
+// Executa e centraliza todas as tentativas de Refresh Token
+function tentarRefresh() {
+  if (!refreshPromise) {
+    refreshPromise = fetch(API_ENDPOINTS.refresh, {
+      method: "POST",
+      credentials: "include",
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Sessão expirada ou inválida.");
+        const sessao = fromApiAuth(await res.json());
+        onSessaoRenovada?.(sessao);
+        return sessao;
+      })
+      .catch((err) => {
+        onSessaoExpirada?.();
+        throw err;
+      })
+      .finally(() => {
+        // Evita zerar a promessa na mesma micro-task
+        queueMicrotask(() => {
+          refreshPromise = null;
+        });
+      });
+  }
+  return refreshPromise;
+}
+
+async function request(url, options = {}, _retry = true) {
   const token = localStorage.getItem("pp_token");
+
   const res = await fetch(url, {
+    credentials: "include", // Envia cookies httpOnly do refresh token
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -59,21 +103,34 @@ async function request(url, options = {}) {
     ...options,
   });
 
+  // Tratamento de Token Expirado (401)
+  if (res.status === 401 && _retry) {
+    try {
+      await tentarRefresh();
+      return request(url, options, false); // Repete a chamada 1x com novo token
+    } catch {
+      throw new Error("Sessão expirada. Faça login novamente.");
+    }
+  }
+
   if (!res.ok) {
     const erro = await res.json().catch(() => ({ message: res.statusText }));
     const error = new Error(erro.message ?? `Erro ${res.status}`);
-    // Código estruturado (ex: "ConvitePendente") — hoje só o fluxo do
-    // Google usa, mas fica disponível pra qualquer chamada que precisar.
     if (erro.erro) error.codigo = erro.erro;
     throw error;
   }
+
   if (res.status === 204) return null;
   return res.json();
 }
 
 const get = (url) => request(url);
-const post = (url, body) =>
-  request(url, { method: "POST", body: JSON.stringify(body) });
+const post = (url, body, opts = {}) =>
+  request(
+    url,
+    { method: "POST", body: JSON.stringify(body) },
+    opts.retry ?? true,
+  );
 const put = (url, body) =>
   request(url, { method: "PUT", body: JSON.stringify(body) });
 const del = (url) => request(url, { method: "DELETE" });
@@ -85,6 +142,7 @@ export const authService = {
   login: async (formDto) => {
     const res = await fetch(API_ENDPOINTS.login, {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(toApiLogin(formDto)),
     });
@@ -95,19 +153,16 @@ export const authService = {
     return fromApiAuth(await res.json());
   },
 
-  // Login com Google: o backend agora devolve o mesmo formato do login
-  // normal (AccountResponseDto), então reaproveita fromApiAuth.
   loginGoogle: (idToken) =>
-    post(API_ENDPOINTS.loginGoogle, toApiGoogleLogin({ idToken })).then(
-      fromApiAuth,
-    ),
+    post(API_ENDPOINTS.loginGoogle, toApiGoogleLogin({ idToken }), {
+      retry: false,
+    }).then(fromApiAuth),
 
-  // Completa o cadastro quando há convite ativo pro e-mail do Google —
-  // reenvia o mesmo idToken (o backend revalida) + Cpf opcional.
   completarConviteGoogle: (idToken, cpf) =>
     post(
       API_ENDPOINTS.completarConviteGoogle,
       toApiCompletarConviteGoogle({ idToken, cpf }),
+      { retry: false },
     ).then(fromApiAuth),
 
   forgotPassword: (dto) => post(API_ENDPOINTS.forgotPassword, dto),
@@ -118,6 +173,11 @@ export const authService = {
     post(`${API_ENDPOINTS.switchLocal}?newLocalId=${newLocalId}`).then(
       fromApiAuth,
     ),
+
+  // Reaproveita o fluxo unificado de tentarRefresh
+  refresh: () => tentarRefresh(),
+
+  logout: () => post(API_ENDPOINTS.logout, {}),
 };
 
 // ----------------------------------------------------------
@@ -134,15 +194,13 @@ export const localService = {
 };
 
 // ----------------------------------------------------------
-// Vínculos Usuário ↔ Local (Perfil por Local)
+// Vínculos Usuário ↔ Local
 // ----------------------------------------------------------
 export const usuarioLocalService = {
   listar: () => get(API_ENDPOINTS.usuariosLocais).then(fromApiUsuarioLocalList),
   buscar: (id) =>
     get(API_ENDPOINTS.usuarioLocalById(id)).then(fromApiUsuarioLocal),
-  // Locais vinculados ao usuário autenticado — alimenta o seletor "Trocar Local".
   meusLocais: () => get(API_ENDPOINTS.meusLocais).then(fromApiUsuarioLocalList),
-  // Locais vinculados a um usuário específico — usado na administração de usuários.
   porUsuario: (usuarioId) =>
     get(API_ENDPOINTS.locaisPorUsuario(usuarioId)).then(
       fromApiUsuarioLocalList,
@@ -169,20 +227,10 @@ export const usuarioService = {
   atualizar: (id, dto) =>
     put(API_ENDPOINTS.usuarioById(id), toApiUsuario(dto)).then(fromApiUsuario),
   excluir: (id) => del(API_ENDPOINTS.usuarioById(id)),
-
-  // "Meu Perfil" — dados do próprio usuário logado.
   meuPerfil: () => get(API_ENDPOINTS.meuPerfil).then(fromApiUsuario),
   atualizarMeuPerfil: (dto) =>
     put(API_ENDPOINTS.meuPerfil, dto).then(fromApiUsuario),
-
-  // NOTA: ainda não existe endpoint PUT /usuarios/me/senha no backend —
-  // esta chamada vai falhar com 404 até esse endpoint ser implementado
-  // (item "Meu perfil" do roadmap, v1.4.4).
   alterarSenha: (dto) => put(API_ENDPOINTS.authPasswordSenhaAtualENova, dto),
-
-  // Convite por link — em vez de cadastrar o usuário direto, o backend
-  // gera um token e manda um e-mail; o convidado preenche nome+senha em
-  // /completar-cadastro?token=... (ver CompletarConvite.jsx).
   criarConvite: (dto) => post(API_ENDPOINTS.criarConvite, dto),
 };
 
@@ -213,7 +261,7 @@ export const produtoService = {
 };
 
 // ----------------------------------------------------------
-// Depósitos (vinculados ao Local)
+// Depósitos
 // ----------------------------------------------------------
 export const depositoService = {
   listar: () => get(API_ENDPOINTS.depositos).then(fromApiDepositoList),
@@ -255,9 +303,8 @@ export const estoqueService = {
 };
 
 // ----------------------------------------------------------
-// Hidrometros
+// Hidrômetros
 // ----------------------------------------------------------
-
 export const hidrometroService = {
   listar: () => get(API_ENDPOINTS.hidrometros).then(fromApiHidrometroList),
   buscar: (id) => get(API_ENDPOINTS.hidrometroById(id)).then(fromApiHidrometro),
@@ -285,10 +332,6 @@ export const movimentacaoService = {
     post(API_ENDPOINTS.movimentacoes, toApiMovimentacao(dto)).then(
       fromApiMovimentacao,
     ),
-
-  // Feature de contagem física / Ajuste de Inventário: envia a contagem de
-  // vários produtos de um depósito de uma vez; a API calcula a diferença
-  // contra o estoque lógico e gera os ajustes necessários.
   contagemInventario: (depositoId, usuarioId, itens) =>
     post(API_ENDPOINTS.contagemInventario, {
       DepositoId: depositoId,
@@ -301,9 +344,7 @@ export const movimentacaoService = {
 };
 
 // ----------------------------------------------------------
-// Aplicações de produto (Piscina + Produto + Quantidade + Data +
-// Análise relacionada) — ao criar, o backend gera automaticamente a
-// MovimentacaoEstoque e atualiza o Estoque do Depósito informado.
+// Aplicações de Produto
 // ----------------------------------------------------------
 export const aplicacaoProdutoService = {
   listar: () =>

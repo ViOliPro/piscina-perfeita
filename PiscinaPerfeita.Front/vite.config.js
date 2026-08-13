@@ -4,9 +4,10 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+import basicSsl from "@vitejs/plugin-basic-ssl";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), basicSsl()],
   resolve: {
     alias: {
       // "@/config"     → src/config/index.js
@@ -22,14 +23,14 @@ export default defineConfig({
   server: {
     port: 5173,
     headers: { "Cross-Origin-Opener-Policy": "same-origin-allow-popups" },
+    https: true,
     proxy: {
       // Todas as chamadas /api/* são redirecionadas para o backend ASP.NET Core
       "/api": {
-        target: "http://localhost:5000",
+        target: "http://localhost:5258",
         changeOrigin: true,
         secure: false,
       },
-      https: true,
     },
   },
 

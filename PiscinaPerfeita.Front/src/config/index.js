@@ -2,12 +2,11 @@
 //  Piscina Perfeita — Arquivo de configuração central
 //  Edite este arquivo para ajustar endpoints, limites e tema.
 // ============================================================
-
 // ----------------------------------------------------------
 // API
 // ----------------------------------------------------------
-export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5258/api";
+
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
 export const API_ENDPOINTS = {
   // Autenticação  (AccountController → api/account/...)
@@ -21,6 +20,8 @@ export const API_ENDPOINTS = {
   authPasswordSenhaAtualENova: `${API_BASE_URL}/usuarios/me/senha`,
   meuPerfil: `${API_BASE_URL}/usuarios/me`,
   criarConvite: `${API_BASE_URL}/usuarios/convites`,
+  refresh: `${API_BASE_URL}/account/refresh`,
+  logout: `${API_BASE_URL}/account/logout`,
 
   // Usuários
   usuarios: `${API_BASE_URL}/usuarios`,

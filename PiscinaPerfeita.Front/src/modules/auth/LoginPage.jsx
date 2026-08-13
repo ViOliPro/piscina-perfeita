@@ -185,7 +185,7 @@ function Alert({ variant, message }) {
 // ----------------------------------------------------------
 // Formulário de Login
 // ----------------------------------------------------------
-function LoginForm({ onForgot }) {
+function LoginForm({ onForgot, onConvitePendente }) {
   const { login, loginGoogle, loading, error, setError } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

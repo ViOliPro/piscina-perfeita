@@ -42,7 +42,7 @@ const PAGES = {
 // Conteúdo protegido — só renderiza após login
 // ----------------------------------------------------------
 function AuthenticatedApp() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, bootstrapping, user } = useAuth();
   const [activePage, setActivePage] = useState("dashboard");
   // Preenchimento inicial da tela de Aplicações quando acionada a partir
   // do botão "Registrar aplicação" em uma Análise (ver Analises.jsx).
@@ -57,6 +57,7 @@ function AuthenticatedApp() {
   // (LoginPage.jsx distingue os dois pelo path).
   const hasAuthToken = new URLSearchParams(window.location.search).has("token");
 
+  if (bootstrapping) return <div style={{ minHeight: "100vh" }} />;
   if (!isAuthenticated || hasAuthToken) return <LoginPage />;
 
   // Um Administrador criado sem nenhum Local vinculado (ex.: síndico

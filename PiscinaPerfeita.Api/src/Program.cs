@@ -1,10 +1,6 @@
-using System.Globalization;
-using System.Reflection;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +9,11 @@ using Microsoft.OpenApi;
 using PiscinaPerfeita.Api.Authorization;
 using PiscinaPerfeita.Api.Data;
 using PiscinaPerfeita.Api.Extension;
+using System.Globalization;
+using System.Reflection;
+using System.Security.Claims;
+using System.Text;
+using System.Threading.RateLimiting;
 
 // 1. Inicializa o builder e carrega as variáveis de ambiente IMEDIATAMENTE
 var builder = WebApplication.CreateBuilder(args);
@@ -35,6 +36,17 @@ if (string.IsNullOrWhiteSpace(jwtKey))
     throw new Exception("Jwt:Key não configurado no ambiente");
 
 var key = Encoding.ASCII.GetBytes(jwtKey);
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    // Render não manda uma lista fixa de proxies conhecidos (é dinâmico) —
+    // limpar essas listas é o padrão recomendado quando o proxy está fora
+    // do seu controle direto, senão o middleware rejeita o header por não
+    // reconhecer a origem.
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 builder
     .Services.AddAuthentication(options =>
@@ -248,28 +260,6 @@ builder.Services.AddCors(options =>
     );
 });
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy(
-        "AppCors",
-        policy =>
-        {
-            if (string.IsNullOrWhiteSpace(allowedOrigins))
-            {
-                policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
-            }
-            else
-            {
-                var origins = allowedOrigins.Split(
-                    ',',
-                    StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
-                );
-
-                policy.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod();
-            }
-        }
-    );
-});
 
 // Rate limiting — hoje o login não tinha nenhum limite de tentativas.
 // Em Development o limite é bem mais alto pra não travar os testes manuais.
@@ -372,6 +362,7 @@ try
         }
     );
 
+    app.UseForwardedHeaders();
     app.UseCors("AppCors");
     app.UseRateLimiter();
     app.UseAuthentication();
