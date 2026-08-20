@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext.jsx";
+import AceiteTermosCheckbox from "./AceiteTermosCheckbox.jsx";
 import {
   tokens,
   cardStyle,
@@ -19,12 +20,17 @@ import {
 export default function CompletarCadastroGoogle({ idToken, onVoltar }) {
   const { completarConviteGoogle, loading, error, setError } = useAuth();
   const [cpf, setCpf] = useState("");
+  const [aceiteTermos, setAceiteTermos] = useState(false);
   const [enviado, setEnviado] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError(null);
-    const ok = await completarConviteGoogle(idToken, cpf.trim() || null);
+    if (!aceiteTermos) {
+      setError("É necessário aceitar os Termos de Uso e a Política de Privacidade.");
+      return;
+    }
+    const ok = await completarConviteGoogle(idToken, cpf.trim() || null, aceiteTermos);
     if (ok) setEnviado(true);
     // Sucesso já salva a sessão no AuthContext — o app troca de tela
     // sozinho quando isAuthenticated vira true, não navegamos daqui.
@@ -84,12 +90,18 @@ export default function CompletarCadastroGoogle({ idToken, onVoltar }) {
               </p>
             </div>
 
+            <AceiteTermosCheckbox
+              checked={aceiteTermos}
+              onChange={setAceiteTermos}
+              disabled={loading}
+            />
+
             {error && <p style={errorTextStyle}>{error}</p>}
 
             <button
               type="submit"
-              disabled={loading}
-              style={primaryButtonStyle(loading)}
+              disabled={loading || !aceiteTermos}
+              style={primaryButtonStyle(loading || !aceiteTermos)}
             >
               {loading ? "Confirmando..." : "Concluir cadastro"}
             </button>

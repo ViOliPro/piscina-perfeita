@@ -61,7 +61,7 @@ namespace PiscinaPerfeita.Api.Service.Account.Google
             );
         }
 
-        public async Task<AuthResult> CompletarCadastroAsync(string idToken, string? cpf)
+        public async Task<AuthResult> CompletarCadastroAsync(string idToken, string? cpf, bool aceiteTermos)
         {
             var payload = await _googleTokenValidator.ValidarAsync(idToken);
             if (payload is null)
@@ -69,10 +69,17 @@ namespace PiscinaPerfeita.Api.Service.Account.Google
             if (!payload.EmailVerificado)
                 return AuthResult.Falha(AuthErro.TokenInvalido, "E-mail do Google não verificado.");
 
+            if (!aceiteTermos)
+                return AuthResult.Falha(
+                    AuthErro.AceiteTermosPendente,
+                    "É necessário aceitar os Termos de Uso e a Política de Privacidade para concluir o cadastro."
+                );
+
             var usuario = await _usuarioService.CompletarConviteGoogleAsync(
                 payload.Email,
                 payload.Nome,
-                cpf
+                cpf,
+                aceiteTermos
             );
             if (usuario is null)
             {

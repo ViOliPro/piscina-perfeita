@@ -52,6 +52,20 @@ let refreshPromise = null;
 let onSessaoRenovada = null;
 let onSessaoExpirada = null;
 
+// Token de acesso mantido só em memória (nunca em localStorage — decisão
+// de segurança contra roubo via XSS, ver AuthContext.jsx). request()
+// precisa lê-lo daqui; até 2026-08-13 ele vinha de localStorage("pp_token"),
+// mas essa chave nunca é mais escrita desde a migração pra refresh via
+// cookie — por isso nenhuma chamada autenticada levava o header
+// Authorization, e tudo voltava 401 exceto login/refresh (que não passam
+// por request()). setAccessToken é chamado pelo AuthContext sempre que o
+// token muda (login, refresh, switchLocal, logout).
+let currentAccessToken = null;
+
+export function setAccessToken(token) {
+  currentAccessToken = token;
+}
+
 export function registrarSessaoHandlers(handlers) {
   onSessaoRenovada = handlers.onSessaoRenovada;
   onSessaoExpirada = handlers.onSessaoExpirada;
@@ -91,7 +105,7 @@ function tentarRefresh() {
 }
 
 async function request(url, options = {}, _retry = true) {
-  const token = localStorage.getItem("pp_token");
+  const token = currentAccessToken;
 
   const res = await fetch(url, {
     credentials: "include", // Envia cookies httpOnly do refresh token
@@ -158,10 +172,10 @@ export const authService = {
       retry: false,
     }).then(fromApiAuth),
 
-  completarConviteGoogle: (idToken, cpf) =>
+  completarConviteGoogle: (idToken, cpf, aceiteTermos) =>
     post(
       API_ENDPOINTS.completarConviteGoogle,
-      toApiCompletarConviteGoogle({ idToken, cpf }),
+      toApiCompletarConviteGoogle({ idToken, cpf, aceiteTermos }),
       { retry: false },
     ).then(fromApiAuth),
 

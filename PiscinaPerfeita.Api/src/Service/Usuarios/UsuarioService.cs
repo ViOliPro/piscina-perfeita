@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PiscinaPerfeita.Api.Data;
 using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
+using PiscinaPerfeita.Api.Helpers;
 using PiscinaPerfeita.Api.Helpers.Authenticated;
 using PiscinaPerfeita.Api.Helpers.Security;
 using PiscinaPerfeita.Api.Models;
@@ -10,6 +11,7 @@ using PiscinaPerfeita.Api.Repository.Locais;
 using PiscinaPerfeita.Api.Repository.Usuarios;
 using PiscinaPerfeita.Api.Repository.UsuariosLocal;
 using PiscinaPerfeita.Api.Service.Email;
+
 
 namespace PiscinaPerfeita.Api.Service.Usuarios
 {
@@ -48,10 +50,8 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             if (_user.IsSuperAdmin())
                 return await _usuariosRepository.Show();
 
-            // CORRIGIDO: antes retornava TODOS os usuários com Role=Usuario do
-            // sistema inteiro, de qualquer Local — um Administrador enxergava
-            // usuários de outros tenants. Agora fica restrito ao Local ativo
-            // do Administrador que está consultando.
+            // Restrito ao Local ativo do Administrador — evita vazamento
+            // de usuários entre tenants.
             var localId = _user.GetLocalId();
             if (localId == Guid.Empty)
                 throw new InvalidOperationException(
@@ -69,13 +69,11 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 throw new KeyNotFoundException($"Usuario com id {id} não encontrado");
             }
 
-            // CORRIGIDO: faltava checar se o usuário buscado pertence ao
-            // mesmo tenant do Administrador logado — sem isso, qualquer
-            // Administrador podia consultar dados de usuários de QUALQUER
-            // outro Local só sabendo o Guid (IDOR/vazamento entre tenants).
-            // Devolvemos 404 (não 403) para não confirmar nem a existência
-            // do usuário fora do escopo do tenant atual. Leitura não altera
-            // privilégio, então não bloqueia por causa do Administrador Pai.
+            // Garante que o usuário buscado pertence ao mesmo tenant do
+            // Administrador logado (evita IDOR entre Locais). Devolve 404
+            // em vez de 403 para não confirmar a existência do usuário
+            // fora do escopo do tenant atual — leitura não altera
+            // privilégio, então não aplica a proteção do Administrador Pai.
             await GarantirUsuarioNoTenantAtual(id, protegerAdministradorPai: false);
 
             return usuarioDb;
@@ -104,7 +102,9 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             await ValidarPermissaoCadastro(usuarioLogado, dto);
 
             // Criando um novo usuário com os dados fornecidos no DTO
-            var newUsuario = await CriarUsuario(dto);
+            var newUsuario = CriarUsuario(dto);
+
+            
             await _usuariosRepository.Create(newUsuario);
 
             await CriarUsuarioLocal(newUsuario, dto, usuarioLogado);
@@ -171,7 +171,7 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 Id = usuarioDb.Id,
                 Nome = usuarioDb.Nome,
                 Email = usuarioDb.Email,
-                CreatedAt = usuarioDb.CreatedAt,
+                CreatedAt = usuario.CreatedAt,
                 Role = usuarioDb.Role,
             };
         }
@@ -184,12 +184,9 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
             }
 
-            // CORRIGIDO: mesmo IDOR do GetById/Update — um Administrador
-            // conseguia apagar QUALQUER usuário do sistema (de qualquer
-            // Local) só sabendo o Guid, e nada impedia apagar o
-            // Administrador Pai do próprio tenant. Excluir é sempre uma
-            // ação sobre o vínculo, então aqui a proteção do Administrador
-            // Pai vale sempre.
+            // Mesma proteção de tenant do GetById/Update. Excluir é sempre
+            // uma ação sobre o vínculo, então aqui a proteção do
+            // Administrador Pai vale sempre.
             await GarantirUsuarioNoTenantAtual(id, protegerAdministradorPai: true);
 
             await _usuariosRepository.Delete(id);
@@ -241,7 +238,7 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 );
         }
 
-        private async Task<Usuario> CriarUsuario(UsuarioRequestDto dto)
+        private static Usuario CriarUsuario(UsuarioRequestDto dto)
         {
             return new Usuario
             {
@@ -366,11 +363,14 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             if (usuarioDb == null)
                 throw new KeyNotFoundException("Usuário não encontrado.");
 
-            var emailJaExiste = await _usuariosRepository.GetByEmail(dto.Email ?? string.Empty);
-            if (emailJaExiste != null && emailJaExiste.Id != usuarioDb.Id)
-                throw new InvalidOperationException(
-                    "Já existe um usuário com este e-mail cadastrado."
-                );
+            if (!string.IsNullOrEmpty(dto.Email))
+            {
+                var emailJaExiste = await _usuariosRepository.GetByEmail(dto.Email);
+                if (emailJaExiste != null && emailJaExiste.Id != usuarioDb.Id)
+                    throw new InvalidOperationException(
+                        "Já existe um usuário com este e-mail cadastrado."
+                    );
+            }
 
             if (
                 !string.IsNullOrWhiteSpace(dto.Email)
@@ -436,12 +436,8 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
 
             var resetToken = await _usuariosRepository.GetPasswordResetToken(hash);
 
-            // CORRIGIDO: antes, um token inválido/expirado/usado disparava um
-            // INSERT esquisito (_usuariosRepository.PasswordResetToken, que é
-            // o método de CRIAR token, não de validar) e o código continuava
-            // adiante mesmo assim — como os campos abaixo usam `?.`, tudo
-            // virava no-op silencioso e o método retornava sem erro nenhum
-            // pro chamador. Agora falha de verdade com uma mensagem clara.
+            // Token inválido/expirado/já usado deve falhar explicitamente,
+            // não seguir adiante silenciosamente.
             if (
                 resetToken is null
                 || resetToken.UsadoEm is not null
@@ -580,6 +576,11 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             if (!ValidarForcaSenha(dto.Senha, out var motivo))
                 throw new InvalidOperationException($"Senha inválida: {motivo}");
 
+            if (!dto.AceiteTermos)
+                throw new InvalidOperationException(
+                    "É necessário aceitar os Termos de Uso e a Política de Privacidade para concluir o cadastro."
+                );
+
             var novoUsuario = new Usuario
             {
                 Nome = dto.Nome,
@@ -587,6 +588,8 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 Cpf = dto.Cpf,
                 SenhaHash = BCrypt.Net.BCrypt.HashPassword(dto.Senha),
                 Role = convite.Role,
+                TermosAceitosVersao = LegalConstants.VersaoTermosAtual,
+                TermosAceitosEm = DateTimeOffset.UtcNow,
             };
 
             await _usuariosRepository.Create(novoUsuario);
@@ -653,12 +656,14 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
         public async Task<Usuario?> CompletarConviteGoogleAsync(
             string email,
             string nome,
-            string? cpf
+            string? cpf,
+            bool aceiteTermos
         )
         {
             // Corrida: o usuário pode ter completado o cadastro por outro caminho
             // (link do convite por e-mail) entre a checagem em AutenticarAsync e
             // esta chamada — trata como login normal em vez de duplicar conta.
+            // Não exige aceite aqui: quem já tem conta já aceitou antes.
             var usuarioExistente = await _usuariosRepository.GetByEmail(email);
             if (usuarioExistente != null)
             {
@@ -667,6 +672,11 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
 
                 return usuarioExistente;
             }
+
+            if (!aceiteTermos)
+                throw new InvalidOperationException(
+                    "É necessário aceitar os Termos de Uso e a Política de Privacidade para concluir o cadastro."
+                );
 
             var convite = await _usuariosRepository.GetConviteAtivoByEmail(email);
             if (convite is null)
@@ -681,6 +691,8 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 LoginGoogle = true,
                 Role = convite.Role,
                 SecurityStamp = Guid.NewGuid().ToString(),
+                TermosAceitosVersao = LegalConstants.VersaoTermosAtual,
+                TermosAceitosEm = DateTimeOffset.UtcNow,
             };
 
             await _usuariosRepository.Create(novoUsuario);

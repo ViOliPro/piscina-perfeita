@@ -6,7 +6,7 @@ namespace PiscinaPerfeita.Api.Service.Account.Google
     public interface IGoogleAuthService
     {
         Task<AuthResult> AutenticarAsync(string idToken);
-        Task<AuthResult> CompletarCadastroAsync(string idToken, string? cpf);
+        Task<AuthResult> CompletarCadastroAsync(string idToken, string? cpf, bool aceiteTermos);
     }
 
     public enum AuthErro
@@ -14,6 +14,7 @@ namespace PiscinaPerfeita.Api.Service.Account.Google
         TokenInvalido,
         AcessoNaoLiberado,
         ConvitePendente,
+        AceiteTermosPendente,
     }
 
     public record AuthResult

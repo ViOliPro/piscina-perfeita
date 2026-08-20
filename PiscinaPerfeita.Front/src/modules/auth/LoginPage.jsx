@@ -379,28 +379,9 @@ function LoginForm({ onForgot, onConvitePendente }) {
 }
 
 // ----------------------------------------------------------
-// Formulário Esqueci minha senha / Redefinir senha
-//
-// CORRIGIDO: removidos os ForgotForm/ResetForm embutidos (que tinham uma
-// mensagem hardcoded dizendo que o backend ainda não existia). Trocados
-// pelos componentes dedicados EsqueciSenha.jsx e RedefinirSenha.jsx, que
-// agora falam com endpoints reais.
-// ----------------------------------------------------------
-
-// (ResetForm removido — ver RedefinirSenha.jsx)
-
-// ----------------------------------------------------------
 // Componente principal da página de login
 // ----------------------------------------------------------
 export default function LoginPage() {
-  // Detecta token na query string: ?token=...
-  // (nome alinhado com os links que o backend gera em
-  // UsuarioService.PasswordResetToken/CriarConvite — antes esta página lia
-  // "reset_token", que nunca existia no link real)
-  //
-  // Reset de senha e convite usam o mesmo nome de parâmetro, então
-  // distinguimos pelo path — o app não usa router, mas window.location.pathname
-  // continua disponível normalmente.
   const params = new URLSearchParams(window.location.search);
   const token = params.get("token");
   const isConvite = window.location.pathname === "/completar-cadastro";
@@ -612,6 +593,34 @@ export default function LoginPage() {
             }}
           >
             {APP_META.name} v{APP_META.version}
+            <div style={{ marginTop: 6 }}>
+              <a
+                href="/termos-de-uso"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: "#6B8CAE" }}
+              >
+                Termos de Uso
+              </a>
+              {" · "}
+              <a
+                href="/politica-de-privacidade"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: "#6B8CAE" }}
+              >
+                Política de Privacidade
+              </a>
+              {" · "}
+              <a
+                href="/politica-de-cookies"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: "#6B8CAE" }}
+              >
+                Política de Cookies
+              </a>
+            </div>
           </div>
         </div>
       </div>

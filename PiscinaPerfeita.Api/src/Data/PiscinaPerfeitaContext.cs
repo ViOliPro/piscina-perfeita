@@ -173,6 +173,8 @@ public partial class PiscinaPerfeitaContext : DbContext
                 .Property(e => e.CreatedAt)
                 .HasColumnType("timestamp with time zone")
                 .HasColumnName("createtat");
+
+            entity.HasIndex(e => e.Email).IsUnique();
         });
 
         modelBuilder.Entity<Local>(entity =>

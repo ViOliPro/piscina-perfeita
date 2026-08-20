@@ -87,11 +87,8 @@ namespace PiscinaPerfeita.Api.Controllers
         {
             try
             {
-                // O usuário só pode trocar para um Local ao qual ele mesmo está
-                // vinculado — por isso o Id vem do token (claims), nunca do
-                // corpo da requisição. Antes este endpoint era [AllowAnonymous]
-                // e aceitava um userId arbitrário no body, permitindo que
-                // qualquer pessoa trocasse o local de qualquer usuário.
+                // Id sempre vem do token (claims), nunca do corpo da
+                // requisição — evita trocar o local de outro usuário.
                 var userId = _authenticatedUser.GetUserId();
                 var res = await _accountService.SwitchLocal(userId, newLocalId);
                 SetRefreshCookie(res.RefreshToken);
@@ -136,10 +133,6 @@ namespace PiscinaPerfeita.Api.Controllers
         [EnableRateLimiting("auth-sensitive")]
         public async Task<IActionResult> RedefinirSenha([FromBody] RedefinirSenhaRequestDto dto)
         {
-            // CORRIGIDO: antes só validávamos o token e retornávamos sucesso
-            // sem nunca trocar a senha. UpdatePasswordResetToken() é o método
-            // que de fato faz o hash da nova senha, marca o token como usado
-            // e rotaciona o SecurityStamp.
             try
             {
                 await _usuarioService.UpdatePasswordResetToken(dto);
@@ -213,12 +206,24 @@ namespace PiscinaPerfeita.Api.Controllers
         {
             var resultado = await _googleAuthService.CompletarCadastroAsync(
                 request.IdToken,
-                request.Cpf
+                request.Cpf,
+                request.AceiteTermos
             );
             if (!resultado.Sucesso)
+            {
+                // AceiteTermosPendente é erro de validação do formulário, não de
+                // sessão — 401 aqui faria o front tentar refresh de token à toa
+                // (não há sessão nenhuma neste endpoint anônimo) e mostrar
+                // "Sessão expirada" em vez da mensagem real.
+                if (resultado.Erro == AuthErro.AceiteTermosPendente)
+                    return BadRequest(
+                        new { message = resultado.Mensagem, erro = resultado.Erro.ToString() }
+                    );
+
                 return Unauthorized(
                     new { message = resultado.Mensagem, erro = resultado.Erro.ToString() }
                 );
+            }
 
             SetRefreshCookie(resultado.RefreshToken!);
             return Ok(

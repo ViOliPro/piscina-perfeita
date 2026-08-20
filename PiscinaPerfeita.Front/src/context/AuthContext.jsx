@@ -9,7 +9,7 @@ import {
   useEffect,
   useCallback,
 } from "react";
-import { authService, registrarSessaoHandlers } from "../config/services.js";
+import { authService, registrarSessaoHandlers, setAccessToken } from "../config/services.js";
 import { can } from "../helpers/Permissions.js";
 
 // Cache otimista para evitar flashing da tela —
@@ -42,11 +42,24 @@ function clearUserCache() {
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(null); // mantido apenas em memória
+  const [token, _setToken] = useState(null); // mantido apenas em memória
   const [user, setUser] = useState(readCachedUser()); // estado otimista
   const [bootstrapping, setBootstrapping] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Atualiza o módulo de serviços (request(), config/services.js) e o
+  // state do React na mesma chamada síncrona — nunca via useEffect(token).
+  // Um useEffect só roda depois do commit, e o React agrupa a atualização
+  // de token/user/bootstrapping do boot numa única leva: as telas que já
+  // dependem de isAuthenticated montam e disparam fetch antes do
+  // useEffect ter rodado (efeitos de filhos disparam antes dos do pai),
+  // então a primeira leva de chamadas sempre saía com o token antigo —
+  // por isso o padrão "401 seguido de 200 no retry" no Network tab.
+  const setToken = useCallback((newToken) => {
+    setAccessToken(newToken);
+    _setToken(newToken);
+  }, []);
 
   useEffect(() => {
     registrarSessaoHandlers({
@@ -131,11 +144,15 @@ export function AuthProvider({ children }) {
   }, []);
 
   // Completa o cadastro do convite ativo via Google (Cpf opcional).
-  const completarConviteGoogle = useCallback(async (idToken, cpf) => {
+  const completarConviteGoogle = useCallback(async (idToken, cpf, aceiteTermos) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await authService.completarConviteGoogle(idToken, cpf);
+      const res = await authService.completarConviteGoogle(
+        idToken,
+        cpf,
+        aceiteTermos,
+      );
       setToken(res.accessToken);
       setUser(res.user);
       saveUserCache(res.user);
