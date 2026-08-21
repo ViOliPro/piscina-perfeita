@@ -1,7 +1,7 @@
 // ============================================================
 //  Piscina Perfeita — Módulo: Movimentações de Estoque
 // ============================================================
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   PageHeader,
   Card,
@@ -23,6 +23,7 @@ import {
   piscinaService,
   produtoService,
   depositoService,
+  estoqueService,
 } from "../../config/services.js";
 import {
   TIPO_MOVIMENTACAO,
@@ -57,6 +58,7 @@ function MovimentacaoForm({
   onSubmit,
   onCancel,
   loading,
+  estoques,
 }) {
   const [form, setForm] = useState({
     piscinaId: "",
@@ -72,6 +74,34 @@ function MovimentacaoForm({
 
   const tipoNum = parseInt(form.tipoMovimentacao);
   const piscinaObrigatoria = TIPOS_QUE_EXIGEM_PISCINA.includes(tipoNum);
+
+  // Filtro em cadeia: só é possível escolher um Produto depois de escolher
+  // o Depósito, e a lista mostra estritamente os produtos que têm estoque
+  // registrado naquele Depósito.
+  // Otimizado: Filtra direto buscando os estoques do depósito selecionado
+  const produtosDoDeposito = useMemo(() => {
+    if (!form.depositoId) return [];
+
+    const produtosIdsNoDeposito = new Set(
+      estoques
+        .filter((e) => e?.deposito?.id === form.depositoId)
+        .map((e) => e?.produto?.id),
+    );
+
+    return produtos.filter((p) => produtosIdsNoDeposito.has(p.id));
+  }, [form.depositoId, estoques, produtos]);
+
+  console.log({ produtosDoDeposito, estoques, produtos });
+  console.log(form);
+  // Reseta o produto se ele deixar de ser válido para o depósito escolhido
+  useEffect(() => {
+    if (
+      form.produtoId &&
+      !produtosDoDeposito.some((p) => p.id === form.produtoId)
+    ) {
+      setForm((f) => ({ ...f, produtoId: "" }));
+    }
+  }, [produtosDoDeposito, form.produtoId]);
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -147,8 +177,13 @@ function MovimentacaoForm({
             value={form.produtoId}
             onChange={set("produtoId")}
           >
-            <option value="">Selecione o produto</option>
-            {produtos.map((p) => (
+            <option value="">
+              {" "}
+              {form.depositoId
+                ? "Selecione o produto"
+                : "Selecione um depósito primeiro"}
+            </option>
+            {produtosDoDeposito.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.nome} ({p.unidadeMedida})
               </option>
@@ -252,21 +287,24 @@ export default function Movimentacoes() {
   const [modalOpen, setModalOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [filtroTipo, setFiltroTipo] = useState("");
+  const [estoques, setEstoques] = useState([]);
 
   useEffect(() => {
     async function load() {
       try {
         setLoading(true);
-        const [m, p, pr, d] = await Promise.all([
+        const [m, p, pr, d, e] = await Promise.all([
           movimentacaoService.listar(),
           piscinaService.listar(),
           produtoService.listar(),
           depositoService.listar(),
+          estoqueService.listar(),
         ]);
         setMovimentos(m ?? []);
         setPiscinas(p ?? []);
         setProdutos(pr ?? []);
         setDepositos(d ?? []);
+        setEstoques(e ?? []);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -396,6 +434,7 @@ export default function Movimentacoes() {
             usuarios={usuarios}
             podeVerUsuario={podeVerUsuario}
             depositos={depositos}
+            estoques={estoques}
             onSubmit={handleSave}
             onCancel={() => setModalOpen(false)}
             loading={saving}

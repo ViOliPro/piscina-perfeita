@@ -163,11 +163,7 @@ export const TIPOS_MOVIMENTACAO_MANUAL = [
 ];
 
 // Tipos que exigem uma Piscina associada (mesma regra do backend)
-export const TIPOS_QUE_EXIGEM_PISCINA = [
-  TIPO_MOVIMENTACAO.ENTRADA,
-  TIPO_MOVIMENTACAO.SAIDA,
-  TIPO_MOVIMENTACAO.APLICACAO,
-];
+export const TIPOS_QUE_EXIGEM_PISCINA = [TIPO_MOVIMENTACAO.APLICACAO];
 
 // Unidades de lançamento aceitas para conversão (mesma família de
 // UNIDADES_MEDIDA, mas incluindo submúltiplos como mg/mL que não fazem

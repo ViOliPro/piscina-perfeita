@@ -23,8 +23,7 @@ namespace PiscinaPerfeita.Api.Helpers.Estoque
         // de depósito, nem sempre ligadas a uma piscina específica.
         public static readonly HashSet<Tipo> TiposQueExigemPiscina = new()
         {
-            Tipo.Entrada,
-            Tipo.Saida,
+
             Tipo.Aplicacao,
         };
 
