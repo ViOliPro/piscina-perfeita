@@ -1,84 +1,108 @@
 // ============================================================
 //  Piscina Perfeita — AuthContext
 //  Gerencia estado de autenticação globalmente.
-//
-//  O backend retorna:
-//  {
-//    accessToken : string,
-//    tokenType   : "Bearer",
-//    expiresIn   : 28800,          // segundos (8h)
-//    user: { nome, email, role }
-//  }
 // ============================================================
-import { createContext, useContext, useState, useCallback } from "react";
-import { authService } from "../config/services.js";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
+import { authService, registrarSessaoHandlers, setAccessToken } from "../config/services.js";
 import { can } from "../helpers/Permissions.js";
 
-const TOKEN_KEY = "pp_token";
+// Cache otimista para evitar flashing da tela —
+// a fonte de verdade é o refresh de token no boot.
 const USER_KEY = "pp_user";
-const EXPIRES_KEY = "pp_expires";
 
 // ----------------------------------------------------------
-// Helpers de storage
+// Helpers de Storage Cache
 // ----------------------------------------------------------
-function saveSession(accessToken, user, expiresIn) {
-  const expiresAt = Date.now() + expiresIn * 1000;
-  localStorage.setItem(TOKEN_KEY, accessToken);
-  localStorage.setItem(USER_KEY, JSON.stringify(user));
-  localStorage.setItem(EXPIRES_KEY, String(expiresAt));
-}
-
-function clearSession() {
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
-  localStorage.removeItem(EXPIRES_KEY);
-}
-
-function readSession() {
-  const token = localStorage.getItem(TOKEN_KEY);
-  const userRaw = localStorage.getItem(USER_KEY);
-  const expiresAt = Number(localStorage.getItem(EXPIRES_KEY) ?? 0);
-
-  if (!token || !userRaw || Date.now() > expiresAt) {
-    clearSession();
-    return { token: null, user: null };
-  }
-
+function readCachedUser() {
   try {
-    return { token, user: JSON.parse(userRaw) };
+    const raw = localStorage.getItem(USER_KEY);
+    return raw ? JSON.parse(raw) : null;
   } catch {
-    clearSession();
-    return { token: null, user: null };
+    return null;
   }
+}
+
+function saveUserCache(user) {
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
+}
+
+function clearUserCache() {
+  localStorage.removeItem(USER_KEY);
 }
 
 // ----------------------------------------------------------
 // Context
 // ----------------------------------------------------------
-// ... (mantenha os imports e os helpers de storage iguais acima)
-
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const initial = readSession();
-  const [token, setToken] = useState(initial.token);
-  const [user, setUser] = useState(initial.user);
+  const [token, _setToken] = useState(null); // mantido apenas em memória
+  const [user, setUser] = useState(readCachedUser()); // estado otimista
+  const [bootstrapping, setBootstrapping] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Login — chama a API e persiste a sessão
+  // Atualiza o módulo de serviços (request(), config/services.js) e o
+  // state do React na mesma chamada síncrona — nunca via useEffect(token).
+  // Um useEffect só roda depois do commit, e o React agrupa a atualização
+  // de token/user/bootstrapping do boot numa única leva: as telas que já
+  // dependem de isAuthenticated montam e disparam fetch antes do
+  // useEffect ter rodado (efeitos de filhos disparam antes dos do pai),
+  // então a primeira leva de chamadas sempre saía com o token antigo —
+  // por isso o padrão "401 seguido de 200 no retry" no Network tab.
+  const setToken = useCallback((newToken) => {
+    setAccessToken(newToken);
+    _setToken(newToken);
+  }, []);
+
+  useEffect(() => {
+    registrarSessaoHandlers({
+      onSessaoRenovada: (sessao) => {
+        setToken(sessao.accessToken);
+        setUser(sessao.user);
+        saveUserCache(sessao.user);
+      },
+      onSessaoExpirada: () => {
+        clearUserCache();
+        setToken(null);
+        setUser(null);
+      },
+    });
+  }, []);
+
+  // Tentativa inicial de restauração da sessão via Refresh Token
+  useEffect(() => {
+    authService
+      .refresh()
+      .then((sessao) => {
+        setToken(sessao.accessToken);
+        setUser(sessao.user);
+        saveUserCache(sessao.user);
+      })
+      .catch(() => {
+        clearUserCache();
+        setUser(null);
+      })
+      .finally(() => setBootstrapping(false));
+  }, []);
+
   const login = useCallback(async ({ email, password }) => {
     setLoading(true);
     setError(null);
     try {
       const res = await authService.login({ email, password });
       const accessToken = res.accessToken ?? res.AccessToken;
-      const expiresIn = res.expiresIn ?? res.ExpiresIn ?? 28800;
       const userPayload = res.user ?? res.User;
 
-      saveSession(accessToken, userPayload, expiresIn);
       setToken(accessToken);
       setUser(userPayload);
+      saveUserCache(userPayload);
       return true;
     } catch (err) {
       setError(err.message ?? "Erro ao fazer login.");
@@ -88,15 +112,25 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  // Login com Google
+  const logout = useCallback(() => {
+    authService.logout().catch(() => {});
+    clearUserCache();
+    setToken(null);
+    setUser(null);
+    setError(null);
+  }, []);
+
+  // Login com Google. Retorna { ok, convitePendente } em vez de só
+  // true/false: "convite pendente" não é bem um erro — é um sinal pra
+  // LoginPage trocar de tela, por isso não usa o `error` global nesse caso.
   const loginGoogle = useCallback(async (idToken) => {
     setLoading(true);
     setError(null);
     try {
       const res = await authService.loginGoogle(idToken);
-      saveSession(res.accessToken, res.user, res.expiresIn);
       setToken(res.accessToken);
       setUser(res.user);
+      saveUserCache(res.user);
       return { ok: true };
     } catch (err) {
       if (err.codigo === "ConvitePendente") {
@@ -109,15 +143,19 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  // Completa o cadastro do convite ativo via Google
-  const completarConviteGoogle = useCallback(async (idToken, cpf) => {
+  // Completa o cadastro do convite ativo via Google (Cpf opcional).
+  const completarConviteGoogle = useCallback(async (idToken, cpf, aceiteTermos) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await authService.completarConviteGoogle(idToken, cpf);
-      saveSession(res.accessToken, res.user, res.expiresIn);
+      const res = await authService.completarConviteGoogle(
+        idToken,
+        cpf,
+        aceiteTermos,
+      );
       setToken(res.accessToken);
       setUser(res.user);
+      saveUserCache(res.user);
       return true;
     } catch (err) {
       setError(err.message ?? "Não foi possível concluir seu cadastro agora.");
@@ -127,27 +165,17 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  // Logout — limpa sessão local
-  const logout = useCallback(() => {
-    clearSession();
-    setToken(null);
-    setUser(null);
-    setError(null);
-  }, []);
-
-  // Troca o Local ativo
+  // Troca o Local (condomínio/unidade) ativo — usada quando o usuário tem
+  // vínculo com mais de um Local. Emite um novo token JWT (com o novo
+  // local_id) e atualiza a sessão.
   const switchLocal = useCallback(async (newLocalId) => {
     setLoading(true);
     setError(null);
     try {
       const res = await authService.switchLocal(newLocalId);
-      const accessToken = res.accessToken;
-      const expiresIn = res.expiresIn ?? 28800;
-      const userPayload = res.user;
-
-      saveSession(accessToken, userPayload, expiresIn);
-      setToken(accessToken);
-      setUser(userPayload);
+      setToken(res.accessToken);
+      setUser(res.user);
+      saveUserCache(res.user);
       return true;
     } catch (err) {
       setError(err.message ?? "Erro ao trocar de local.");
@@ -156,7 +184,6 @@ export function AuthProvider({ children }) {
       setLoading(false);
     }
   }, []);
-
   const isAuthenticated = !!token;
 
   return (
@@ -165,11 +192,12 @@ export function AuthProvider({ children }) {
         token,
         user,
         isAuthenticated,
+        bootstrapping,
         loading,
         error,
+        login,
         loginGoogle,
         completarConviteGoogle,
-        login,
         logout,
         switchLocal,
         setError,
@@ -180,7 +208,7 @@ export function AuthProvider({ children }) {
   );
 }
 
-// Custom Hooks (devem ficar fora de AuthProvider)
+// Custom Hooks
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth deve ser usado dentro de <AuthProvider>");

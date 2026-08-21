@@ -16,6 +16,22 @@ namespace PiscinaPerfeita.Api.Controllers
     [Route("api/[controller]")]
     public class AccountController : ControllerBase
     {
+        private const string RefreshCookieName = "pp_refresh";
+
+        private void SetRefreshCookie(string rawToken) =>
+            Response.Cookies.Append(
+                RefreshCookieName,
+                rawToken,
+                new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.None,
+                    Path = "/api/account",
+                    Expires = DateTimeOffset.UtcNow.AddDays(30),
+                }
+            );
+
         private readonly IAccountService _accountService;
         private readonly IAuthenticatedUser _authenticatedUser;
         private readonly IUsuarioService _usuarioService;
@@ -47,7 +63,8 @@ namespace PiscinaPerfeita.Api.Controllers
             try
             {
                 var res = await _accountService.Login(req);
-                return Ok(res);
+                SetRefreshCookie(res.RefreshToken);
+                return Ok(res.Response);
             }
             catch (ArgumentException ex)
             {
@@ -70,14 +87,12 @@ namespace PiscinaPerfeita.Api.Controllers
         {
             try
             {
-                // O usuário só pode trocar para um Local ao qual ele mesmo está
-                // vinculado — por isso o Id vem do token (claims), nunca do
-                // corpo da requisição. Antes este endpoint era [AllowAnonymous]
-                // e aceitava um userId arbitrário no body, permitindo que
-                // qualquer pessoa trocasse o local de qualquer usuário.
+                // Id sempre vem do token (claims), nunca do corpo da
+                // requisição — evita trocar o local de outro usuário.
                 var userId = _authenticatedUser.GetUserId();
                 var res = await _accountService.SwitchLocal(userId, newLocalId);
-                return Ok(res);
+                SetRefreshCookie(res.RefreshToken);
+                return Ok(res.Response);
             }
             catch (ArgumentException ex)
             {
@@ -118,10 +133,6 @@ namespace PiscinaPerfeita.Api.Controllers
         [EnableRateLimiting("auth-sensitive")]
         public async Task<IActionResult> RedefinirSenha([FromBody] RedefinirSenhaRequestDto dto)
         {
-            // CORRIGIDO: antes só validávamos o token e retornávamos sucesso
-            // sem nunca trocar a senha. UpdatePasswordResetToken() é o método
-            // que de fato faz o hash da nova senha, marca o token como usado
-            // e rotaciona o SecurityStamp.
             try
             {
                 await _usuarioService.UpdatePasswordResetToken(dto);
@@ -173,6 +184,7 @@ namespace PiscinaPerfeita.Api.Controllers
                 return Unauthorized(
                     new { message = resultado.Mensagem, erro = resultado.Erro.ToString() }
                 );
+            SetRefreshCookie(resultado.RefreshToken!);
 
             return Ok(
                 new AccountResponseDto
@@ -194,13 +206,26 @@ namespace PiscinaPerfeita.Api.Controllers
         {
             var resultado = await _googleAuthService.CompletarCadastroAsync(
                 request.IdToken,
-                request.Cpf
+                request.Cpf,
+                request.AceiteTermos
             );
             if (!resultado.Sucesso)
+            {
+                // AceiteTermosPendente é erro de validação do formulário, não de
+                // sessão — 401 aqui faria o front tentar refresh de token à toa
+                // (não há sessão nenhuma neste endpoint anônimo) e mostrar
+                // "Sessão expirada" em vez da mensagem real.
+                if (resultado.Erro == AuthErro.AceiteTermosPendente)
+                    return BadRequest(
+                        new { message = resultado.Mensagem, erro = resultado.Erro.ToString() }
+                    );
+
                 return Unauthorized(
                     new { message = resultado.Mensagem, erro = resultado.Erro.ToString() }
                 );
+            }
 
+            SetRefreshCookie(resultado.RefreshToken!);
             return Ok(
                 new AccountResponseDto
                 {
@@ -210,6 +235,47 @@ namespace PiscinaPerfeita.Api.Controllers
                     User = resultado.User!,
                 }
             );
+        }
+
+        [HttpPost("refresh")]
+        [AllowAnonymous]
+        [EnableRateLimiting("auth-sensitive")]
+        public async Task<ActionResult<AccountResponseDto>> Refresh()
+        {
+            if (
+                !Request.Cookies.TryGetValue(RefreshCookieName, out var rawToken)
+                || string.IsNullOrEmpty(rawToken)
+            )
+                return Unauthorized(new { message = "Sessão expirada. Faça login novamente." });
+
+            try
+            {
+                var resultado = await _accountService.Refresh(rawToken);
+                SetRefreshCookie(resultado.RefreshToken);
+                return Ok(resultado.Response);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Response.Cookies.Delete(
+                    RefreshCookieName,
+                    new CookieOptions { Path = "/api/account" }
+                );
+                return Unauthorized(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("logout")]
+        [Authorize]
+        public async Task<IActionResult> Logout()
+        {
+            if (
+                Request.Cookies.TryGetValue(RefreshCookieName, out var rawToken)
+                && !string.IsNullOrEmpty(rawToken)
+            )
+                await _accountService.RevogarRefreshToken(rawToken);
+
+            Response.Cookies.Delete(RefreshCookieName, new CookieOptions { Path = "/api/account" });
+            return NoContent();
         }
     }
 }

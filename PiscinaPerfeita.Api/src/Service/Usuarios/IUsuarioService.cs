@@ -34,6 +34,6 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
         // Usado pelo AutenticarAsync pra decidir entre "acesso bloqueado" e
         // "tem convite, redireciona pra completar cadastro".
         Task<bool> ExisteConviteAtivoAsync(string email);
-        Task<Usuario?> CompletarConviteGoogleAsync(string email, string nome, string? cpf);
+        Task<Usuario?> CompletarConviteGoogleAsync(string email, string nome, string? cpf, bool aceiteTermos);
     }
 }

@@ -16,7 +16,11 @@ public class ProdutoRepository : IProdutoRepository
     // Método para listar todos os produtos
     public async Task<List<ProdutoResponseDto>> Show()
     {
-        return await _context.Produtos.Select(p => new ProdutoResponseDto
+        var query = _context.Produtos.AsNoTracking().AsQueryable();
+
+        return await query
+            .OrderBy(n =>  n.Nome)
+            .Select(p => new ProdutoResponseDto
         {
             Id = p.Id,
             Nome = p.Nome,
@@ -103,7 +107,5 @@ public class ProdutoRepository : IProdutoRepository
         await _context.SaveChangesAsync();
 
     }
-
-
 
 }

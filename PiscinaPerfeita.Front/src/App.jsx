@@ -19,8 +19,20 @@ import Depositos from "./modules/depositos/Depositos.jsx";
 import Aplicacoes from "./modules/aplicacoes/Aplicacoes.jsx";
 import ContagemInventario from "./modules/inventario/ContagemInventario.jsx";
 import Hidrometro from "./modules/hidrometro/Hidrometro.jsx";
+import TermosDeUsoPage from "./modules/legal/TermosDeUsoPage.jsx";
+import PoliticaDePrivacidadePage from "./modules/legal/PoliticaDePrivacidadePage.jsx";
+import PoliticaDeCookiesPage from "./modules/legal/PoliticaDeCookiesPage.jsx";
 import { PERFIS, ROLES } from "./config/index.js";
 import { useState } from "react";
+
+// Páginas legais são públicas de propósito: o usuário precisa poder lê-las
+// antes de aceitar (no cadastro) ou a qualquer momento, sem precisar estar
+// logado. Checadas antes de qualquer coisa relacionada a autenticação.
+const LEGAL_PAGES = {
+  "/termos-de-uso": TermosDeUsoPage,
+  "/politica-de-privacidade": PoliticaDePrivacidadePage,
+  "/politica-de-cookies": PoliticaDeCookiesPage,
+};
 
 const PAGES = {
   dashboard: Dashboard,
@@ -42,21 +54,19 @@ const PAGES = {
 // Conteúdo protegido — só renderiza após login
 // ----------------------------------------------------------
 function AuthenticatedApp() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, bootstrapping, user } = useAuth();
   const [activePage, setActivePage] = useState("dashboard");
   // Preenchimento inicial da tela de Aplicações quando acionada a partir
   // do botão "Registrar aplicação" em uma Análise (ver Analises.jsx).
   const [prefillAplicacao, setPrefillAplicacao] = useState(null);
 
-  // CORRIGIDO: se o link de redefinição/convite (?token=...) for aberto num
-  // navegador onde já existe uma sessão válida (ex.: computador
-  // compartilhado, ou a pessoa nem tinha esquecido a senha e só queria
-  // trocar por segurança), o gate original (`if (!isAuthenticated)`) pulava
-  // direto pro Dashboard e o token na URL era ignorado silenciosamente.
-  // Cobre tanto /redefinir-senha?token=... quanto /completar-cadastro?token=...
-  // (LoginPage.jsx distingue os dois pelo path).
+  // Mesmo com sessão válida (ex.: computador compartilhado), um link de
+  // redefinição/convite (?token=...) deve levar à LoginPage, não pular
+  // direto pro Dashboard. Cobre tanto /redefinir-senha?token=... quanto
+  // /completar-cadastro?token=... (LoginPage.jsx distingue pelo path).
   const hasAuthToken = new URLSearchParams(window.location.search).has("token");
 
+  if (bootstrapping) return <div style={{ minHeight: "100vh" }} />;
   if (!isAuthenticated || hasAuthToken) return <LoginPage />;
 
   // Um Administrador criado sem nenhum Local vinculado (ex.: síndico
@@ -93,6 +103,9 @@ function AuthenticatedApp() {
 // Raiz — envolve tudo com AuthProvider
 // ----------------------------------------------------------
 export default function App() {
+  const LegalPage = LEGAL_PAGES[window.location.pathname];
+  if (LegalPage) return <LegalPage />;
+
   return (
     <AuthProvider>
       <AuthenticatedApp />

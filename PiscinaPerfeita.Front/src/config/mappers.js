@@ -660,8 +660,8 @@ export function toApiGoogleLogin({ idToken }) {
 /**
  * CompletarConviteGoogleRequest — Cpf é opcional por enquanto.
  */
-export function toApiCompletarConviteGoogle({ idToken, cpf }) {
-  const dto = { IdToken: idToken };
+export function toApiCompletarConviteGoogle({ idToken, cpf, aceiteTermos }) {
+  const dto = { IdToken: idToken, AceiteTermos: !!aceiteTermos };
   if (cpf) dto.Cpf = cpf;
   return dto;
 }

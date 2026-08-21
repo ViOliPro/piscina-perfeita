@@ -184,6 +184,8 @@ public class UsuarioRepository : IUsuarioRepository
                 CreatedAt = u.CreatedAt,
                 Role = u.Role,
                 SecurityStamp = u.SecurityStamp,
+                LocalId = u.LocalId,
+                UltimoLocalId = u.UltimoLocalId,
             })
             .FirstOrDefaultAsync();
 

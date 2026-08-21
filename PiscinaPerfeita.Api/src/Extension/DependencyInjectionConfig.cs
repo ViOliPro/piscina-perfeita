@@ -1,4 +1,5 @@
 ﻿using PiscinaPerfeita.Api.Helpers.Authenticated;
+using PiscinaPerfeita.Api.Repository;
 using PiscinaPerfeita.Api.Repository.Analises;
 using PiscinaPerfeita.Api.Repository.AplicacoesProduto;
 using PiscinaPerfeita.Api.Repository.Depositos;
@@ -66,6 +67,7 @@ namespace PiscinaPerfeita.Api.Extension
             services.AddScoped<IDepositoRepository, DepositoRepository>();
             services.AddScoped<IAplicacaoProdutoRepository, AplicacaoProdutoRepository>();
             services.AddScoped<IHidrometroRepository, HidrometroRepository>();
+            services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
             // Qualquer outra injeção (Validadores, Helpers, etc) entra aqui embaixo
 

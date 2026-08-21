@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { authService } from "../../config/services.js";
+import AceiteTermosCheckbox from "./AceiteTermosCheckbox.jsx";
 import {
   tokens,
   cardStyle,
@@ -22,6 +23,7 @@ const REQUISITOS_SENHA = [
 // token e onDone chegam como props vindas de LoginPage.jsx.
 export default function CompletarConvite({ token, onDone }) {
   const [form, setForm] = useState({ nome: "", senha: "", confirmar: "" });
+  const [aceiteTermos, setAceiteTermos] = useState(false);
   const [erro, setErro] = useState(null);
   const [enviando, setEnviando] = useState(false);
   const [sucesso, setSucesso] = useState(false);
@@ -65,6 +67,10 @@ export default function CompletarConvite({ token, onDone }) {
       setErro("A confirmação não corresponde à senha.");
       return;
     }
+    if (!aceiteTermos) {
+      setErro("É necessário aceitar os Termos de Uso e a Política de Privacidade.");
+      return;
+    }
 
     setEnviando(true);
     try {
@@ -72,6 +78,7 @@ export default function CompletarConvite({ token, onDone }) {
         token,
         nome: form.nome.trim(),
         senha: form.senha,
+        aceiteTermos,
       });
       setSucesso(true);
       setTimeout(() => onDone?.(), 2500);
@@ -188,12 +195,18 @@ export default function CompletarConvite({ token, onDone }) {
               />
             </div>
 
+            <AceiteTermosCheckbox
+              checked={aceiteTermos}
+              onChange={setAceiteTermos}
+              disabled={enviando}
+            />
+
             {erro && <p style={errorTextStyle}>{erro}</p>}
 
             <button
               type="submit"
-              disabled={enviando}
-              style={primaryButtonStyle(enviando)}
+              disabled={enviando || !aceiteTermos}
+              style={primaryButtonStyle(enviando || !aceiteTermos)}
             >
               {enviando ? "Salvando..." : "Concluir cadastro"}
             </button>

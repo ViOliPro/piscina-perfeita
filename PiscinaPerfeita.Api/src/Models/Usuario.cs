@@ -31,6 +31,12 @@ namespace PiscinaPerfeita.Api.Models
         // Campo para invalidar tokens antigos
         public string SecurityStamp { get; set; } = Guid.NewGuid().ToString();
 
+        // Registro de aceite dos Termos de Uso/Política de Privacidade no
+        // momento do cadastro — versão do documento aceito e quando, para
+        // efeito de comprovação (LGPD).
+        public string? TermosAceitosVersao { get; set; }
+        public DateTimeOffset? TermosAceitosEm { get; set; }
+
         [Column("CreatedAt")]
         public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
         public virtual ICollection<Piscina> Piscinas { get; set; } = [];

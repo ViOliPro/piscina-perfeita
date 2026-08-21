@@ -9,5 +9,9 @@ namespace PiscinaPerfeita.Api.Dtos.Request
 
         // Opcional por enquanto — vira obrigatório quando pagamento/assinatura entrar.
         public string? Cpf { get; set; }
+
+        // Validado explicitamente no service (deve ser true) — Required não
+        // rejeita "false" em um bool, então a checagem real fica lá.
+        public bool AceiteTermos { get; set; }
     }
 }

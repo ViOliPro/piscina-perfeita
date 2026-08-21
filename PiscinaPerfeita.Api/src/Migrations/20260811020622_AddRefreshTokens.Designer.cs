@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PiscinaPerfeita.Api.Data;
@@ -11,9 +12,11 @@ using PiscinaPerfeita.Api.Data;
 namespace PiscinaPerfeita.Api.Migrations
 {
     [DbContext(typeof(PiscinaPerfeitaContext))]
-    partial class PiscinaPerfeitaContextModelSnapshot : ModelSnapshot
+    [Migration("20260811020622_AddRefreshTokens")]
+    partial class AddRefreshTokens
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -703,14 +706,6 @@ namespace PiscinaPerfeita.Api.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
                         .HasColumnName("password");
-
-                    b.Property<DateTimeOffset?>("TermosAceitosEm")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("termosaceitosem");
-
-                    b.Property<string>("TermosAceitosVersao")
-                        .HasColumnType("text")
-                        .HasColumnName("termosaceitosversao");
 
                     b.Property<Guid?>("UltimoLocalId")
                         .HasColumnType("uuid")

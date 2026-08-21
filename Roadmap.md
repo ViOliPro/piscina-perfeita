@@ -121,7 +121,7 @@
 - [ x ] Login via Google (OAuth).
 - [ x ] Painel "Meu perfil" (dados do usuário, troca de senha).
 - [ ] Autenticação multifator (MFA) — opcional, priorizar para clientes empresariais.
-- [ ] Refresh Token (renovação de sessão sem novo login).
+- [ x ] Refresh Token (renovação de sessão sem novo login).
 
 ### Versão 1.5.0 — Conciliação e Inventários Periódicos
 
