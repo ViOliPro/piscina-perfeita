@@ -33,16 +33,18 @@ import { useUsuariosSelecionaveis } from "../../hooks/useUsuariosSelecionaveis.j
 // ----------------------------------------------------------
 // Helpers
 // ----------------------------------------------------------
-function statusEstoque(qtd) {
-  if (qtd === null || qtd === undefined) return { variant: "info", label: "—" };
-  if (qtd <= ESTOQUE_LIMITES.BAIXO) return { variant: "bad", label: "Baixo" };
-  if (qtd <= ESTOQUE_LIMITES.ATENCAO)
-    return { variant: "warn", label: "Atenção" };
+function statusEstoque(item) {
+  const atual = item.quantidadeAtual ?? 0;
+  const minimo = item.quantidadeMinima ?? 0;
+  const ideal = item.estoqueIdeal ?? 0;
+
+  if (atual <= minimo) return { variant: "bad", label: "Baixo" };
+  if (atual < ideal) return { variant: "warn", label: "Atencao" };
   return { variant: "ok", label: "Normal" };
 }
 
 function isBaixoOuAtencao(e) {
-  return (e.quantidadeAtual ?? 0) <= ESTOQUE_LIMITES.ATENCAO;
+  return statusEstoque(e).label !== "Normal";
 }
 
 // Quantidade sugerida para o pedido de orçamento.
@@ -260,9 +262,7 @@ function PedidoOrcamento({ estoques, depositos }) {
     .filter((e) => calcularQtdSugerida(e) > 0);
 
   function copiar() {
-    const linhas = [
-      "#\tProduto\tUnidade\tQtd. solicitada",
-    ];
+    const linhas = ["#\tProduto\tUnidade\tQtd. solicitada"];
     itens.forEach((item, i) => {
       const qtdSugerida = calcularQtdSugerida(item);
       linhas.push(
@@ -566,7 +566,7 @@ export default function Estoque() {
       key: "_status",
       label: "Status",
       render: (_, r) => {
-        const s = statusEstoque(r.quantidadeAtual);
+        const s = statusEstoque(r);
         return <Badge variant={s.variant}>{s.label}</Badge>;
       },
     },

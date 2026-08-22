@@ -24,9 +24,10 @@ namespace PiscinaPerfeita.Api.Controllers
         // 1. GET: api/clientes (Retorna todos os registros do banco)
         [HttpGet]
         [Authorize(Policy = Policies.Listar)]
-        public async Task<ActionResult<IEnumerable<EstoqueResponseDto>>> Get()
+        public async Task<ActionResult<IEnumerable<EstoqueResponseDto>>> Get([FromQuery] string? status)
         {
-            var estoques = await _estoquesService.Show();
+
+            var estoques = await _estoquesService.Show(status);
             return Ok(estoques);
         }
 

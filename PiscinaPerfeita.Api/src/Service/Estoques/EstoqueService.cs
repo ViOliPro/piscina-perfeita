@@ -37,11 +37,29 @@ namespace PiscinaPerfeita.Api.Service.Estoques
             _user = user ?? throw new ArgumentNullException(nameof(user));
         }
 
+        private enum StatusEstoque
+        {
+            baixo,
+            normal,
+            alerta,
+            todos
+        }
+
         // Implementação dos métodos do serviço
         // Cada método chama o repositório correspondente e transforma os dados em DTOs de resposta
-        public async Task<List<EstoqueResponseDto>> Show()
+        public async Task<List<EstoqueResponseDto>> Show(String? status)
         {
-            return await _estoqueRepository.Show();
+            if (string.IsNullOrWhiteSpace(status) ||
+                !Enum.TryParse<StatusEstoque>(status, ignoreCase: true, out var statusEstoque))
+            {
+                status = StatusEstoque.todos.ToString();
+            }
+            else
+            {
+                status = statusEstoque.ToString();
+            }
+
+            return await _estoqueRepository.Show(status);
         }
 
         // O método GetById busca um estoque específico pelo ID e retorna um DTO de resposta

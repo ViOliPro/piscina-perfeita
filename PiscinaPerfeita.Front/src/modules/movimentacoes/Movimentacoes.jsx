@@ -91,8 +91,6 @@ function MovimentacaoForm({
     return produtos.filter((p) => produtosIdsNoDeposito.has(p.id));
   }, [form.depositoId, estoques, produtos]);
 
-  console.log({ produtosDoDeposito, estoques, produtos });
-  console.log(form);
   // Reseta o produto se ele deixar de ser válido para o depósito escolhido
   useEffect(() => {
     if (

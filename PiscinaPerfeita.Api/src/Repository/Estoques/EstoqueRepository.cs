@@ -14,10 +14,24 @@ public class EstoqueRepository : IEstoqueRepository
     }
 
     // Metodo Show: Retorna uma lista de todos os estoques, incluindo as informações relacionadas de produto e depósito.
-    public async Task<List<EstoqueResponseDto>> Show()
+    public async Task<List<EstoqueResponseDto>> Show(String status)
     {
-        return await _context
-            .Estoques.Select(a => new EstoqueResponseDto
+        var query = _context.Estoques.AsNoTracking().AsQueryable();
+
+        if(status.Equals("baixo",StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(q => q.QuantidadeAtual <= q.QuantidadeMinima);
+        }
+        else if (status.Equals("alerta", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(q => q.QuantidadeAtual < q.EstoqueIdeal);
+        }
+        else if (status.Equals("normal", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(q => q.QuantidadeAtual > q.EstoqueIdeal);
+        }
+
+        return await query.Select(a => new EstoqueResponseDto
             {
                 Id = a.Id,
                 QuantidadeAtual = a.QuantidadeAtual,
@@ -33,9 +47,6 @@ public class EstoqueRepository : IEstoqueRepository
                             Categoria = a.Produto.Categoria != null ? a.Produto.Categoria : string.Empty,
                         }
                         : null,
-                // Bug corrigido: antes o Deposito nunca era preenchido aqui
-                // (só no Create/Update do Service) — a listagem sempre
-                // voltava com Deposito=null.
                 Deposito =
                     a.Deposito != null ? new NomeIdDto(a.DepositoId, a.Deposito.Nome) : null,
                 Usuario =
