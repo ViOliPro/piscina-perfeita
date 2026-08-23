@@ -198,7 +198,6 @@ export const CATEGORIAS_PRODUTO_SUGESTOES = [
   "Equipamentos",
   "Acessórios",
   "Filtragem",
-  "Limpeza",
   "Segurança",
 ];
 

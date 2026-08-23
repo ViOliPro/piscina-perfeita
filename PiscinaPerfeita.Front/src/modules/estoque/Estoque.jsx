@@ -232,6 +232,7 @@ function EstoqueForm({
         >
           {loading ? "Salvando…" : initial ? "Salvar alterações" : "Registrar"}
         </Button>
+        qtdSugerida
       </div>
     </form>
   );
@@ -250,15 +251,12 @@ function PedidoOrcamento({ estoques, depositos }) {
   const [filtroCategoria, setFiltroCategoria] = useState("");
 
   const categorias = Array.from(
-    new Set(estoques.map((e) => e.produto?.categoria).filter(Boolean)),
+    new Set(estoques.map((e) => e?.produto?.categoria).filter(Boolean)),
   );
-
   const itens = estoques
     .filter((e) => (escopo === "todos" ? true : isBaixoOuAtencao(e)))
     .filter((e) => !filtroDeposito || e?.deposito?.id === filtroDeposito)
     .filter((e) => !filtroCategoria || e.produto?.categoria === filtroCategoria)
-    // Não faz sentido pedir orçamento de 0 unidades (item já no nível
-    // ideal, ou sem quantidade sugerida a repor).
     .filter((e) => calcularQtdSugerida(e) > 0);
 
   function copiar() {
@@ -367,15 +365,7 @@ function PedidoOrcamento({ estoques, depositos }) {
           >
             <thead>
               <tr>
-                {[
-                  "#",
-                  "Produto",
-                  "Und.",
-                  "Qtd. solicitada",
-                  "Valor unit. (R$)",
-                  "Valor total (R$)",
-                  "Prazo entrega",
-                ].map((h) => (
+                {["#", "Produto", "Und.", "Qtd. solicitada"].map((h) => (
                   <th
                     key={h}
                     style={{
@@ -427,15 +417,6 @@ function PedidoOrcamento({ estoques, depositos }) {
                           ⓘ estimativa
                         </span>
                       )}
-                    </td>
-                    <td style={{ padding: "7px 10px", color: "#aaa" }}>
-                      ___________
-                    </td>
-                    <td style={{ padding: "7px 10px", color: "#aaa" }}>
-                      ___________
-                    </td>
-                    <td style={{ padding: "7px 10px", color: "#aaa" }}>
-                      ___________
                     </td>
                   </tr>
                 );
@@ -535,9 +516,9 @@ export default function Estoque() {
   }
 
   const filtered = estoques.filter((e) => {
-    const txt = `${e.produto?.nome} ${e.deposito?.nome}`.toLowerCase();
+    const txt = `${e.produto?.nome} ${e.produto?.categoria}`.toLowerCase();
     const matchSearch = txt.includes(search.toLowerCase());
-    const matchDeposito = !filtroDeposito || e.depositoId === filtroDeposito;
+    const matchDeposito = !filtroDeposito || e?.deposito?.id === filtroDeposito;
     const matchTab =
       tab === "todos" ? true : tab === "baixo" ? isBaixoOuAtencao(e) : true;
     return matchSearch && matchDeposito && matchTab;
@@ -550,6 +531,11 @@ export default function Estoque() {
       key: "produto",
       label: "Produto",
       render: (_, r) => r.produto?.nome ?? "—",
+    },
+    {
+      key: "categoria",
+      label: "Categoria",
+      render: (_, r) => r.produto?.categoria ?? "—",
     },
     {
       key: "deposito",
@@ -634,7 +620,7 @@ export default function Estoque() {
               <SearchInput
                 value={search}
                 onChange={setSearch}
-                placeholder="Buscar produto ou depósito…"
+                placeholder="Buscar produto ou categoria…"
               />
               <FilterSelect
                 value={filtroDeposito}
