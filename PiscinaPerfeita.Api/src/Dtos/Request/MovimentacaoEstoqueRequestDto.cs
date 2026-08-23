@@ -30,6 +30,8 @@ namespace PiscinaPerfeita.Api.Dtos.Request
         [Range(0.01, 999999.99, ErrorMessage = "A quantidade deve ser maior do que zero.")]
         public decimal? Quantidade { get; set; }
 
+        public DateTimeOffset? DataMovimentacao { get; set; } = DateTimeOffset.UtcNow;
+
         // Unidade em que "Quantidade" foi informada (ex.: "mL", "g").
         // Pode ser diferente da UnidadeMedida "base" do produto (ex.:
         // produto cadastrado em L, lançamento em mL) — a API converte
