@@ -91,8 +91,6 @@ function MovimentacaoForm({
     return produtos.filter((p) => produtosIdsNoDeposito.has(p.id));
   }, [form.depositoId, estoques, produtos]);
 
-  console.log({ produtosDoDeposito, estoques, produtos });
-  console.log(form);
   // Reseta o produto se ele deixar de ser válido para o depósito escolhido
   useEffect(() => {
     if (
@@ -288,13 +286,16 @@ export default function Movimentacoes() {
   const [search, setSearch] = useState("");
   const [filtroTipo, setFiltroTipo] = useState("");
   const [estoques, setEstoques] = useState([]);
+  const [filtroPiscina, setFiltroPiscina] = useState("");
+  const [dataInicio, setDataInicio] = useState("");
+  const [dataFim, setDataFim] = useState("");
 
   useEffect(() => {
     async function load() {
       try {
         setLoading(true);
         const [m, p, pr, d, e] = await Promise.all([
-          movimentacaoService.listar(),
+          carregarMovimentacoes(),
           piscinaService.listar(),
           produtoService.listar(),
           depositoService.listar(),
@@ -313,6 +314,47 @@ export default function Movimentacoes() {
     }
     load();
   }, []);
+
+  function paraInicioDoDia(data) {
+    return data ? new Date(`${data}T00:00:00`).toISOString() : undefined;
+  }
+
+  function paraFimDoDia(data) {
+    return data ? new Date(`${data}T23:59:59.999`).toISOString() : undefined;
+  }
+
+  async function carregarMovimentacoes(filtros = {}) {
+    try {
+      setLoading(true);
+      setError(null);
+      const movimentacoes = await movimentacaoService.listar(filtros);
+      setMovimentos(movimentacoes ?? []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function aplicarFiltros() {
+    if (dataInicio && dataFim && dataFim < dataInicio) {
+      setError("A data final deve ser posterior ou igual à data inicial.");
+      return;
+    }
+
+    await carregarMovimentacoes({
+      dataInicio: paraInicioDoDia(dataInicio),
+      dataFim: paraFimDoDia(dataFim),
+      piscinaId: filtroPiscina || undefined,
+    });
+  }
+
+  async function limparFiltros() {
+    setDataInicio("");
+    setDataFim("");
+    setFiltroPiscina("");
+    await carregarMovimentacoes();
+  }
 
   async function handleSave(dto) {
     try {
@@ -404,6 +446,41 @@ export default function Movimentacoes() {
             onChange={setSearch}
             placeholder="Buscar produto, piscina ou depósito…"
           />
+          <input
+            type="date"
+            aria-label="Data inicial"
+            title="Data inicial"
+            style={inputStyle}
+            value={dataInicio}
+            onChange={(e) => setDataInicio(e.target.value)}
+          />
+
+          <input
+            type="date"
+            aria-label="Data final"
+            title="Data final"
+            style={inputStyle}
+            value={dataFim}
+            onChange={(e) => setDataFim(e.target.value)}
+          />
+
+          <FilterSelect
+            value={filtroPiscina}
+            onChange={setFiltroPiscina}
+            placeholder="Todas as piscinas"
+            options={piscinas.map((p) => ({
+              value: p.id,
+              label: p.nome,
+            }))}
+          />
+
+          <Button variant="ghost" onClick={aplicarFiltros}>
+            Filtrar
+          </Button>
+
+          <Button variant="ghost" onClick={limparFiltros}>
+            Limpar
+          </Button>
           <FilterSelect
             value={filtroTipo}
             onChange={setFiltroTipo}

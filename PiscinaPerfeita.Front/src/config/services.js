@@ -339,13 +339,26 @@ export const hidrometroService = {
 // Movimentações
 // ----------------------------------------------------------
 export const movimentacaoService = {
-  listar: () => get(API_ENDPOINTS.movimentacoes).then(fromApiMovimentacaoList),
+  listar: ({ dataInicio, dataFim, piscinaId } = {}) => {
+    const params = {};
+
+    if (dataInicio) params.dataInicio = dataInicio;
+    if (dataFim) params.dataFim = dataFim;
+    if (piscinaId) params.piscinaId = piscinaId;
+
+    return get(API_ENDPOINTS.movimentacoes, { params }).then(
+      fromApiMovimentacaoList,
+    );
+  },
+
   buscar: (id) =>
     get(API_ENDPOINTS.movimentacaoById(id)).then(fromApiMovimentacao),
+
   criar: (dto) =>
     post(API_ENDPOINTS.movimentacoes, toApiMovimentacao(dto)).then(
       fromApiMovimentacao,
     ),
+
   contagemInventario: (depositoId, usuarioId, itens) =>
     post(API_ENDPOINTS.contagemInventario, {
       DepositoId: depositoId,

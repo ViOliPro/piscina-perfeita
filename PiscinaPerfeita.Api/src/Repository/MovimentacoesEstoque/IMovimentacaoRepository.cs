@@ -5,7 +5,7 @@ namespace PiscinaPerfeita.Api.Repository.MovimentacoesEstoque
 {
     public interface IMovimentacaoRepository
     {
-        Task<List<MovimentacaoEstoqueResponseDto>> Show();
+        Task<List<MovimentacaoEstoqueResponseDto>> Show(DateTimeOffset? dataInicio = null, DateTimeOffset? dataFim = null, Guid? piscinaId = null);
 
         Task<MovimentacaoEstoqueResponseDto?> GetById(Guid id);
 

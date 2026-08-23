@@ -188,11 +188,16 @@ export const UNIDADES_MEDIDA = ["kg", "g", "L", "mL", "un", "cx", "sc"];
 // na API (não um enum), então isso só alimenta um <datalist> de apoio,
 // sem travar o usuário a essas opções.
 export const CATEGORIAS_PRODUTO_SUGESTOES = [
+  "Produto Limpeza",
+  "Produto Piscina",
+  "Material Limpeza",
+  "Material Piscina",
+  "Consumiveis",
+  "Ambiente",
   "Químicos",
   "Equipamentos",
   "Acessórios",
   "Filtragem",
-  "Limpeza",
   "Segurança",
 ];
 

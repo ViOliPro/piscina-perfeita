@@ -24,11 +24,11 @@ namespace PiscinaPerfeita.Api.Controllers
         // GET: api/movimentacoes
         [HttpGet]
         [Authorize(Policy = Policies.Listar)]
-        public async Task<ActionResult<IEnumerable<MovimentacaoEstoqueResponseDto>>> Get()
+        public async Task<ActionResult<IEnumerable<MovimentacaoEstoqueResponseDto>>> Get([FromQuery] DateTimeOffset? dataInicio = null, DateTimeOffset? dataFim = null, Guid? piscinaId = null)
         {
             try
             {
-                var movimentacoes = await _movimentacoesService.Show();
+                var movimentacoes = await _movimentacoesService.Show(dataInicio, dataFim, piscinaId);
                 return Ok(movimentacoes);
             }
             catch (Exception ex)

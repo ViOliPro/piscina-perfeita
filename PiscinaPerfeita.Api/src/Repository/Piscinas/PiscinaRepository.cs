@@ -38,7 +38,7 @@ public class PiscinaRepository : IPiscinaRepository
             {
                 Id = m.Id,
                 Nome = m.TipoMovimentacao.ToString(),
-                DataMovimentacao = m.DataMovimentacao,
+                DataMovimentacao = m.DataMovimentacao
             }).ToList()
 
         }).ToListAsync();

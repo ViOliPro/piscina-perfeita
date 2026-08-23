@@ -31,9 +31,31 @@ public class MovimentacaoRepository : IMovimentacaoRepository
         Usuario = new NomeIdDto(m.UsuarioId, m.Usuarios.Nome),
     };
 
-    public async Task<List<MovimentacaoEstoqueResponseDto>> Show()
+    public async Task<List<MovimentacaoEstoqueResponseDto>> Show(DateTimeOffset? dataInicio = null, DateTimeOffset? dataFim = null, Guid? piscinaId = null)
     {
-        return await _context.MovimentacoesEstoques.Select(Projecao).ToListAsync();
+        var query = _context.MovimentacoesEstoques.AsNoTracking().AsQueryable();
+
+        // Início do mês atual como padrão caso não receba parâmetro
+        if (!dataInicio.HasValue)
+        {
+            var agora = DateTimeOffset.UtcNow;
+            dataInicio = new DateTimeOffset(agora.Year, agora.Month, 1, 0, 0, 0, agora.Offset);
+        }
+
+        query = query.Where(a => a.DataMovimentacao >= dataInicio.Value);
+
+        if (dataFim.HasValue)
+        {
+            query = query.Where(a => a.DataMovimentacao <= dataFim.Value);
+        }
+
+        if (piscinaId.HasValue)
+        {
+            query = query.Where(a => a.PiscinaId == piscinaId.Value);
+        }
+
+        query = query.OrderByDescending(d => d.DataMovimentacao);
+        return await query.Select(Projecao).ToListAsync();
     }
 
     public async Task<MovimentacaoEstoqueResponseDto?> GetById(Guid id)

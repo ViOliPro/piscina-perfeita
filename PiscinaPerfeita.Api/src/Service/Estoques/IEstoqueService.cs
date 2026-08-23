@@ -5,7 +5,7 @@ namespace PiscinaPerfeita.Api.Service.Estoques
 {
     public interface IEstoqueService
     {
-        Task<List<EstoqueResponseDto>> Show();
+        Task<List<EstoqueResponseDto>> Show(String? status);
         Task<EstoqueResponseDto> GetById(Guid id);
         Task<EstoqueResponseDto> Create(EstoqueRequestDto dto);
         Task<EstoqueResponseDto> Update(Guid id, EstoqueRequestDto dto);

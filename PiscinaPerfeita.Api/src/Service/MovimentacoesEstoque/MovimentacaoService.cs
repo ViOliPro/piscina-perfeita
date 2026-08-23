@@ -49,9 +49,9 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
                 depositoRepository ?? throw new ArgumentNullException(nameof(depositoRepository));
         }
 
-        public async Task<List<MovimentacaoEstoqueResponseDto>> Show()
+        public async Task<List<MovimentacaoEstoqueResponseDto>> Show(DateTimeOffset? dataInicio = null, DateTimeOffset? dataFim = null, Guid? piscinaId = null)
         {
-            return await _movimentacaoRepository.Show();
+            return await _movimentacaoRepository.Show(dataInicio, dataFim, piscinaId);
         }
 
         public async Task<MovimentacaoEstoqueResponseDto?> GetById(Guid id)
@@ -122,6 +122,7 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
                 TipoMovimentacao = dto.TipoMovimentacao,
                 Quantidade = dto.Quantidade,
                 UnidadeLancamento = dto.UnidadeLancamento,
+                DataMovimentacao = dto.DataMovimentacao?.ToUniversalTime() ?? DateTimeOffset.UtcNow
             };
 
             var estoqueDb = await ObterOuCriarEstoque(
