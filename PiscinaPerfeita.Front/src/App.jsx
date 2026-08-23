@@ -23,7 +23,8 @@ import TermosDeUsoPage from "./modules/legal/TermosDeUsoPage.jsx";
 import PoliticaDePrivacidadePage from "./modules/legal/PoliticaDePrivacidadePage.jsx";
 import PoliticaDeCookiesPage from "./modules/legal/PoliticaDeCookiesPage.jsx";
 import { PERFIS, ROLES } from "./config/index.js";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { LoadingSpinner } from "./components/ui/index.jsx";
 
 // Páginas legais são públicas de propósito: o usuário precisa poder lê-las
 // antes de aceitar (no cadastro) ou a qualquer momento, sem precisar estar
@@ -66,7 +67,56 @@ function AuthenticatedApp() {
   // /completar-cadastro?token=... (LoginPage.jsx distingue pelo path).
   const hasAuthToken = new URLSearchParams(window.location.search).has("token");
 
-  if (bootstrapping) return <div style={{ minHeight: "100vh" }} />;
+  if (bootstrapping) {
+    return (
+      <>
+        <style>{`
+        @keyframes logoPulse {
+          0%, 100% {
+            transform: scale(1);
+            opacity: 0.72;
+            filter: saturate(0.85) drop-shadow(0 0 0 rgba(56, 189, 248, 0));
+          }
+
+          50% {
+            transform: scale(1.1);
+            opacity: 1;
+            filter: saturate(1.2) drop-shadow(0 0 10px rgba(56, 189, 248, 0.35));
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          img[alt="PiscinaPerfeita"] {
+            animation: none !important;
+          }
+        }
+      `}</style>
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "100vh",
+            gap: 16,
+          }}
+        >
+          <img
+            src="/favicon.svg"
+            alt="PiscinaPerfeita"
+            style={{
+              width: 64,
+              height: 64,
+              animation: "logoPulse 2.4s ease-in-out infinite",
+            }}
+          />
+          <LoadingSpinner />
+        </div>
+      </>
+    );
+  }
+
   if (!isAuthenticated || hasAuthToken) return <LoginPage />;
 
   // Um Administrador criado sem nenhum Local vinculado (ex.: síndico
@@ -104,6 +154,7 @@ function AuthenticatedApp() {
 // ----------------------------------------------------------
 export default function App() {
   const LegalPage = LEGAL_PAGES[window.location.pathname];
+
   if (LegalPage) return <LegalPage />;
 
   return (
