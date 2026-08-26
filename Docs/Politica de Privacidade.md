@@ -1,8 +1,6 @@
 # Política de Privacidade — Piscina Perfeita
 
-_Última atualização: [preencher na publicação]_
-
-> ⚠️ **Nota interna (remover antes de publicar):** este documento foi redigido com base nas informações levantadas até agora. O endereço do sistema ainda é o domínio provisório da Render (`https://piscina-perfeita-front-roel.onrender.com/`) — assim que você configurar um domínio próprio, atualize todas as referências de URL abaixo. Também não há CNPJ registrado ainda; o texto trata o Piscina Perfeita como serviço operado por pessoa física até que isso mude. Recomendamos revisão por um profissional jurídico antes da publicação oficial, especialmente antes de abrir cadastro público e cobrança (v2.0.0).
+_Última atualização: [19/08/2026]_
 
 ---
 
@@ -24,20 +22,20 @@ O Piscina Perfeita é destinado a síndicos moradores e síndicos profissionais 
 
 ### 3.1 Dados fornecidos diretamente por você
 
-| Dado | Finalidade |
-|---|---|
-| Nome | Identificação do usuário dentro do sistema |
-| E-mail | Login, comunicação e recuperação de conta |
-| Senha | Autenticação (armazenada sempre como hash — nunca em texto puro) |
-| Perfil de acesso (Administrador, Operador, Visualizador) | Controle de permissões dentro do Local |
-| Vínculo com o Local/condomínio | Isolamento de dados entre clientes (multi-tenant) |
+| Dado                                                     | Finalidade                                                       |
+| -------------------------------------------------------- | ---------------------------------------------------------------- |
+| Nome                                                     | Identificação do usuário dentro do sistema                       |
+| E-mail                                                   | Login, comunicação e recuperação de conta                        |
+| Senha                                                    | Autenticação (armazenada sempre como hash — nunca em texto puro) |
+| Perfil de acesso (Administrador, Operador, Visualizador) | Controle de permissões dentro do Local                           |
+| Vínculo com o Local/condomínio                           | Isolamento de dados entre clientes (multi-tenant)                |
 
 ### 3.2 Dados gerados pelo uso do sistema
 
-| Dado | Finalidade |
-|---|---|
-| Registros de análises de água (pH, cloro, alcalinidade, temperatura) | Histórico técnico da(s) piscina(s) do condomínio |
-| Movimentações de estoque (entradas, saídas, aplicações, descartes, ajustes) | Controle de inventário e rastreabilidade |
+| Dado                                                                        | Finalidade                                       |
+| --------------------------------------------------------------------------- | ------------------------------------------------ |
+| Registros de análises de água (pH, cloro, alcalinidade, temperatura)        | Histórico técnico da(s) piscina(s) do condomínio |
+| Movimentações de estoque (entradas, saídas, aplicações, descartes, ajustes) | Controle de inventário e rastreabilidade         |
 
 **Não coletamos, hoje, registros de log de acesso** (IP, horário de login, dispositivo). Essa funcionalidade está prevista para uma versão futura, como parte do reforço de segurança e auditoria do sistema. Caso seja implementada, esta política será atualizada com antecedência para refletir a nova coleta antes de entrar em vigor.
 

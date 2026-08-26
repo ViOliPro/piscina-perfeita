@@ -1,8 +1,6 @@
 # Política de Cookies — Piscina Perfeita
 
-_Última atualização: [preencher na publicação]_
-
-> ⚠️ **Nota interna (remover antes de publicar):** revisar junto com um profissional jurídico antes de publicar, e atualizar o domínio (`https://piscina-perfeita-front-roel.onrender.com/`) assim que o domínio definitivo estiver configurado.
+_Última atualização: [19/08/2026]_
 
 ---
 
@@ -14,8 +12,8 @@ Cookies são pequenos arquivos de texto armazenados no seu navegador quando voc�
 
 Atualmente, utilizamos **apenas cookies estritamente necessários**, indispensáveis para o funcionamento básico do sistema:
 
-| Cookie | Finalidade | Necessário? |
-|---|---|---|
+| Cookie                                       | Finalidade                                                                                     | Necessário?                          |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------ |
 | Cookie de sessão/autenticação (`pp_refresh`) | Manter você conectado(a) e permitir a renovação segura da sua sessão sem exigir login repetido | Sim — o sistema não funciona sem ele |
 
 Esse cookie é `HttpOnly` (não acessível via JavaScript) e transmitido apenas por conexão segura (HTTPS), reduzindo o risco de acesso indevido.

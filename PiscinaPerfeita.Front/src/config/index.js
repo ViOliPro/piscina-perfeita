@@ -54,6 +54,7 @@ export const API_ENDPOINTS = {
   movimentacoes: `${API_BASE_URL}/movimentacoes`,
   movimentacaoById: (id) => `${API_BASE_URL}/movimentacoes/${id}`,
   contagemInventario: `${API_BASE_URL}/movimentacoes/contagem-inventario`,
+  lancarLoteInventario: `${API_BASE_URL}/movimentacoes/lote-inventario`,
 
   // Aplicações de produto (gera movimentação + baixa de estoque automaticamente)
   aplicacoesProduto: `${API_BASE_URL}/aplicacoesproduto`,

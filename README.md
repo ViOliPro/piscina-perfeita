@@ -4,7 +4,7 @@ Sistema de gestão para empresas e condomínios que administram piscinas — con
 
 Projeto pessoal desenvolvido do zero para praticar arquitetura full stack em condições próximas de produção: autenticação, autorização por papéis, isolamento de dados entre tenants, deploy em nuvem e documentação técnica real.
 
-🔗 **Demo online:** [link do deploy] — usuário `demo@...` / senha `...` (conta somente leitura)
+🔗 **Demo online:** [\[link do deploy\]](https://piscina-perfeita-front-roel.onrender.com/) — usuário `teste@piscinaperfeita.com` / senha `74859600` (conta somente leitura)
 
 ![.NET](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet) ![React](https://img.shields.io/badge/React-Vite-61DAFB?logo=react) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql) ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)
 
@@ -12,9 +12,9 @@ Projeto pessoal desenvolvido do zero para praticar arquitetura full stack em con
 
 ## 🖼️ Screenshots
 
-| Dashboard                                      | Controle de estoque                        | Análise de água                            |
-| ---------------------------------------------- | ------------------------------------------ | ------------------------------------------ |
-| ![dashboard](./Docs/screenshots/dashboard.png) | ![estoque](./Docs/screenshots/estoque.png) | ![analise](./Docs/screenshots/analise.png) |
+| Dashboard                                      | Análise de água piscinas                   | Medidor de agua                                  |
+| ---------------------------------------------- | ------------------------------------------ | ------------------------------------------------ |
+| ![dashboard](./Docs/screenshots/dashboard.png) | ![analise](./Docs/screenshots/analise.png) | ![hidrometro](./Docs/screenshots/hidrometro.png) |
 
 ## ✨ Funcionalidades
 
