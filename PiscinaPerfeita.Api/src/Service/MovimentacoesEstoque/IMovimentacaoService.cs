@@ -17,5 +17,9 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
         Task<List<ContagemInventarioResultadoDto>> RegistrarContagemInventario(
             ContagemInventarioRequestDto dto
         );
+
+        Task<List<MovimentacaoLoteInventarioResultadoDto>> RegistrarLoteInventario(
+            MovimentacaoLoteInventarioRequestDto dto
+        );
     }
 }

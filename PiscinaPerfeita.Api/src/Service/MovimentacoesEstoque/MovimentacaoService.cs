@@ -342,6 +342,84 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
             return resultados;
         }
 
+        // Compra/entrada e ajuste em lote. A validação acontece por inteiro
+        // antes de persistir; o repositório grava todos os itens numa transação.
+        public async Task<List<MovimentacaoLoteInventarioResultadoDto>> RegistrarLoteInventario(
+            MovimentacaoLoteInventarioRequestDto dto
+        )
+        {
+            if (dto.Itens == null || dto.Itens.Count == 0)
+                throw new ArgumentException("Informe ao menos um produto.");
+            if (dto.Itens.Select(i => i.ProdutoId).Distinct().Count() != dto.Itens.Count)
+                throw new ArgumentException("Um produto não pode aparecer mais de uma vez no mesmo lançamento.");
+            if (dto.TipoMovimentacao != Tipo.Entrada && dto.TipoMovimentacao != Tipo.Compra && dto.TipoMovimentacao != Tipo.AjusteInventario)
+                throw new ArgumentException("O lançamento em lote aceita apenas Entrada, Compra ou Ajuste de Inventário.");
+
+            var deposito = await _depositoRepository.GetById(dto.DepositoId)
+                ?? throw new KeyNotFoundException($"Depósito com id {dto.DepositoId} não encontrado.");
+            var usuarioId = _user.GetUserId();
+            var data = dto.DataMovimentacao?.ToUniversalTime() ?? DateTimeOffset.UtcNow;
+            var movimentacoes = new List<MovimentacaoEstoque>();
+            var estoquesNovos = new List<Estoque>();
+            var estoquesAtualizados = new List<(Guid EstoqueId, decimal QuantidadeAtual)>();
+            var resultados = new List<MovimentacaoLoteInventarioResultadoDto>();
+
+            foreach (var item in dto.Itens)
+            {
+                if (dto.TipoMovimentacao != Tipo.AjusteInventario && item.Quantidade <= 0)
+                    throw new ArgumentException("A quantidade de Compra ou Entrada deve ser maior que zero.");
+                var produto = await _produtoRepository.GetById(item.ProdutoId)
+                    ?? throw new KeyNotFoundException($"Produto com id {item.ProdutoId} não encontrado.");
+                var estoque = await _estoqueRepository.GetEntidadeByProdutoEDeposito(item.ProdutoId, dto.DepositoId);
+                var anterior = estoque?.QuantidadeAtual ?? 0m;
+                var quantidadeBase = ConversorUnidade.ConverterParaUnidadeBase(
+                    item.Quantidade, item.UnidadeLancamento, produto.UnidadeMedida);
+                var quantidadeMovimentada = dto.TipoMovimentacao == Tipo.AjusteInventario
+                    ? quantidadeBase - anterior
+                    : quantidadeBase;
+
+                // Em ajuste, Quantidade representa o delta assinado. Em compra/entrada,
+                // mantém-se a quantidade informada na unidade escolhida para auditoria.
+                var movimentacao = new MovimentacaoEstoque
+                {
+                    ProdutoId = item.ProdutoId,
+                    DepositoId = dto.DepositoId,
+                    UsuarioId = usuarioId,
+                    TipoMovimentacao = dto.TipoMovimentacao,
+                    Quantidade = dto.TipoMovimentacao == Tipo.AjusteInventario ? quantidadeMovimentada : item.Quantidade,
+                    UnidadeLancamento = item.UnidadeLancamento ?? produto.UnidadeMedida,
+                    DataMovimentacao = data
+                };
+                var atual = dto.TipoMovimentacao == Tipo.AjusteInventario
+                    ? quantidadeBase
+                    : CalculadoraEstoque.CalcularNovaQuantidade(anterior, quantidadeBase, dto.TipoMovimentacao, produto.Nome, deposito.Nome);
+
+                if (estoque == null)
+                {
+                    var novoEstoque = new Estoque
+                    {
+                        ProdutoId = item.ProdutoId, DepositoId = dto.DepositoId,
+                        UsuarioId = usuarioId, QuantidadeAtual = atual, QuantidadeMinima = 5
+                    };
+                    estoquesNovos.Add(novoEstoque);
+                }
+                else
+                    estoquesAtualizados.Add((estoque.Id, atual));
+
+                movimentacoes.Add(movimentacao);
+                resultados.Add(new MovimentacaoLoteInventarioResultadoDto
+                {
+                    ProdutoId = item.ProdutoId, ProdutoNome = produto.Nome,
+                    QuantidadeAnterior = anterior, QuantidadeMovimentada = quantidadeMovimentada,
+                    QuantidadeAtual = atual, MovimentacaoEstoqueId = movimentacao.Id
+                });
+            }
+
+            await _movimentacaoRepository.CreateLoteComAtualizacaoEstoque(
+                movimentacoes, estoquesNovos, estoquesAtualizados);
+            return resultados;
+        }
+
         // Busca o Estoque do produto no depósito; se não existir e o tipo
         // for de entrada, cria automaticamente com saldo zero (primeira
         // compra/entrada deste produto neste depósito). Para tipos de
