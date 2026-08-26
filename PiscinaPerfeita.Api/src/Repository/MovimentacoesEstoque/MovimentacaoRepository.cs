@@ -90,6 +90,36 @@ public class MovimentacaoRepository : IMovimentacaoRepository
         await _context.SaveChangesAsync();
     }
 
+    public async Task CreateLoteComAtualizacaoEstoque(
+        IReadOnlyCollection<MovimentacaoEstoque> movimentacoes,
+        IReadOnlyCollection<Estoque> estoquesNovos,
+        IReadOnlyCollection<(Guid EstoqueId, decimal QuantidadeAtual)> estoquesAtualizados
+    )
+    {
+        await using var transacao = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            if (estoquesNovos.Count > 0)
+                await _context.Estoques.AddRangeAsync(estoquesNovos);
+
+            foreach (var (estoqueId, quantidadeAtual) in estoquesAtualizados)
+            {
+                var estoque = await _context.Estoques.FindAsync(estoqueId)
+                    ?? throw new KeyNotFoundException($"Estoque com ID {estoqueId} não encontrado.");
+                estoque.QuantidadeAtual = quantidadeAtual;
+            }
+
+            await _context.MovimentacoesEstoques.AddRangeAsync(movimentacoes);
+            await _context.SaveChangesAsync();
+            await transacao.CommitAsync();
+        }
+        catch
+        {
+            await transacao.RollbackAsync();
+            throw;
+        }
+    }
+
     public async Task Update(Guid id, MovimentacaoEstoque movimentacao)
     {
         var mov = await _context.MovimentacoesEstoques.FindAsync(id);

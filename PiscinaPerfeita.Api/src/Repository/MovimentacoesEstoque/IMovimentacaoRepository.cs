@@ -5,7 +5,11 @@ namespace PiscinaPerfeita.Api.Repository.MovimentacoesEstoque
 {
     public interface IMovimentacaoRepository
     {
-        Task<List<MovimentacaoEstoqueResponseDto>> Show(DateTimeOffset? dataInicio = null, DateTimeOffset? dataFim = null, Guid? piscinaId = null);
+        Task<List<MovimentacaoEstoqueResponseDto>> Show(
+            DateTimeOffset? dataInicio = null,
+            DateTimeOffset? dataFim = null,
+            Guid? piscinaId = null
+        );
 
         Task<MovimentacaoEstoqueResponseDto?> GetById(Guid id);
 
@@ -24,6 +28,13 @@ namespace PiscinaPerfeita.Api.Repository.MovimentacoesEstoque
             MovimentacaoEstoque movimentacao,
             Guid estoqueId,
             decimal novaQuantidadeEstoque
+        );
+
+        // Persiste todas as linhas e todos os saldos da operação em uma única transação.
+        Task CreateLoteComAtualizacaoEstoque(
+            IReadOnlyCollection<MovimentacaoEstoque> movimentacoes,
+            IReadOnlyCollection<Estoque> estoquesNovos,
+            IReadOnlyCollection<(Guid EstoqueId, decimal QuantidadeAtual)> estoquesAtualizados
         );
     }
 }

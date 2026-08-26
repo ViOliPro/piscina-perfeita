@@ -368,8 +368,29 @@ export const movimentacaoService = {
         QuantidadeContada: parseFloat(i.quantidadeContada),
       })),
     }),
+
+  lancarLoteInventario: ({ depositoId, usuarioId, itens, tipoMovimentacao }) =>
+    post(API_ENDPOINTS.lancarLoteInventario, {
+      DepositoId: depositoId,
+      tipoMovimentacao: tipoMovimentacao,
+      UsuarioId: usuarioId || null,
+      Itens: itens.map((i) => ({
+        ProdutoId: i.produtoId,
+        QuantidadeContada: parseFloat(i.quantidade), // Lê 'quantidade' diretamente
+      })),
+    }),
 };
 
+/*  */
+/*       const res = await movimentacaoService.lancarLoteInventario({
+        depositoId,
+        tipoMovimentacao: tipo,
+        itens: preenchidos.map((i) => ({
+          ...i,
+          quantidade: Number(i.quantidade),
+          unidadeLancamento: i.unidadeLancamento || null,
+        })),
+      }); */
 // ----------------------------------------------------------
 // Aplicações de Produto
 // ----------------------------------------------------------

@@ -19,17 +19,17 @@ O **Pool Manager** é uma plataforma distribuída (Web e Mobile) projetada para 
 
 O sistema adota o padrão de arquitetura desacoplada baseada em APIs RESTful, garantindo isolamento de camadas e persistência relacional robusta.
 
-- **Camada de Apresentação (Frontend):** React.js + Vite (SPA), TailwindCSS (Interface Responsiva).
-- **Camada de Negócio e Serviços (Backend):** ASP.NET Core Web API (.NET 8).
+- **Camada de Apresentação (Frontend):** React.js + Vite (SPA).
+- **Camada de Negócio e Serviços (Backend):** ASP.NET Core Web API (.NET 10).
 - **Persistência de Dados (Database):** PostgreSQL.
 - **Mapeamento Objeto-Relacional (ORM):** Entity Framework Core via _Code-First Migrations_.
 - **Segurança e Sessão:** Autenticação baseada em Claims com Tokens JWT (JSON Web Tokens) e criptografia de credenciais via BCrypt.
 
 ### 2.1. Hospedagem e Infraestrutura
 
-- **Frontend:** Vercel
-- **Backend:** Railway / Render
-- **Banco de Dados:** PostgreSQL (Railway)
+- **Frontend:** Render
+- **Backend:** Render
+- **Banco de Dados:** PostgreSQL (Neon)
 
 ---
 

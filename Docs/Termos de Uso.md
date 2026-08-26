@@ -1,8 +1,6 @@
 # Termos de Uso — Piscina Perfeita
 
-_Última atualização: [preencher na publicação]_
-
-> ⚠️ **Nota interna (remover antes de publicar):** assim como a Política de Privacidade, este documento usa o domínio provisório da Render e trata o serviço como operado por pessoa física (sem CNPJ ainda). Atualize essas referências assim que os dados definitivos existirem, e revise com um profissional jurídico antes de publicar oficialmente — em especial antes de abrir cobrança (v2.0.0).
+_Última atualização: [19/08/2026]_
 
 ---
 
