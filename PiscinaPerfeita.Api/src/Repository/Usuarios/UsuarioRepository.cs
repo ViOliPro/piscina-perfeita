@@ -34,11 +34,6 @@ public class UsuarioRepository : IUsuarioRepository
 
     public async Task<List<UsuarioResponseDto>> FilterRoleUsuario(Guid localId)
     {
-        // CORRIGIDO: antes filtrava só por `u.Role == Role.Usuario`, ou seja,
-        // qualquer Administrador via TODOS os usuários comuns do sistema,
-        // de qualquer Local/tenant — vazamento direto entre tenants. Agora
-        // exige também um vínculo ATIVO em UsuariosLocais para o Local do
-        // Administrador que está fazendo a consulta.
         var usuarioDto = await _context
             .Usuarios.Where(u =>
                 u.Role == Role.Usuario
@@ -52,11 +47,7 @@ public class UsuarioRepository : IUsuarioRepository
                 Cpf = u.Cpf ?? string.Empty,
                 CreatedAt = u.CreatedAt,
                 Role = u.Role,
-                // CORRIGIDO: este campo nunca era preenchido aqui — como o valor
-                // default do enum Perfil é 0 (Administrador), todo usuário retornado
-                // por este endpoint aparecia como "Administrador" no front, mesmo
-                // sendo Operador ou Visualizador. Agora reflete o Perfil do vínculo
-                // ativo deste usuário especificamente no Local consultado.
+
                 Perfil = u
                     .UsuariosLocais.Where(ul => ul.LocalId == localId && ul.Ativo)
                     .Select(ul => ul.Perfil)
@@ -135,6 +126,18 @@ public class UsuarioRepository : IUsuarioRepository
         await _context.SaveChangesAsync();
     }
 
+    public async Task AceitarTermos(Guid id, string versao)
+    {
+        var user = await _context.Usuarios.FindAsync(id);
+        if (user == null)
+            throw new KeyNotFoundException($"Usuário com ID {id} não encontrado.");
+
+        user.TermosAceitosVersao = versao;
+        user.TermosAceitosEm = DateTimeOffset.UtcNow;
+
+        await _context.SaveChangesAsync();
+    }
+
     public async Task Delete(Guid id)
     {
         var user = await _context.Usuarios.FirstOrDefaultAsync(m => m.Id == id);
@@ -186,6 +189,8 @@ public class UsuarioRepository : IUsuarioRepository
                 SecurityStamp = u.SecurityStamp,
                 LocalId = u.LocalId,
                 UltimoLocalId = u.UltimoLocalId,
+                TermosAceitosVersao = u.TermosAceitosVersao,
+                TermosAceitosEm = u.TermosAceitosEm,
             })
             .FirstOrDefaultAsync();
 

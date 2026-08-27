@@ -1,3 +1,4 @@
+using PiscinaPerfeita.Api.Data;
 using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Helpers.Authenticated;
@@ -22,6 +23,7 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
         private readonly IProdutoRepository _produtoRepository;
         private readonly IDepositoRepository _depositoRepository;
         private readonly IAuthenticatedUser _user;
+        private readonly IUnitOfWork _unitOfWork;
 
         public MovimentacaoService(
             IMovimentacaoRepository movimentacaoRepository,
@@ -30,7 +32,8 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
             IUsuarioRepository usuarioRepository,
             IPiscinaRepository piscinaRepository,
             IProdutoRepository produtoRepository,
-            IDepositoRepository depositoRepository
+            IDepositoRepository depositoRepository,
+            IUnitOfWork unitOfWork
         )
         {
             _movimentacaoRepository =
@@ -47,9 +50,14 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
                 produtoRepository ?? throw new ArgumentNullException(nameof(produtoRepository));
             _depositoRepository =
                 depositoRepository ?? throw new ArgumentNullException(nameof(depositoRepository));
+            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         }
 
-        public async Task<List<MovimentacaoEstoqueResponseDto>> Show(DateTimeOffset? dataInicio = null, DateTimeOffset? dataFim = null, Guid? piscinaId = null)
+        public async Task<List<MovimentacaoEstoqueResponseDto>> Show(
+            DateTimeOffset? dataInicio = null,
+            DateTimeOffset? dataFim = null,
+            Guid? piscinaId = null
+        )
         {
             return await _movimentacaoRepository.Show(dataInicio, dataFim, piscinaId);
         }
@@ -103,9 +111,7 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
 
             var deposito = await _depositoRepository.GetById(dto.DepositoId);
             if (deposito == null)
-                throw new KeyNotFoundException(
-                    $"Depósito com id {dto.DepositoId} não encontrado."
-                );
+                throw new KeyNotFoundException($"Depósito com id {dto.DepositoId} não encontrado.");
 
             var quantidadeConvertida = ConversorUnidade.ConverterParaUnidadeBase(
                 dto.Quantidade ?? 0,
@@ -122,36 +128,47 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
                 TipoMovimentacao = dto.TipoMovimentacao,
                 Quantidade = dto.Quantidade,
                 UnidadeLancamento = dto.UnidadeLancamento,
-                DataMovimentacao = dto.DataMovimentacao?.ToUniversalTime() ?? DateTimeOffset.UtcNow
+                DataMovimentacao = dto.DataMovimentacao?.ToUniversalTime() ?? DateTimeOffset.UtcNow,
             };
 
-            var estoqueDb = await ObterOuCriarEstoque(
-                dto.ProdutoId,
-                dto.DepositoId,
-                dto.TipoMovimentacao,
-                produto.Nome,
-                deposito.Nome,
-                userId
-            );
+            // Duas escritas em sequência quando o Estoque ainda não existe:
+            // ObterOuCriarEstoque cria o Estoque (SaveChanges próprio) e,
+            // depois, CreateComAtualizacaoEstoque grava a movimentação
+            // (outro SaveChanges, já atômico entre si internamente). Sem
+            // transação, uma falha na segunda deixa um Estoque criado com
+            // saldo zero e nenhuma movimentação de entrada que o justifique
+            // — o produto "some" do ledger.
+            await _unitOfWork.ExecuteAsync(async () =>
+            {
+                var estoqueDb = await ObterOuCriarEstoque(
+                    dto.ProdutoId,
+                    dto.DepositoId,
+                    dto.TipoMovimentacao,
+                    produto.Nome,
+                    deposito.Nome,
+                    userId
+                );
 
-            var novaQuantidade = CalculadoraEstoque.CalcularNovaQuantidade(
-                estoqueDb.QuantidadeAtual ?? 0,
-                quantidadeConvertida,
-                dto.TipoMovimentacao,
-                produto.Nome,
-                deposito.Nome
-            );
+                var novaQuantidade = CalculadoraEstoque.CalcularNovaQuantidade(
+                    estoqueDb.QuantidadeAtual ?? 0,
+                    quantidadeConvertida,
+                    dto.TipoMovimentacao,
+                    produto.Nome,
+                    deposito.Nome
+                );
 
-            await _movimentacaoRepository.CreateComAtualizacaoEstoque(
-                movimentacao,
-                estoqueDb.Id,
-                novaQuantidade
-            );
+                await _movimentacaoRepository.CreateComAtualizacaoEstoque(
+                    movimentacao,
+                    estoqueDb.Id,
+                    novaQuantidade
+                );
+            });
 
             return new MovimentacaoEstoqueResponseDto
             {
                 Id = movimentacao.Id,
-                Piscina = piscina != null ? new NomeIdDto(dto.PiscinaId!.Value, piscina.Nome) : null,
+                Piscina =
+                    piscina != null ? new NomeIdDto(dto.PiscinaId!.Value, piscina.Nome) : null,
                 Produto = new NomeIdDto(movimentacao.ProdutoId, produto.Nome),
                 Deposito = new NomeIdDto(movimentacao.DepositoId, deposito.Nome),
                 Usuario = new NomeIdDto(movimentacao.UsuarioId, user.Nome),
@@ -239,30 +256,98 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
         {
             var deposito = await _depositoRepository.GetById(dto.DepositoId);
             if (deposito == null)
-                throw new KeyNotFoundException(
-                    $"Depósito com id {dto.DepositoId} não encontrado."
-                );
+                throw new KeyNotFoundException($"Depósito com id {dto.DepositoId} não encontrado.");
 
             var usuarioId = dto.UsuarioId ?? _user.GetUserId();
             var resultados = new List<ContagemInventarioResultadoDto>();
 
-            foreach (var item in dto.Itens)
+            // Uma contagem física cobre vários produtos de um Depósito como
+            // um único evento — sem transação, uma falha no meio do loop
+            // (ex.: item 6 de 10) deixava os 5 primeiros produtos já
+            // ajustados e os demais não, uma contagem parcial que não
+            // corresponde a nenhum estado real do depósito.
+            await _unitOfWork.ExecuteAsync(async () =>
             {
-                var produto = await _produtoRepository.GetById(item.ProdutoId);
-                if (produto == null)
-                    throw new KeyNotFoundException(
-                        $"Produto com id {item.ProdutoId} não encontrado."
+                foreach (var item in dto.Itens)
+                {
+                    var produto = await _produtoRepository.GetById(item.ProdutoId);
+                    if (produto == null)
+                        throw new KeyNotFoundException(
+                            $"Produto com id {item.ProdutoId} não encontrado."
+                        );
+
+                    var estoqueDb = await _estoqueRepository.GetEntidadeByProdutoEDeposito(
+                        item.ProdutoId,
+                        dto.DepositoId
+                    );
+                    var quantidadeAnterior = estoqueDb?.QuantidadeAtual ?? 0;
+                    var diferenca = item.QuantidadeContada - quantidadeAnterior;
+
+                    if (diferenca == 0)
+                    {
+                        resultados.Add(
+                            new ContagemInventarioResultadoDto
+                            {
+                                ProdutoId = item.ProdutoId,
+                                ProdutoNome = produto.Nome,
+                                QuantidadeAnterior = quantidadeAnterior,
+                                QuantidadeContada = item.QuantidadeContada,
+                                Diferenca = 0,
+                            }
+                        );
+                        continue;
+                    }
+
+                    if (estoqueDb == null)
+                    {
+                        // Produto nunca teve estoque cadastrado neste depósito:
+                        // cria já com a quantidade contada, sem gerar uma
+                        // movimentação de ajuste (não havia saldo lógico prévio
+                        // para "divergir").
+                        var novoEstoque = new Estoque
+                        {
+                            ProdutoId = item.ProdutoId,
+                            DepositoId = dto.DepositoId,
+                            UsuarioId = usuarioId,
+                            QuantidadeAtual = item.QuantidadeContada,
+                            QuantidadeMinima = 5,
+                        };
+                        await _estoqueRepository.Create(novoEstoque);
+
+                        resultados.Add(
+                            new ContagemInventarioResultadoDto
+                            {
+                                ProdutoId = item.ProdutoId,
+                                ProdutoNome = produto.Nome,
+                                QuantidadeAnterior = 0,
+                                QuantidadeContada = item.QuantidadeContada,
+                                Diferenca = diferenca,
+                                MovimentacaoEstoqueId = null,
+                            }
+                        );
+                        continue;
+                    }
+
+                    var movimentacao = new MovimentacaoEstoque
+                    {
+                        PiscinaId = null,
+                        ProdutoId = item.ProdutoId,
+                        DepositoId = dto.DepositoId,
+                        UsuarioId = usuarioId,
+                        TipoMovimentacao = Tipo.AjusteInventario,
+                        // Para AjusteInventario, Quantidade guarda a diferença
+                        // ASSINADA (pode ser negativa) — é o valor que, somado
+                        // ao saldo anterior, resulta na quantidade contada.
+                        Quantidade = diferenca,
+                        UnidadeLancamento = produto.UnidadeMedida,
+                    };
+
+                    await _movimentacaoRepository.CreateComAtualizacaoEstoque(
+                        movimentacao,
+                        estoqueDb.Id,
+                        item.QuantidadeContada
                     );
 
-                var estoqueDb = await _estoqueRepository.GetEntidadeByProdutoEDeposito(
-                    item.ProdutoId,
-                    dto.DepositoId
-                );
-                var quantidadeAnterior = estoqueDb?.QuantidadeAtual ?? 0;
-                var diferenca = item.QuantidadeContada - quantidadeAnterior;
-
-                if (diferenca == 0)
-                {
                     resultados.Add(
                         new ContagemInventarioResultadoDto
                         {
@@ -270,74 +355,12 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
                             ProdutoNome = produto.Nome,
                             QuantidadeAnterior = quantidadeAnterior,
                             QuantidadeContada = item.QuantidadeContada,
-                            Diferenca = 0,
-                        }
-                    );
-                    continue;
-                }
-
-                if (estoqueDb == null)
-                {
-                    // Produto nunca teve estoque cadastrado neste depósito:
-                    // cria já com a quantidade contada, sem gerar uma
-                    // movimentação de ajuste (não havia saldo lógico prévio
-                    // para "divergir").
-                    var novoEstoque = new Estoque
-                    {
-                        ProdutoId = item.ProdutoId,
-                        DepositoId = dto.DepositoId,
-                        UsuarioId = usuarioId,
-                        QuantidadeAtual = item.QuantidadeContada,
-                        QuantidadeMinima = 5,
-                    };
-                    await _estoqueRepository.Create(novoEstoque);
-
-                    resultados.Add(
-                        new ContagemInventarioResultadoDto
-                        {
-                            ProdutoId = item.ProdutoId,
-                            ProdutoNome = produto.Nome,
-                            QuantidadeAnterior = 0,
-                            QuantidadeContada = item.QuantidadeContada,
                             Diferenca = diferenca,
-                            MovimentacaoEstoqueId = null,
+                            MovimentacaoEstoqueId = movimentacao.Id,
                         }
                     );
-                    continue;
                 }
-
-                var movimentacao = new MovimentacaoEstoque
-                {
-                    PiscinaId = null,
-                    ProdutoId = item.ProdutoId,
-                    DepositoId = dto.DepositoId,
-                    UsuarioId = usuarioId,
-                    TipoMovimentacao = Tipo.AjusteInventario,
-                    // Para AjusteInventario, Quantidade guarda a diferença
-                    // ASSINADA (pode ser negativa) — é o valor que, somado
-                    // ao saldo anterior, resulta na quantidade contada.
-                    Quantidade = diferenca,
-                    UnidadeLancamento = produto.UnidadeMedida,
-                };
-
-                await _movimentacaoRepository.CreateComAtualizacaoEstoque(
-                    movimentacao,
-                    estoqueDb.Id,
-                    item.QuantidadeContada
-                );
-
-                resultados.Add(
-                    new ContagemInventarioResultadoDto
-                    {
-                        ProdutoId = item.ProdutoId,
-                        ProdutoNome = produto.Nome,
-                        QuantidadeAnterior = quantidadeAnterior,
-                        QuantidadeContada = item.QuantidadeContada,
-                        Diferenca = diferenca,
-                        MovimentacaoEstoqueId = movimentacao.Id,
-                    }
-                );
-            }
+            });
 
             return resultados;
         }
@@ -351,12 +374,23 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
             if (dto.Itens == null || dto.Itens.Count == 0)
                 throw new ArgumentException("Informe ao menos um produto.");
             if (dto.Itens.Select(i => i.ProdutoId).Distinct().Count() != dto.Itens.Count)
-                throw new ArgumentException("Um produto não pode aparecer mais de uma vez no mesmo lançamento.");
-            if (dto.TipoMovimentacao != Tipo.Entrada && dto.TipoMovimentacao != Tipo.Compra && dto.TipoMovimentacao != Tipo.AjusteInventario)
-                throw new ArgumentException("O lançamento em lote aceita apenas Entrada, Compra ou Ajuste de Inventário.");
+                throw new ArgumentException(
+                    "Um produto não pode aparecer mais de uma vez no mesmo lançamento."
+                );
+            if (
+                dto.TipoMovimentacao != Tipo.Entrada
+                && dto.TipoMovimentacao != Tipo.Compra
+                && dto.TipoMovimentacao != Tipo.AjusteInventario
+            )
+                throw new ArgumentException(
+                    "O lançamento em lote aceita apenas Entrada, Compra ou Ajuste de Inventário."
+                );
 
-            var deposito = await _depositoRepository.GetById(dto.DepositoId)
-                ?? throw new KeyNotFoundException($"Depósito com id {dto.DepositoId} não encontrado.");
+            var deposito =
+                await _depositoRepository.GetById(dto.DepositoId)
+                ?? throw new KeyNotFoundException(
+                    $"Depósito com id {dto.DepositoId} não encontrado."
+                );
             var usuarioId = _user.GetUserId();
             var data = dto.DataMovimentacao?.ToUniversalTime() ?? DateTimeOffset.UtcNow;
             var movimentacoes = new List<MovimentacaoEstoque>();
@@ -367,16 +401,28 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
             foreach (var item in dto.Itens)
             {
                 if (dto.TipoMovimentacao != Tipo.AjusteInventario && item.Quantidade <= 0)
-                    throw new ArgumentException("A quantidade de Compra ou Entrada deve ser maior que zero.");
-                var produto = await _produtoRepository.GetById(item.ProdutoId)
-                    ?? throw new KeyNotFoundException($"Produto com id {item.ProdutoId} não encontrado.");
-                var estoque = await _estoqueRepository.GetEntidadeByProdutoEDeposito(item.ProdutoId, dto.DepositoId);
+                    throw new ArgumentException(
+                        "A quantidade de Compra ou Entrada deve ser maior que zero."
+                    );
+                var produto =
+                    await _produtoRepository.GetById(item.ProdutoId)
+                    ?? throw new KeyNotFoundException(
+                        $"Produto com id {item.ProdutoId} não encontrado."
+                    );
+                var estoque = await _estoqueRepository.GetEntidadeByProdutoEDeposito(
+                    item.ProdutoId,
+                    dto.DepositoId
+                );
                 var anterior = estoque?.QuantidadeAtual ?? 0m;
                 var quantidadeBase = ConversorUnidade.ConverterParaUnidadeBase(
-                    item.Quantidade, item.UnidadeLancamento, produto.UnidadeMedida);
-                var quantidadeMovimentada = dto.TipoMovimentacao == Tipo.AjusteInventario
-                    ? quantidadeBase - anterior
-                    : quantidadeBase;
+                    item.Quantidade,
+                    item.UnidadeLancamento,
+                    produto.UnidadeMedida
+                );
+                var quantidadeMovimentada =
+                    dto.TipoMovimentacao == Tipo.AjusteInventario
+                        ? quantidadeBase - anterior
+                        : quantidadeBase;
 
                 // Em ajuste, Quantidade representa o delta assinado. Em compra/entrada,
                 // mantém-se a quantidade informada na unidade escolhida para auditoria.
@@ -386,20 +432,33 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
                     DepositoId = dto.DepositoId,
                     UsuarioId = usuarioId,
                     TipoMovimentacao = dto.TipoMovimentacao,
-                    Quantidade = dto.TipoMovimentacao == Tipo.AjusteInventario ? quantidadeMovimentada : item.Quantidade,
+                    Quantidade =
+                        dto.TipoMovimentacao == Tipo.AjusteInventario
+                            ? quantidadeMovimentada
+                            : item.Quantidade,
                     UnidadeLancamento = item.UnidadeLancamento ?? produto.UnidadeMedida,
-                    DataMovimentacao = data
+                    DataMovimentacao = data,
                 };
-                var atual = dto.TipoMovimentacao == Tipo.AjusteInventario
-                    ? quantidadeBase
-                    : CalculadoraEstoque.CalcularNovaQuantidade(anterior, quantidadeBase, dto.TipoMovimentacao, produto.Nome, deposito.Nome);
+                var atual =
+                    dto.TipoMovimentacao == Tipo.AjusteInventario
+                        ? quantidadeBase
+                        : CalculadoraEstoque.CalcularNovaQuantidade(
+                            anterior,
+                            quantidadeBase,
+                            dto.TipoMovimentacao,
+                            produto.Nome,
+                            deposito.Nome
+                        );
 
                 if (estoque == null)
                 {
                     var novoEstoque = new Estoque
                     {
-                        ProdutoId = item.ProdutoId, DepositoId = dto.DepositoId,
-                        UsuarioId = usuarioId, QuantidadeAtual = atual, QuantidadeMinima = 5
+                        ProdutoId = item.ProdutoId,
+                        DepositoId = dto.DepositoId,
+                        UsuarioId = usuarioId,
+                        QuantidadeAtual = atual,
+                        QuantidadeMinima = 5,
                     };
                     estoquesNovos.Add(novoEstoque);
                 }
@@ -407,16 +466,34 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
                     estoquesAtualizados.Add((estoque.Id, atual));
 
                 movimentacoes.Add(movimentacao);
-                resultados.Add(new MovimentacaoLoteInventarioResultadoDto
-                {
-                    ProdutoId = item.ProdutoId, ProdutoNome = produto.Nome,
-                    QuantidadeAnterior = anterior, QuantidadeMovimentada = quantidadeMovimentada,
-                    QuantidadeAtual = atual, MovimentacaoEstoqueId = movimentacao.Id
-                });
+                resultados.Add(
+                    new MovimentacaoLoteInventarioResultadoDto
+                    {
+                        ProdutoId = item.ProdutoId,
+                        ProdutoNome = produto.Nome,
+                        QuantidadeAnterior = anterior,
+                        QuantidadeMovimentada = quantidadeMovimentada,
+                        QuantidadeAtual = atual,
+                        MovimentacaoEstoqueId = movimentacao.Id,
+                    }
+                );
             }
 
             await _movimentacaoRepository.CreateLoteComAtualizacaoEstoque(
-                movimentacoes, estoquesNovos, estoquesAtualizados);
+                movimentacoes,
+                estoquesNovos,
+                estoquesAtualizados
+            );
+
+            // Id de MovimentacaoEstoque é DatabaseGenerated (gen_random_uuid()
+            // no Postgres) — até aqui, movimentacao.Id era sempre Guid.Empty
+            // pra todo item, porque resultados[i] foi montado ANTES do
+            // SaveChangesAsync rodar. EF Core já populou o Id gerado nos
+            // mesmos objetos rastreados em `movimentacoes` depois do Create
+            // acima; só falta refletir isso nos resultados (mesma ordem/1:1).
+            for (var i = 0; i < resultados.Count; i++)
+                resultados[i].MovimentacaoEstoqueId = movimentacoes[i].Id;
+
             return resultados;
         }
 

@@ -74,6 +74,14 @@ export default function ContagemInventario() {
       ),
     [estoques, depositoId],
   );
+  // Produtos elegíveis para Compra/Entrada: só os que já têm Estoque
+  // cadastrado nesse depósito (mesmo critério que o modo Ajuste já usava
+  // pra listar a tabela de contagem). Cadastro de um produto novo num
+  // depósito continua sendo feito na tela de Estoques, não aqui.
+  const produtosDoDeposito = useMemo(
+    () => (depositoId ? produtos.filter((p) => saldos.has(p.id)) : []),
+    [produtos, saldos, depositoId],
+  );
   const ehAjuste = tipo === TIPO_MOVIMENTACAO.AJUSTE_INVENTARIO;
   const atualizar = (i, campo, valor) =>
     setItens((atual) =>
@@ -173,6 +181,8 @@ export default function ContagemInventario() {
                 onChange={(e) => {
                   setDepositoId(e.target.value);
                   setResultado([]);
+                  setItens([novaLinha()]);
+                  setContagens({});
                 }}
               >
                 <option value="">Selecione o depósito</option>
@@ -320,12 +330,22 @@ export default function ContagemInventario() {
                             <select
                               style={inputStyle}
                               value={item.produtoId}
+                              disabled={!depositoId}
+                              title={
+                                !depositoId
+                                  ? "Selecione um depósito primeiro"
+                                  : undefined
+                              }
                               onChange={(e) =>
                                 atualizar(i, "produtoId", e.target.value)
                               }
                             >
-                              <option value="">Selecione</option>
-                              {produtos.map((p) => (
+                              <option value="">
+                                {depositoId
+                                  ? "Selecione"
+                                  : "Selecione um depósito primeiro"}
+                              </option>
+                              {produtosDoDeposito.map((p) => (
                                 <option key={p.id} value={p.id}>
                                   {p.nome}
                                 </option>

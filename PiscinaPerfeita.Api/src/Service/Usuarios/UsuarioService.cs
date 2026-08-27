@@ -12,7 +12,6 @@ using PiscinaPerfeita.Api.Repository.Usuarios;
 using PiscinaPerfeita.Api.Repository.UsuariosLocal;
 using PiscinaPerfeita.Api.Service.Email;
 
-
 namespace PiscinaPerfeita.Api.Service.Usuarios
 {
     public class UsuarioService : IUsuarioService
@@ -23,6 +22,7 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
         private readonly IAuthenticatedUser _user;
         private readonly IConfiguration _config;
         private readonly IEmailService _email;
+        private readonly IUnitOfWork _unitOfWork;
 
         public UsuarioService(
             IUsuarioRepository usuariosRepository,
@@ -30,7 +30,8 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             IUsuarioLocalRepository usuariosLocalRepository,
             ILocalRepository locaisRepository,
             IConfiguration config,
-            IEmailService email
+            IEmailService email,
+            IUnitOfWork unitOfWork
         )
         {
             _usuariosRepository =
@@ -43,6 +44,7 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             _user = user ?? throw new ArgumentNullException(nameof(user));
             _config = config ?? throw new ArgumentNullException(nameof(config));
             _email = email ?? throw new ArgumentNullException(nameof(email));
+            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         }
 
         public async Task<List<UsuarioResponseDto>> Show()
@@ -104,10 +106,15 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             // Criando um novo usuário com os dados fornecidos no DTO
             var newUsuario = CriarUsuario(dto);
 
-            
-            await _usuariosRepository.Create(newUsuario);
-
-            await CriarUsuarioLocal(newUsuario, dto, usuarioLogado);
+            // Usuario e UsuarioLocal são duas chamadas de repositório
+            // independentes (cada uma com seu próprio SaveChangesAsync) —
+            // sem transação, uma falha na segunda deixava o Usuario já
+            // commitado sozinho, sem nenhum vínculo com Local (órfão).
+            await _unitOfWork.ExecuteAsync(async () =>
+            {
+                await _usuariosRepository.Create(newUsuario);
+                await CriarUsuarioLocal(newUsuario, dto, usuarioLogado);
+            });
 
             return new UsuarioResponseDto
             {
@@ -452,8 +459,14 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
             resetToken.Usuario.SecurityStamp = Guid.NewGuid().ToString(); // Atualiza o SecurityStamp para invalidar tokens antigos
             resetToken.UsadoEm = DateTime.UtcNow;
 
-            await _usuariosRepository.Update(resetToken.Usuario.Id, resetToken.Usuario);
-            await _usuariosRepository.UpdatePasswordResetToken(resetToken);
+            // Duas escritas independentes — sem transação, se a segunda
+            // falhar depois que a senha já mudou, o token de reset fica
+            // sem ser marcado como usado e continua válido pra reuso.
+            await _unitOfWork.ExecuteAsync(async () =>
+            {
+                await _usuariosRepository.Update(resetToken.Usuario.Id, resetToken.Usuario);
+                await _usuariosRepository.UpdatePasswordResetToken(resetToken);
+            });
         }
 
         public async Task EsqueciSenha(EsqueciSenhaRequestDto dto)
@@ -592,27 +605,41 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 TermosAceitosEm = DateTimeOffset.UtcNow,
             };
 
-            await _usuariosRepository.Create(novoUsuario);
-
-            var usuarioLocal = new UsuarioLocal
+            // Três escritas independentes em sequência — sem transação, uma
+            // falha no meio do caminho deixa o Usuario órfão (sem
+            // UsuarioLocal) e/ou o convite sem ser marcado como usado
+            // (permitindo reaproveitar o mesmo link depois).
+            await _unitOfWork.ExecuteAsync(async () =>
             {
-                UsuarioId = novoUsuario.Id,
-                LocalId = convite.LocalId,
-                Perfil = convite.Perfil,
-                // Só reproduz Administrador Pai quando o convite (a) veio de
-                // um SuperAdmin e (b) já tinha LocalId + Perfil Administrador
-                // definidos juntos — mesma condição de CriarUsuarioLocal.
-                EhAdministradorPai =
-                    convite.CriadoPorSuperAdmin
-                    && convite.LocalId.HasValue
-                    && convite.Perfil == Perfil.Administrador,
-            };
+                await _usuariosRepository.Create(novoUsuario);
 
-            await _usuariosLocalRepository.Create(usuarioLocal);
+                var usuarioLocal = new UsuarioLocal
+                {
+                    UsuarioId = novoUsuario.Id,
+                    LocalId = convite.LocalId,
+                    Perfil = convite.Perfil,
+                    // Só reproduz Administrador Pai quando o convite (a) veio de
+                    // um SuperAdmin e (b) já tinha LocalId + Perfil Administrador
+                    // definidos juntos — mesma condição de CriarUsuarioLocal.
+                    EhAdministradorPai =
+                        convite.CriadoPorSuperAdmin
+                        && convite.LocalId.HasValue
+                        && convite.Perfil == Perfil.Administrador,
+                };
 
-            convite.UsadoEm = DateTime.UtcNow;
-            await _usuariosRepository.UpdateConvite(convite);
+                await _usuariosLocalRepository.Create(usuarioLocal);
+
+                convite.UsadoEm = DateTime.UtcNow;
+                await _usuariosRepository.UpdateConvite(convite);
+            });
         }
+
+        // Usado pelo gate de aceite pós-login, para contas que existiam antes
+        // desse recurso (ex.: usuário seed) e por isso nunca passaram pelo
+        // fluxo de convite/CompletarConvite, onde o aceite normalmente é
+        // registrado.
+        public Task AceitarTermos(Guid usuarioId) =>
+            _usuariosRepository.AceitarTermos(usuarioId, LegalConstants.VersaoTermosAtual);
 
         private static bool ValidarForcaSenha(string senha, out string motivo)
         {
@@ -695,23 +722,28 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
                 TermosAceitosEm = DateTimeOffset.UtcNow,
             };
 
-            await _usuariosRepository.Create(novoUsuario);
-
-            var usuarioLocal = new UsuarioLocal
+            // Mesmo gap do CompletarConvite por e-mail: três escritas em
+            // sequência sem transação.
+            await _unitOfWork.ExecuteAsync(async () =>
             {
-                UsuarioId = novoUsuario.Id,
-                LocalId = convite.LocalId,
-                Perfil = convite.Perfil,
-                EhAdministradorPai =
-                    convite.CriadoPorSuperAdmin
-                    && convite.LocalId.HasValue
-                    && convite.Perfil == Perfil.Administrador,
-            };
+                await _usuariosRepository.Create(novoUsuario);
 
-            await _usuariosLocalRepository.Create(usuarioLocal);
+                var usuarioLocal = new UsuarioLocal
+                {
+                    UsuarioId = novoUsuario.Id,
+                    LocalId = convite.LocalId,
+                    Perfil = convite.Perfil,
+                    EhAdministradorPai =
+                        convite.CriadoPorSuperAdmin
+                        && convite.LocalId.HasValue
+                        && convite.Perfil == Perfil.Administrador,
+                };
 
-            convite.UsadoEm = DateTime.UtcNow;
-            await _usuariosRepository.UpdateConvite(convite);
+                await _usuariosLocalRepository.Create(usuarioLocal);
+
+                convite.UsadoEm = DateTime.UtcNow;
+                await _usuariosRepository.UpdateConvite(convite);
+            });
 
             return novoUsuario;
         }

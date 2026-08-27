@@ -135,7 +135,13 @@ async function request(url, options = {}, _retry = true) {
   }
 
   if (res.status === 204) return null;
-  return res.json();
+
+  // Nem todo 200 de sucesso tem corpo (ex.: endpoints que só confirmam uma
+  // ação, como POST /account/aceitar-termos, retornam Ok() sem payload).
+  // res.json() direto nesses casos estoura "Unexpected end of JSON input"
+  // porque o corpo vem vazio — não é exclusividade do 204.
+  const texto = await res.text();
+  return texto ? JSON.parse(texto) : null;
 }
 
 const get = (url) => request(url);
@@ -192,6 +198,7 @@ export const authService = {
   refresh: () => tentarRefresh(),
 
   logout: () => post(API_ENDPOINTS.logout, {}),
+  aceitarTermos: () => post(API_ENDPOINTS.aceitarTermos, {}),
 };
 
 // ----------------------------------------------------------
@@ -358,7 +365,6 @@ export const movimentacaoService = {
     post(API_ENDPOINTS.movimentacoes, toApiMovimentacao(dto)).then(
       fromApiMovimentacao,
     ),
-
   contagemInventario: (depositoId, usuarioId, itens) =>
     post(API_ENDPOINTS.contagemInventario, {
       DepositoId: depositoId,
@@ -369,28 +375,18 @@ export const movimentacaoService = {
       })),
     }),
 
-  lancarLoteInventario: ({ depositoId, usuarioId, itens, tipoMovimentacao }) =>
+  lancarLoteInventario: ({ depositoId, itens, tipoMovimentacao }) =>
     post(API_ENDPOINTS.lancarLoteInventario, {
       DepositoId: depositoId,
-      tipoMovimentacao: tipoMovimentacao,
-      UsuarioId: usuarioId || null,
+      TipoMovimentacao: tipoMovimentacao,
       Itens: itens.map((i) => ({
         ProdutoId: i.produtoId,
-        QuantidadeContada: parseFloat(i.quantidade), // Lê 'quantidade' diretamente
+        Quantidade: parseFloat(i.quantidade),
+        UnidadeLancamento: i.unidadeLancamento || null,
       })),
     }),
 };
 
-/*  */
-/*       const res = await movimentacaoService.lancarLoteInventario({
-        depositoId,
-        tipoMovimentacao: tipo,
-        itens: preenchidos.map((i) => ({
-          ...i,
-          quantidade: Number(i.quantidade),
-          unidadeLancamento: i.unidadeLancamento || null,
-        })),
-      }); */
 // ----------------------------------------------------------
 // Aplicações de Produto
 // ----------------------------------------------------------

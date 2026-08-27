@@ -1,4 +1,5 @@
 ﻿using PiscinaPerfeita.Api.Dtos.Response;
+using PiscinaPerfeita.Api.Helpers;
 using PiscinaPerfeita.Api.Service.Usuarios;
 
 namespace PiscinaPerfeita.Api.Service.Account.Google
@@ -44,6 +45,8 @@ namespace PiscinaPerfeita.Api.Service.Account.Google
                     LocalId = resultado.LocalId,
                     Role = usuario.Role,
                     Perfil = resultado.Perfil,
+                    PrecisaAceitarTermos =
+                        usuario.TermosAceitosVersao != LegalConstants.VersaoTermosAtual,
                 };
                 return AuthResult.Ok(resultado.AccessToken, resultado.RefreshToken, userDto);
             }
@@ -61,7 +64,11 @@ namespace PiscinaPerfeita.Api.Service.Account.Google
             );
         }
 
-        public async Task<AuthResult> CompletarCadastroAsync(string idToken, string? cpf, bool aceiteTermos)
+        public async Task<AuthResult> CompletarCadastroAsync(
+            string idToken,
+            string? cpf,
+            bool aceiteTermos
+        )
         {
             var payload = await _googleTokenValidator.ValidarAsync(idToken);
             if (payload is null)

@@ -1,5 +1,6 @@
 using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
+using PiscinaPerfeita.Api.Helpers;
 using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Repository.Usuarios;
 
@@ -66,6 +67,8 @@ namespace PiscinaPerfeita.Api.Service.Account
                     LocalId = resultado.LocalId,
                     Role = usuario.Role,
                     Perfil = resultado.Perfil,
+                    PrecisaAceitarTermos =
+                        usuario.TermosAceitosVersao != LegalConstants.VersaoTermosAtual,
                 },
             };
 

@@ -67,6 +67,15 @@ export function fromApiAuthUser(raw) {
     // nenhum Local) — usado para guiar um Administrador sem local a criar
     // o primeiro Local antes de liberar o resto do sistema.
     perfil: field(raw, "perfil", "Perfil"),
+    // true quando a conta ainda não registrou aceite da versão atual dos
+    // Termos de Uso/Política de Privacidade — cobre contas criadas antes
+    // desse recurso existir. O front bloqueia o app até chamar
+    // authService.aceitarTermos() quando este campo vier true.
+    precisaAceitarTermos: !!field(
+      raw,
+      "precisaAceitarTermos",
+      "PrecisaAceitarTermos",
+    ),
   };
 }
 
