@@ -1,14 +1,4 @@
-// ============================================================
-//  Piscina Perfeita — Módulo: Contagem de Inventário (Ajuste)
-//
-//  Objetivo: mitigar perdas ou desvios de produtos. O usuário escolhe um
-//  Depósito, o sistema lista os produtos com o saldo lógico atual, e o
-//  usuário preenche quanto contou fisicamente de cada um. A diferença é
-//  calculada automaticamente e, ao confirmar, o backend gera uma
-//  MovimentacaoEstoque do tipo "Ajuste de Inventário" para cada produto
-//  com divergência (produtos que batem certinho não geram ajuste).
-// ============================================================
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   PageHeader,
   Card,
@@ -16,128 +6,186 @@ import {
   FormField,
   LoadingSpinner,
   ErrorMessage,
-  DataTable,
   Badge,
 } from "../../components/ui/index.jsx";
 import { inputStyle } from "../../components/ui/styles.js";
 import {
-  estoqueService,
   depositoService,
+  estoqueService,
   movimentacaoService,
+  produtoService,
 } from "../../config/services.js";
-import { useAuth, useCan } from "../../context/AuthContext.jsx";
+import {
+  TIPO_MOVIMENTACAO,
+  TIPO_LABELS,
+  UNIDADES_LANCAMENTO,
+} from "../../config/index.js";
 import { PERMISSIONS } from "../../helpers/Permissions.js";
 import ProtecaoDeRota from "../../helpers/ProtecaoDeRota.jsx";
 
+const tipos = [
+  TIPO_MOVIMENTACAO.ENTRADA,
+  TIPO_MOVIMENTACAO.COMPRA,
+  TIPO_MOVIMENTACAO.AJUSTE_INVENTARIO,
+];
+const novaLinha = () => ({
+  produtoId: "",
+  quantidade: "",
+  unidadeLancamento: "",
+});
+
 export default function ContagemInventario() {
-  const { user } = useAuth();
   const [depositos, setDepositos] = useState([]);
-  const [depositoId, setDepositoId] = useState("");
+  const [produtos, setProdutos] = useState([]);
   const [estoques, setEstoques] = useState([]);
-  const [contagens, setContagens] = useState({}); // { estoqueId: "quantidade digitada" }
+  const [depositoId, setDepositoId] = useState("");
+  const [tipo, setTipo] = useState(TIPO_MOVIMENTACAO.COMPRA);
+  const [itens, setItens] = useState([novaLinha()]);
+  const [contagens, setContagens] = useState({});
   const [loading, setLoading] = useState(true);
-  const [loadingEstoques, setLoadingEstoques] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
-  const [resultado, setResultado] = useState(null); // resultado da última contagem enviada
-
+  const [resultado, setResultado] = useState([]);
   useEffect(() => {
-    async function load() {
+    async function carregar() {
       try {
-        setLoading(true);
-        setDepositos((await depositoService.listar()) ?? []);
+        const [d, p, e] = await Promise.all([
+          depositoService.listar(),
+          produtoService.listar(),
+          estoqueService.listar(),
+        ]);
+        setDepositos(d ?? []);
+        setProdutos(p ?? []);
+        setEstoques(e ?? []);
       } catch (err) {
         setError(err.message);
       } finally {
         setLoading(false);
       }
     }
-    load();
+    carregar();
   }, []);
-
-  useEffect(() => {
-    if (!depositoId) {
-      setEstoques([]);
+  const saldos = useMemo(
+    () =>
+      new Map(
+        estoques
+          .filter((e) => e.deposito?.id === depositoId)
+          .map((e) => [e.produto?.id, e.quantidadeAtual ?? 0]),
+      ),
+    [estoques, depositoId],
+  );
+  // Produtos elegíveis para Compra/Entrada: só os que já têm Estoque
+  // cadastrado nesse depósito (mesmo critério que o modo Ajuste já usava
+  // pra listar a tabela de contagem). Cadastro de um produto novo num
+  // depósito continua sendo feito na tela de Estoques, não aqui.
+  const produtosDoDeposito = useMemo(
+    () => (depositoId ? produtos.filter((p) => saldos.has(p.id)) : []),
+    [produtos, saldos, depositoId],
+  );
+  const ehAjuste = tipo === TIPO_MOVIMENTACAO.AJUSTE_INVENTARIO;
+  const atualizar = (i, campo, valor) =>
+    setItens((atual) =>
+      atual.map((item, n) => (n === i ? { ...item, [campo]: valor } : item)),
+    );
+  const remover = (i) =>
+    setItens((atual) =>
+      atual.length === 1 ? atual : atual.filter((_, n) => n !== i),
+    );
+  const atualizarContagem = (estoqueId, valor) =>
+    setContagens((atual) => ({ ...atual, [estoqueId]: valor }));
+  async function confirmar() {
+    const preenchidos = ehAjuste
+      ? estoques
+          .filter(
+            (e) =>
+              e.deposito?.id === depositoId &&
+              contagens[e.id] !== undefined &&
+              contagens[e.id] !== "",
+          )
+          .map((e) => ({
+            produtoId: e.produto?.id,
+            quantidade: Number(contagens[e.id]),
+            unidadeLancamento: null,
+          }))
+      : itens.filter((i) => i.produtoId && Number(i.quantidade) > 0);
+    if (!depositoId || preenchidos.length === 0) {
+      setError(
+        "Selecione o depósito e informe ao menos um produto com quantidade válida.",
+      );
       return;
     }
-    async function loadEstoques() {
-      try {
-        setLoadingEstoques(true);
-        setError(null);
-        setResultado(null);
-        const todos = (await estoqueService.listar()) ?? [];
-        // Filtra pelo depósito escolhido — o Estoque retorna { deposito: {id, nome} }.
-        const doDeposito = todos.filter((e) => e.deposito?.id === depositoId);
-        setEstoques(doDeposito);
-        setContagens({});
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoadingEstoques(false);
-      }
-    }
-    loadEstoques();
-  }, [depositoId]);
-
-  function setContagem(estoqueId, valor) {
-    setContagens((prev) => ({ ...prev, [estoqueId]: valor }));
-  }
-
-  async function handleConfirmar() {
-    const itens = estoques
-      .filter((e) => contagens[e.id] !== undefined && contagens[e.id] !== "")
-      .map((e) => ({
-        produtoId: e.produto?.id,
-        quantidadeContada: contagens[e.id],
-      }));
-
-    if (itens.length === 0) {
-      setError("Preencha ao menos uma quantidade contada antes de confirmar.");
+    if (
+      new Set(preenchidos.map((i) => i.produtoId)).size !== preenchidos.length
+    ) {
+      setError("Não repita o mesmo produto no lançamento.");
       return;
     }
-
     try {
       setSaving(true);
       setError(null);
-      const res = await movimentacaoService.contagemInventario(
+      const res = await movimentacaoService.lancarLoteInventario({
         depositoId,
-        user?.userId,
-        itens,
-      );
+        tipoMovimentacao: tipo,
+        itens: preenchidos.map((i) => ({
+          ...i,
+          quantidade: Number(i.quantidade),
+          unidadeLancamento: i.unidadeLancamento || null,
+        })),
+      });
       setResultado(res ?? []);
+      setItens([novaLinha()]);
       setContagens({});
-      // Recarrega os estoques do depósito pra refletir os novos saldos.
-      const todos = (await estoqueService.listar()) ?? [];
-      setEstoques(todos.filter((e) => e.deposito?.id === depositoId));
+      setEstoques((await estoqueService.listar()) ?? []);
     } catch (err) {
       setError(err.message);
     } finally {
       setSaving(false);
     }
   }
-
-  const podeMostrarCard = useCan(PERMISSIONS.INVENTARIOS.CREATE);
-
   if (loading) return <LoadingSpinner />;
-
   return (
     <ProtecaoDeRota permissao={PERMISSIONS.INVENTARIOS.VIEW}>
       <div>
         <PageHeader
-          title="Contagem de inventário"
-          description="Confira o saldo físico dos produtos e ajuste divergências automaticamente"
+          title="Atualização de inventário"
+          description="Registre compras, entradas ou ajustes para vários produtos em uma única operação."
         />
         {error && <ErrorMessage message={error} />}
-
-        {podeMostrarCard && (
-          <Card>
-            <FormField label="Depósito a conferir *">
+        <Card>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+              gap: 12,
+              marginBottom: 16,
+            }}
+          >
+            <FormField label="Tipo de lançamento *">
               <select
-                style={{ ...inputStyle, maxWidth: 320 }}
-                value={depositoId}
-                onChange={(e) => setDepositoId(e.target.value)}
+                style={inputStyle}
+                value={tipo}
+                onChange={(e) => setTipo(Number(e.target.value))}
               >
-                <option value="">Selecione um depósito…</option>
+                {tipos.map((t) => (
+                  <option key={t} value={t}>
+                    {TIPO_LABELS[t]}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Depósito *">
+              <select
+                required
+                style={inputStyle}
+                value={depositoId}
+                onChange={(e) => {
+                  setDepositoId(e.target.value);
+                  setResultado([]);
+                  setItens([novaLinha()]);
+                  setContagens({});
+                }}
+              >
+                <option value="">Selecione o depósito</option>
                 {depositos.map((d) => (
                   <option key={d.id} value={d.id}>
                     {d.nome}
@@ -145,135 +193,255 @@ export default function ContagemInventario() {
                 ))}
               </select>
             </FormField>
-          </Card>
-        )}
-
-        {loadingEstoques && <LoadingSpinner />}
-
-        {!loadingEstoques && depositoId && estoques.length === 0 && (
-          <Card>
-            <p style={{ fontSize: 13, color: "#5a6b7a" }}>
-              Nenhum produto com estoque cadastrado neste depósito ainda.
-            </p>
-          </Card>
-        )}
-        {!loadingEstoques && estoques.length > 0 && (
-          <Card noPadding>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: 13,
-              }}
-            >
-              <thead>
-                <tr
+          </div>
+          <p style={{ fontSize: 13, color: "#5a6b7a" }}>
+            {ehAjuste
+              ? "Informe apenas o saldo físico contado nos produtos do depósito. O sistema calcula a diferença."
+              : "Cada linha gera sua própria movimentação, agrupada e confirmada de uma só vez."}
+          </p>
+          {ehAjuste ? (
+            <>
+              <div style={{ overflowX: "auto" }}>
+                <table
                   style={{
-                    textAlign: "left",
-                    borderBottom: "1px solid #e7ecf0",
+                    width: "100%",
+                    borderCollapse: "collapse",
+                    fontSize: 13,
                   }}
                 >
-                  <th style={{ padding: "10px 12px" }}>Produto</th>
-                  <th style={{ padding: "10px 12px" }}>
-                    Saldo lógico (sistema)
-                  </th>
-                  <th style={{ padding: "10px 12px" }}>Quantidade contada</th>
-                  <th style={{ padding: "10px 12px" }}>Diferença</th>
-                </tr>
-              </thead>
-              <tbody>
-                {estoques.map((e) => {
-                  const contado = contagens[e.id];
-                  const diferenca =
-                    contado !== undefined && contado !== ""
-                      ? parseFloat(contado) - (e.quantidadeAtual ?? 0)
-                      : null;
-                  return (
+                  <thead>
                     <tr
-                      key={e.id}
-                      style={{ borderBottom: "1px solid #f2f5f7" }}
+                      style={{
+                        textAlign: "left",
+                        borderBottom: "1px solid #e7ecf0",
+                      }}
                     >
-                      <td style={{ padding: "10px 12px" }}>
-                        {e.produto?.nome ?? "—"}
-                      </td>
-                      <td style={{ padding: "10px 12px" }}>
-                        {e.quantidadeAtual ?? 0}{" "}
-                        {e.produto?.unidadeMedida ?? ""}
-                      </td>
-                      <td style={{ padding: "10px 12px" }}>
-                        <input
-                          type="number"
-                          step="0.0001"
-                          min="0"
-                          placeholder="—"
-                          style={{ ...inputStyle, width: 120 }}
-                          value={contado ?? ""}
-                          onChange={(ev) => setContagem(e.id, ev.target.value)}
-                        />
-                      </td>
-                      <td style={{ padding: "10px 12px" }}>
-                        {diferenca === null ? (
-                          "—"
-                        ) : diferenca === 0 ? (
-                          <Badge variant="ok">Sem diferença</Badge>
-                        ) : (
-                          <Badge variant={diferenca > 0 ? "info" : "bad"}>
-                            {diferenca > 0 ? "+" : ""}
-                            {diferenca.toFixed(4)}{" "}
-                            {e.produto?.unidadeMedida ?? ""}
-                          </Badge>
-                        )}
-                      </td>
+                      <th style={{ padding: 10 }}>Produto</th>
+                      <th style={{ padding: 10 }}>Saldo atual</th>
+                      <th style={{ padding: 10 }}>Saldo contado</th>
+                      <th style={{ padding: 10 }}>Diferença</th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                padding: 12,
-              }}
-            >
-              <Button
-                variant="primary"
-                onClick={handleConfirmar}
-                disabled={saving}
-                permission={PERMISSIONS.INVENTARIOS.CREATE}
+                  </thead>
+                  <tbody>
+                    {estoques
+                      .filter((e) => e.deposito?.id === depositoId)
+                      .map((e) => {
+                        const contado = contagens[e.id];
+                        const diferenca =
+                          contado === undefined || contado === ""
+                            ? null
+                            : Number(contado) - (e.quantidadeAtual ?? 0);
+                        return (
+                          <tr
+                            key={e.id}
+                            style={{ borderBottom: "1px solid #f2f5f7" }}
+                          >
+                            <td style={{ padding: 10 }}>
+                              {e.produto?.nome ?? "—"}
+                            </td>
+                            <td style={{ padding: 10 }}>
+                              {e.quantidadeAtual ?? 0}{" "}
+                              {e.produto?.unidadeMedida ?? ""}
+                            </td>
+                            <td style={{ padding: 10 }}>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.0001"
+                                placeholder="—"
+                                style={{ ...inputStyle, width: 120 }}
+                                value={contado ?? ""}
+                                onChange={(ev) =>
+                                  atualizarContagem(e.id, ev.target.value)
+                                }
+                              />
+                            </td>
+                            <td style={{ padding: 10 }}>
+                              {diferenca === null ? (
+                                "—"
+                              ) : diferenca === 0 ? (
+                                <Badge variant="ok">Sem diferença</Badge>
+                              ) : (
+                                <Badge variant={diferenca > 0 ? "info" : "bad"}>
+                                  {diferenca > 0 ? "+" : ""}
+                                  {diferenca.toFixed(4)}
+                                </Badge>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  marginTop: 16,
+                }}
               >
-                {saving ? "Confirmando…" : "Confirmar contagem"}
-              </Button>
-            </div>
-          </Card>
-        )}
-        {resultado && (
+                <Button
+                  type="button"
+                  variant="primary"
+                  disabled={saving}
+                  onClick={confirmar}
+                  permission={PERMISSIONS.INVENTARIOS.CREATE}
+                >
+                  {saving ? "Confirmando…" : "Confirmar ajuste"}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ overflowX: "auto" }}>
+                <table
+                  style={{
+                    width: "100%",
+                    borderCollapse: "collapse",
+                    fontSize: 13,
+                  }}
+                >
+                  <thead>
+                    <tr
+                      style={{
+                        textAlign: "left",
+                        borderBottom: "1px solid #e7ecf0",
+                      }}
+                    >
+                      <th style={{ padding: 10 }}>Produto</th>
+                      <th style={{ padding: 10 }}>Saldo atual</th>
+                      <th style={{ padding: 10 }}>Quantidade</th>
+                      <th style={{ padding: 10 }}>Unidade</th>
+                      <th />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {itens.map((item, i) => {
+                      const produto = produtos.find(
+                        (p) => p.id === item.produtoId,
+                      );
+                      return (
+                        <tr
+                          key={i}
+                          style={{ borderBottom: "1px solid #f2f5f7" }}
+                        >
+                          <td style={{ padding: 10 }}>
+                            <select
+                              style={inputStyle}
+                              value={item.produtoId}
+                              disabled={!depositoId}
+                              title={
+                                !depositoId
+                                  ? "Selecione um depósito primeiro"
+                                  : undefined
+                              }
+                              onChange={(e) =>
+                                atualizar(i, "produtoId", e.target.value)
+                              }
+                            >
+                              <option value="">
+                                {depositoId
+                                  ? "Selecione"
+                                  : "Selecione um depósito primeiro"}
+                              </option>
+                              {produtosDoDeposito.map((p) => (
+                                <option key={p.id} value={p.id}>
+                                  {p.nome}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td style={{ padding: 10 }}>
+                            {item.produtoId
+                              ? `${saldos.get(item.produtoId) ?? 0} ${produto?.unidadeMedida ?? ""}`
+                              : "—"}
+                          </td>
+                          <td style={{ padding: 10 }}>
+                            <input
+                              type="number"
+                              min="0.0001"
+                              step="0.0001"
+                              style={{ ...inputStyle, width: 120 }}
+                              value={item.quantidade}
+                              onChange={(e) =>
+                                atualizar(i, "quantidade", e.target.value)
+                              }
+                            />
+                          </td>
+                          <td style={{ padding: 10 }}>
+                            <select
+                              style={inputStyle}
+                              value={item.unidadeLancamento}
+                              onChange={(e) =>
+                                atualizar(
+                                  i,
+                                  "unidadeLancamento",
+                                  e.target.value,
+                                )
+                              }
+                            >
+                              <option value="">Unidade do produto</option>
+                              {UNIDADES_LANCAMENTO.map((u) => (
+                                <option key={u} value={u}>
+                                  {u}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td style={{ padding: 10 }}>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              onClick={() => remover(i)}
+                              disabled={itens.length === 1}
+                            >
+                              Remover
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 8,
+                  marginTop: 16,
+                }}
+              >
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setItens((atual) => [...atual, novaLinha()])}
+                >
+                  + Adicionar produto
+                </Button>
+                <Button
+                  type="button"
+                  variant="primary"
+                  disabled={saving}
+                  onClick={confirmar}
+                  permission={PERMISSIONS.INVENTARIOS.CREATE}
+                >
+                  {saving ? "Confirmando…" : "Confirmar lançamento"}
+                </Button>
+              </div>
+            </>
+          )}
+        </Card>
+        {resultado.length > 0 && (
           <Card>
-            <h3 style={{ fontSize: 14, marginTop: 0 }}>
-              Resultado da contagem
-            </h3>
-            <DataTable
-              columns={[
-                { key: "produtoNome", label: "Produto" },
-                { key: "quantidadeAnterior", label: "Saldo anterior" },
-                { key: "quantidadeContada", label: "Contado" },
-                {
-                  key: "diferenca",
-                  label: "Ajuste gerado",
-                  render: (v, r) =>
-                    v === 0 ? (
-                      <Badge variant="ok">Sem ajuste</Badge>
-                    ) : (
-                      <Badge variant={v > 0 ? "info" : "bad"}>
-                        {v > 0 ? "+" : ""}
-                        {v}
-                      </Badge>
-                    ),
-                },
-              ]}
-              data={resultado}
-              emptyMessage="—"
-            />
+            <h3 style={{ fontSize: 14, marginTop: 0 }}>Lançamento concluído</h3>
+            {resultado.map((r) => (
+              <p key={r.produtoId}>
+                <Badge variant="ok">Registrado</Badge> {r.produtoNome}: saldo{" "}
+                {r.quantidadeAnterior} → {r.quantidadeAtual}
+              </p>
+            ))}
           </Card>
         )}
       </div>

@@ -9,7 +9,11 @@ import {
   useEffect,
   useCallback,
 } from "react";
-import { authService, registrarSessaoHandlers, setAccessToken } from "../config/services.js";
+import {
+  authService,
+  registrarSessaoHandlers,
+  setAccessToken,
+} from "../config/services.js";
 import { can } from "../helpers/Permissions.js";
 
 // Cache otimista para evitar flashing da tela —
@@ -144,26 +148,31 @@ export function AuthProvider({ children }) {
   }, []);
 
   // Completa o cadastro do convite ativo via Google (Cpf opcional).
-  const completarConviteGoogle = useCallback(async (idToken, cpf, aceiteTermos) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await authService.completarConviteGoogle(
-        idToken,
-        cpf,
-        aceiteTermos,
-      );
-      setToken(res.accessToken);
-      setUser(res.user);
-      saveUserCache(res.user);
-      return true;
-    } catch (err) {
-      setError(err.message ?? "Não foi possível concluir seu cadastro agora.");
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const completarConviteGoogle = useCallback(
+    async (idToken, cpf, aceiteTermos) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await authService.completarConviteGoogle(
+          idToken,
+          cpf,
+          aceiteTermos,
+        );
+        setToken(res.accessToken);
+        setUser(res.user);
+        saveUserCache(res.user);
+        return true;
+      } catch (err) {
+        setError(
+          err.message ?? "Não foi possível concluir seu cadastro agora.",
+        );
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   // Troca o Local (condomínio/unidade) ativo — usada quando o usuário tem
   // vínculo com mais de um Local. Emite um novo token JWT (com o novo
@@ -184,7 +193,20 @@ export function AuthProvider({ children }) {
       setLoading(false);
     }
   }, []);
+
   const isAuthenticated = !!token;
+
+  // Gate de aceite pós-login (ver user.precisaAceitarTermos, calculado pelo
+  // backend). Só atualiza o cache local depois que o backend confirmar —
+  // não otimista, já que isso é a prova de consentimento.
+  const aceitarTermos = useCallback(async () => {
+    await authService.aceitarTermos();
+    setUser((prev) => {
+      const atualizado = { ...prev, precisaAceitarTermos: false };
+      saveUserCache(atualizado);
+      return atualizado;
+    });
+  }, []);
 
   return (
     <AuthContext.Provider
@@ -200,6 +222,7 @@ export function AuthProvider({ children }) {
         completarConviteGoogle,
         logout,
         switchLocal,
+        aceitarTermos,
         setError,
       }}
     >

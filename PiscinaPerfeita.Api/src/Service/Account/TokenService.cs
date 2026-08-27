@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using PiscinaPerfeita.Api.Data;
 using PiscinaPerfeita.Api.Helpers.Security;
 using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Repository;
@@ -19,6 +20,7 @@ public class TokenService : ITokenService
     private readonly ILocalRepository _localRepository;
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly IConfiguration _configuration;
+    private readonly IUnitOfWork _unitOfWork;
 
     private const int RefreshTokenDiasValidade = 30;
 
@@ -27,7 +29,8 @@ public class TokenService : ITokenService
         IUsuarioLocalRepository usuarioLocalRepository,
         ILocalRepository localRepository,
         IRefreshTokenRepository refreshTokenRepository,
-        IConfiguration configuration
+        IConfiguration configuration,
+        IUnitOfWork unitOfWork
     )
     {
         _usuarioRepository =
@@ -41,6 +44,7 @@ public class TokenService : ITokenService
             refreshTokenRepository
             ?? throw new ArgumentNullException(nameof(refreshTokenRepository));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
 
     public async Task<AuthTokenResult> GerarTokenAsync(Usuario usuario)
@@ -51,9 +55,13 @@ public class TokenService : ITokenService
             return await EmitirVerTodosAsync(usuario);
 
         var (localId, perfil) = await ResolverVinculoPadraoAsync(usuario);
-        await _usuarioRepository.UpdateUltimoLocal(usuario.Id, localId ?? Guid.Empty);
+        string refreshToken = null!;
 
-        var refreshToken = await GerarRefreshTokenAsync(usuario.Id);
+        await _unitOfWork.ExecuteAsync(async () =>
+        {
+            await _usuarioRepository.UpdateUltimoLocal(usuario.Id, localId ?? Guid.Empty);
+            refreshToken = await GerarRefreshTokenAsync(usuario.Id);
+        });
 
         return new AuthTokenResult(
             CriarToken(usuario, localId?.ToString() ?? string.Empty, perfil),
@@ -95,9 +103,12 @@ public class TokenService : ITokenService
             perfilAtivo = vinculo.Perfil;
         }
 
-        await _usuarioRepository.UpdateUltimoLocal(usuario.Id, newLocalId.Value);
-
-        var refreshToken = await GerarRefreshTokenAsync(usuario.Id);
+        string refreshToken = null!;
+        await _unitOfWork.ExecuteAsync(async () =>
+        {
+            await _usuarioRepository.UpdateUltimoLocal(usuario.Id, newLocalId.Value);
+            refreshToken = await GerarRefreshTokenAsync(usuario.Id);
+        });
 
         return new AuthTokenResult(
             CriarToken(usuario, newLocalId.Value.ToString(), perfilAtivo),
@@ -109,8 +120,12 @@ public class TokenService : ITokenService
 
     private async Task<AuthTokenResult> EmitirVerTodosAsync(Usuario usuario)
     {
-        await _usuarioRepository.UpdateUltimoLocal(usuario.Id, Guid.Empty);
-        var refreshToken = await GerarRefreshTokenAsync(usuario.Id);
+        string refreshToken = null!;
+        await _unitOfWork.ExecuteAsync(async () =>
+        {
+            await _usuarioRepository.UpdateUltimoLocal(usuario.Id, Guid.Empty);
+            refreshToken = await GerarRefreshTokenAsync(usuario.Id);
+        });
 
         return new AuthTokenResult(
             CriarToken(usuario, Guid.Empty.ToString(), Perfil.Administrador),

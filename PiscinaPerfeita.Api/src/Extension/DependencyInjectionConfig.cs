@@ -1,4 +1,5 @@
-﻿using PiscinaPerfeita.Api.Helpers.Authenticated;
+﻿using PiscinaPerfeita.Api.Data;
+using PiscinaPerfeita.Api.Helpers.Authenticated;
 using PiscinaPerfeita.Api.Repository;
 using PiscinaPerfeita.Api.Repository.Analises;
 using PiscinaPerfeita.Api.Repository.AplicacoesProduto;
@@ -35,6 +36,7 @@ namespace PiscinaPerfeita.Api.Extension
         public static IServiceCollection ResolveDependencies(this IServiceCollection services)
         {
             // 1. Registre aqui todos os seus Services
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IUsuarioService, UsuarioService>();
             services.AddScoped<IEstoqueService, EstoqueService>();
             services.AddScoped<IPiscinaService, PiscinaService>();

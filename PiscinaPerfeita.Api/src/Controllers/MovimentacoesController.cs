@@ -147,5 +147,22 @@ namespace PiscinaPerfeita.Api.Controllers
                 return Conflict(new { message = ex.Message });
             }
         }
+
+        // POST: api/movimentacoes/lote-inventario
+        // Registra uma compra/entrada ou uma contagem de vários produtos sem
+        // deixar saldos ou histórico parcialmente gravados.
+        [HttpPost("lote-inventario")]
+        [Authorize(Policy = Policies.Cadastrar)]
+        public async Task<ActionResult<IEnumerable<MovimentacaoLoteInventarioResultadoDto>>>
+            LoteInventario(MovimentacaoLoteInventarioRequestDto dto)
+        {
+            try
+            {
+                return Ok(await _movimentacoesService.RegistrarLoteInventario(dto));
+            }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+            catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+        }
     }
 }

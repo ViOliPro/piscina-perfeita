@@ -108,6 +108,20 @@ namespace PiscinaPerfeita.Api.Controllers
             }
         }
 
+        // Gate de aceite pós-login — para contas que existiam antes desse
+        // recurso (ex.: usuário seed) e nunca passaram pelo fluxo de
+        // convite. O front bloqueia o acesso ao app enquanto
+        // PrecisaAceitarTermos (vindo no login/refresh) for true, e chama
+        // este endpoint quando o usuário marca o aceite.
+        [HttpPost("aceitar-termos")]
+        [Authorize]
+        public async Task<IActionResult> AceitarTermos()
+        {
+            var userId = _authenticatedUser.GetUserId();
+            await _usuarioService.AceitarTermos(userId);
+            return Ok();
+        }
+
         // POST /api/auth/esqueci-senha
         [HttpPost("esqueci-senha")]
         [AllowAnonymous]

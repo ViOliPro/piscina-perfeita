@@ -1,3 +1,4 @@
+using PiscinaPerfeita.Api.Data;
 using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Helpers.Authenticated;
@@ -14,20 +15,24 @@ namespace PiscinaPerfeita.Api.Service.UsuariosLocal
         private readonly ILocalRepository _locaisRepository;
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IAuthenticatedUser _user;
+        private readonly IUnitOfWork _unitOfWork;
 
         public UsuarioLocalService(
             IUsuarioLocalRepository usuariosRepository,
             ILocalRepository locaisRepository,
             IUsuarioRepository usuarioRepository,
-            IAuthenticatedUser user
+            IAuthenticatedUser user,
+            IUnitOfWork unitOfWork
         )
         {
             _usuariosLocalRepository =
                 usuariosRepository ?? throw new ArgumentNullException(nameof(usuariosRepository));
             _locaisRepository =
                 locaisRepository ?? throw new ArgumentNullException(nameof(locaisRepository));
-            _usuarioRepository = usuarioRepository ?? throw new ArgumentNullException(nameof(usuarioRepository));
+            _usuarioRepository =
+                usuarioRepository ?? throw new ArgumentNullException(nameof(usuarioRepository));
             _user = user ?? throw new ArgumentNullException(nameof(user));
+            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         }
 
         public async Task<List<UsuarioLocalResponseDto>> Show()
@@ -135,16 +140,21 @@ namespace PiscinaPerfeita.Api.Service.UsuariosLocal
                 EhAdministradorPai = usuario.EhAdministradorPai,
             };
 
-            await _usuariosLocalRepository.Update(id, newUser);
+            await _unitOfWork.ExecuteAsync(async () =>
+            {
+                await _usuariosLocalRepository.Update(id, newUser);
 
-            // Mudou o Perfil (nível de permissão) desse vínculo — invalida
-            // imediatamente qualquer token já emitido pra esse usuário, forçando
-            // relogin. Sem isso, um rebaixamento (ex: Operador virando
-            // Visualizador) só teria efeito quando o token expirasse (até 1h) ou
-            // o usuário trocasse de Local manualmente.
-
-            if(perfilMudou)
-                await _usuarioRepository.RotateSecurityStamp(dto.UsuarioId);
+                // Mudou o Perfil (nível de permissão) desse vínculo — invalida
+                // imediatamente qualquer token já emitido pra esse usuário, forçando
+                // relogin. Sem isso, um rebaixamento (ex: Operador virando
+                // Visualizador) só teria efeito quando o token expirasse (até 1h) ou
+                // o usuário trocasse de Local manualmente. Duas escritas que
+                // precisam ser tudo-ou-nada: sem transação, se a rotação
+                // falhasse depois do Update já commitado, o token antigo com
+                // o perfil errado continuaria válido por até 1h.
+                if (perfilMudou)
+                    await _usuarioRepository.RotateSecurityStamp(dto.UsuarioId);
+            });
 
             return new UsuarioLocalResponseDto
             {
@@ -162,8 +172,11 @@ namespace PiscinaPerfeita.Api.Service.UsuariosLocal
         {
             var usuario = await GarantirPodeGerenciarVinculo(id);
 
-            await _usuariosLocalRepository.Delete(id);
-            await _usuarioRepository.RotateSecurityStamp(usuario.UsuarioId);
+            await _unitOfWork.ExecuteAsync(async () =>
+            {
+                await _usuariosLocalRepository.Delete(id);
+                await _usuarioRepository.RotateSecurityStamp(usuario.UsuarioId);
+            });
         }
 
         // SuperAdmin sempre pode. Um Administrador comum só pode gerenciar
