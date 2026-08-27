@@ -22,11 +22,10 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
         // diretamente (que só gera o token) porque este método nem existia
         // na interface — o e-mail nunca era enviado.
         Task EsqueciSenha(EsqueciSenhaRequestDto dto);
-
         Task<PasswordResetToken?> GetPasswordResetTokenByHash(string tokenHash);
-
         Task<ConviteResponseDto> CriarConvite(ConviteRequestDto dto);
         Task CompletarConvite(CompletarConviteRequestDto dto);
+        Task AceitarTermos(Guid usuarioId);
 
         // Google Auth
         Task<Usuario?> ObterOuVincularPorEmailGoogleAsync(string email);
@@ -34,6 +33,11 @@ namespace PiscinaPerfeita.Api.Service.Usuarios
         // Usado pelo AutenticarAsync pra decidir entre "acesso bloqueado" e
         // "tem convite, redireciona pra completar cadastro".
         Task<bool> ExisteConviteAtivoAsync(string email);
-        Task<Usuario?> CompletarConviteGoogleAsync(string email, string nome, string? cpf, bool aceiteTermos);
+        Task<Usuario?> CompletarConviteGoogleAsync(
+            string email,
+            string nome,
+            string? cpf,
+            bool aceiteTermos
+        );
     }
 }

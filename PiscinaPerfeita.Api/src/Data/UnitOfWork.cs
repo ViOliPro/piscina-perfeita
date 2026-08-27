@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+
 namespace PiscinaPerfeita.Api.Data
 {
     public class UnitOfWork : IUnitOfWork

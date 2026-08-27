@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
 import { AppLayout } from "./components/layout/AppLayout.jsx";
 import LoginPage from "./modules/auth/LoginPage.jsx";
 import MeuPerfil from "./modules/auth/MeuPerfil.jsx";
+import AceiteTermosGate from "./modules/auth/AceiteTermosGate.jsx";
 import PrimeiroLocal from "./modules/onboarding/PrimeiroLocal.jsx";
 import Dashboard from "./modules/dashboard/Dashboard.jsx";
 import Analises from "./modules/analises/Analises.jsx";
@@ -118,6 +119,11 @@ function AuthenticatedApp() {
   }
 
   if (!isAuthenticated || hasAuthToken) return <LoginPage />;
+
+  // Pré-requisito pra tudo, inclusive criar o primeiro Local — cobre
+  // contas que existiam antes desse recurso (ex.: usuário seed) e nunca
+  // passaram pela tela de convite, onde o aceite normalmente é coletado.
+  if (user?.precisaAceitarTermos) return <AceiteTermosGate />;
 
   // Um Administrador criado sem nenhum Local vinculado (ex.: síndico
   // profissional recém-cadastrado) precisa criar seu primeiro condomínio

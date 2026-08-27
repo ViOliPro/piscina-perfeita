@@ -135,6 +135,18 @@ public class UsuarioRepository : IUsuarioRepository
         await _context.SaveChangesAsync();
     }
 
+    public async Task AceitarTermos(Guid id, string versao)
+    {
+        var user = await _context.Usuarios.FindAsync(id);
+        if (user == null)
+            throw new KeyNotFoundException($"Usuário com ID {id} não encontrado.");
+
+        user.TermosAceitosVersao = versao;
+        user.TermosAceitosEm = DateTimeOffset.UtcNow;
+
+        await _context.SaveChangesAsync();
+    }
+
     public async Task Delete(Guid id)
     {
         var user = await _context.Usuarios.FirstOrDefaultAsync(m => m.Id == id);

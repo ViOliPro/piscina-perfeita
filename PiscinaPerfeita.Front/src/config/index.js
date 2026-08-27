@@ -22,6 +22,7 @@ export const API_ENDPOINTS = {
   criarConvite: `${API_BASE_URL}/usuarios/convites`,
   refresh: `${API_BASE_URL}/account/refresh`,
   logout: `${API_BASE_URL}/account/logout`,
+  aceitarTermos: `${API_BASE_URL}/account/aceitar-termos`,
 
   // Usuários
   usuarios: `${API_BASE_URL}/usuarios`,

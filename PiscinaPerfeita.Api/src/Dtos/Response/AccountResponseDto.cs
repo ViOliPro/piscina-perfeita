@@ -22,5 +22,12 @@ namespace PiscinaPerfeita.Api.Dtos.Response
         // não tiver nenhum Local) — usado pelo front para saber se deve
         // guiar um Administrador sem local a criar o primeiro Local.
         public Perfil? Perfil { get; set; }
+
+        // true quando o usuário ainda não aceitou a versão atual dos
+        // Termos de Uso/Política de Privacidade (LegalConstants.VersaoTermosAtual)
+        // — cobre contas criadas antes desse recurso existir (ex.: seed).
+        // O front deve bloquear o acesso ao app até chamar POST
+        // /account/aceitar-termos quando este campo vier true.
+        public bool PrecisaAceitarTermos { get; set; }
     }
 }
