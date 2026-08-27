@@ -1,4 +1,5 @@
-﻿using PiscinaPerfeita.Api.Dtos.Request;
+﻿using PiscinaPerfeita.Api.Data;
+using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Helpers.Authenticated;
 using PiscinaPerfeita.Api.Models;
@@ -12,11 +13,13 @@ namespace PiscinaPerfeita.Api.Service.Locais
         private readonly ILocalRepository _localRepository;
         private readonly IUsuarioLocalRepository _usuarioLocalRepository;
         private readonly IAuthenticatedUser _user;
+        private readonly IUnitOfWork _unitOfWork;
 
         public LocalService(
             ILocalRepository localRepository,
             IUsuarioLocalRepository usuarioLocalRepository,
-            IAuthenticatedUser user
+            IAuthenticatedUser user,
+            IUnitOfWork unitOfWork
         )
         {
             _localRepository =
@@ -25,6 +28,7 @@ namespace PiscinaPerfeita.Api.Service.Locais
                 usuarioLocalRepository
                 ?? throw new ArgumentNullException(nameof(usuarioLocalRepository));
             _user = user ?? throw new ArgumentNullException(nameof(user));
+            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         }
 
         // Um SuperAdmin enxerga todos os Locais cadastrados no sistema.
@@ -76,21 +80,28 @@ namespace PiscinaPerfeita.Api.Service.Locais
                 Cep = dto.Cep,
             };
 
-            await _localRepository.Create(local);
-
-            // SuperAdmin já enxerga/gerencia todos os Locais automaticamente
-            // (ver Show/GarantirAcessoAoLocal e o filtro global em
-            // PiscinaPerfeitaContext), então NÃO deve ganhar um vínculo
-            // UsuarioLocal a cada Local que criar — antes isso acontecia
-            // incondicionalmente e um SuperAdmin acumulava um vínculo novo
-            // por Local criado, sem necessidade nenhuma.
-            // Um Administrador comum precisa ficar vinculado ao Local que
-            // acabou de criar para poder de fato usá-lo (criar piscinas,
-            // produtos, etc. dentro dele).
-            if (usuarioLogado.Role != Role.SuperAdmin && usuarioLogado.UserId != null)
+            await _unitOfWork.ExecuteAsync(async () =>
             {
-                await VincularCriadorAoNovoLocal(usuarioLogado.UserId.Value, local.Id);
-            }
+                await _localRepository.Create(local);
+
+                // SuperAdmin já enxerga/gerencia todos os Locais automaticamente
+                // (ver Show/GarantirAcessoAoLocal e o filtro global em
+                // PiscinaPerfeitaContext), então NÃO deve ganhar um vínculo
+                // UsuarioLocal a cada Local que criar — antes isso acontecia
+                // incondicionalmente e um SuperAdmin acumulava um vínculo novo
+                // por Local criado, sem necessidade nenhuma.
+                // Um Administrador comum precisa ficar vinculado ao Local que
+                // acabou de criar para poder de fato usá-lo (criar piscinas,
+                // produtos, etc. dentro dele). As duas escritas precisam ser
+                // tudo-ou-nada: sem transação, se o vínculo falhasse depois
+                // do Local já commitado, o Local ficava órfão — sem nenhum
+                // Administrador vinculado, só recuperável manualmente por um
+                // SuperAdmin.
+                if (usuarioLogado.Role != Role.SuperAdmin && usuarioLogado.UserId != null)
+                {
+                    await VincularCriadorAoNovoLocal(usuarioLogado.UserId.Value, local.Id);
+                }
+            });
 
             return new LocalResponseDto
             {
