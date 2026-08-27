@@ -5,6 +5,7 @@ Sistema de gestão para empresas e condomínios que administram piscinas — con
 Projeto pessoal desenvolvido do zero para praticar arquitetura full stack em condições próximas de produção: autenticação, autorização por papéis, isolamento de dados entre tenants, deploy em nuvem e documentação técnica real.
 
 🔗 **Demo online:** [link do deploy] — usuário `demo@...` / senha `...` (conta somente leitura)
+Devido esta versao de teste o servidor é free, e no inicio ele demora para acordar cerca de 50sgit checkout main
 
 ![.NET](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet) ![React](https://img.shields.io/badge/React-Vite-61DAFB?logo=react) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql) ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)
 
