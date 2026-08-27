@@ -31,7 +31,11 @@ public class MovimentacaoRepository : IMovimentacaoRepository
         Usuario = new NomeIdDto(m.UsuarioId, m.Usuarios.Nome),
     };
 
-    public async Task<List<MovimentacaoEstoqueResponseDto>> Show(DateTimeOffset? dataInicio = null, DateTimeOffset? dataFim = null, Guid? piscinaId = null)
+    public async Task<List<MovimentacaoEstoqueResponseDto>> Show(
+        DateTimeOffset? dataInicio = null,
+        DateTimeOffset? dataFim = null,
+        Guid? piscinaId = null
+    )
     {
         var query = _context.MovimentacoesEstoques.AsNoTracking().AsQueryable();
 
@@ -96,28 +100,27 @@ public class MovimentacaoRepository : IMovimentacaoRepository
         IReadOnlyCollection<(Guid EstoqueId, decimal QuantidadeAtual)> estoquesAtualizados
     )
     {
-        await using var transacao = await _context.Database.BeginTransactionAsync();
-        try
-        {
-            if (estoquesNovos.Count > 0)
-                await _context.Estoques.AddRangeAsync(estoquesNovos);
+        // Um único SaveChangesAsync() já grava tudo abaixo numa única
+        // transação implícita do EF Core — não precisa (e não pode) abrir
+        // uma transação manual aqui: o projeto tem EnableRetryOnFailure
+        // ativo no Npgsql, e BeginTransactionAsync() direto (fora de
+        // CreateExecutionStrategy().ExecuteAsync()) lança
+        // "InvalidOperationException: The configured execution strategy
+        // does not support user-initiated transactions" em runtime, toda
+        // vez que este método fosse chamado.
+        if (estoquesNovos.Count > 0)
+            await _context.Estoques.AddRangeAsync(estoquesNovos);
 
-            foreach (var (estoqueId, quantidadeAtual) in estoquesAtualizados)
-            {
-                var estoque = await _context.Estoques.FindAsync(estoqueId)
-                    ?? throw new KeyNotFoundException($"Estoque com ID {estoqueId} não encontrado.");
-                estoque.QuantidadeAtual = quantidadeAtual;
-            }
-
-            await _context.MovimentacoesEstoques.AddRangeAsync(movimentacoes);
-            await _context.SaveChangesAsync();
-            await transacao.CommitAsync();
-        }
-        catch
+        foreach (var (estoqueId, quantidadeAtual) in estoquesAtualizados)
         {
-            await transacao.RollbackAsync();
-            throw;
+            var estoque =
+                await _context.Estoques.FindAsync(estoqueId)
+                ?? throw new KeyNotFoundException($"Estoque com ID {estoqueId} não encontrado.");
+            estoque.QuantidadeAtual = quantidadeAtual;
         }
+
+        await _context.MovimentacoesEstoques.AddRangeAsync(movimentacoes);
+        await _context.SaveChangesAsync();
     }
 
     public async Task Update(Guid id, MovimentacaoEstoque movimentacao)

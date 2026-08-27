@@ -484,6 +484,16 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
                 estoquesNovos,
                 estoquesAtualizados
             );
+
+            // Id de MovimentacaoEstoque é DatabaseGenerated (gen_random_uuid()
+            // no Postgres) — até aqui, movimentacao.Id era sempre Guid.Empty
+            // pra todo item, porque resultados[i] foi montado ANTES do
+            // SaveChangesAsync rodar. EF Core já populou o Id gerado nos
+            // mesmos objetos rastreados em `movimentacoes` depois do Create
+            // acima; só falta refletir isso nos resultados (mesma ordem/1:1).
+            for (var i = 0; i < resultados.Count; i++)
+                resultados[i].MovimentacaoEstoqueId = movimentacoes[i].Id;
+
             return resultados;
         }
 

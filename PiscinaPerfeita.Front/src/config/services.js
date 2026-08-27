@@ -365,7 +365,6 @@ export const movimentacaoService = {
     post(API_ENDPOINTS.movimentacoes, toApiMovimentacao(dto)).then(
       fromApiMovimentacao,
     ),
-
   contagemInventario: (depositoId, usuarioId, itens) =>
     post(API_ENDPOINTS.contagemInventario, {
       DepositoId: depositoId,
@@ -376,14 +375,14 @@ export const movimentacaoService = {
       })),
     }),
 
-  lancarLoteInventario: ({ depositoId, usuarioId, itens, tipoMovimentacao }) =>
+  lancarLoteInventario: ({ depositoId, itens, tipoMovimentacao }) =>
     post(API_ENDPOINTS.lancarLoteInventario, {
       DepositoId: depositoId,
-      tipoMovimentacao: tipoMovimentacao,
-      UsuarioId: usuarioId || null,
+      TipoMovimentacao: tipoMovimentacao,
       Itens: itens.map((i) => ({
         ProdutoId: i.produtoId,
-        QuantidadeContada: parseFloat(i.quantidade), // Lê 'quantidade' diretamente
+        Quantidade: parseFloat(i.quantidade),
+        UnidadeLancamento: i.unidadeLancamento || null,
       })),
     }),
 };
