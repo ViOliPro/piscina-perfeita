@@ -20,6 +20,30 @@ namespace PiscinaPerfeita.Api.Controllers
                 analisesService ?? throw new ArgumentNullException(nameof(analisesService));
         }
 
+        // GET: api/analises/qualidade-agua
+        // Precisa estar declarado antes de GetById({id}) — "qualidade-agua"
+        // não é um Guid, mas o roteamento do ASP.NET Core resolve por
+        // especificidade de rota, então a ordem de declaração aqui não
+        // importa de fato; mantido no topo só por legibilidade.
+        [HttpGet("qualidade-agua")]
+        [Authorize(Policy = Policies.Listar)]
+        public async Task<ActionResult<QualidadeAguaResponseDto>> QualidadeAgua(
+            [FromQuery] Guid piscinaId,
+            [FromQuery] DateTimeOffset? inicio,
+            [FromQuery] DateTimeOffset? fim
+        )
+        {
+            try
+            {
+                var resultado = await _analisesService.ObterQualidadeAgua(piscinaId, inicio, fim);
+                return Ok(resultado);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
         // 1. GET: api/clientes (Retorna todos os registros do banco)
         [HttpGet]
         [Authorize(Policy = Policies.Listar)]

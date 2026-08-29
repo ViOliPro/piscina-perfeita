@@ -273,6 +273,79 @@ export function fromApiAnaliseList(rawList) {
   return (rawList ?? []).map(fromApiAnalise);
 }
 
+// StatusParametro (enum C#) chega como número por padrão no JSON — mapeia
+// pro texto que os componentes de UI já esperam (cor do badge etc.).
+const STATUS_PARAMETRO = ["ideal", "abaixo", "acima", "sem-dados"];
+
+function fromApiParametroResumo(raw) {
+  const status = field(raw, "status", "Status");
+  return {
+    valor: field(raw, "valor", "Valor") ?? null,
+    status:
+      typeof status === "number"
+        ? STATUS_PARAMETRO[status]
+        : (status ?? "sem-dados"),
+  };
+}
+
+function fromApiFaixaIdeal(raw) {
+  return {
+    min: field(raw, "min", "Min"),
+    max: field(raw, "max", "Max"),
+  };
+}
+
+export function fromApiQualidadeAgua(raw) {
+  if (!raw) return null;
+  const piscina = field(raw, "piscina", "Piscina");
+  const periodo = field(raw, "periodo", "Periodo");
+  const faixas = field(raw, "faixasIdeais", "FaixasIdeais") ?? {};
+  const resumo = field(raw, "resumo", "Resumo") ?? {};
+  const pontos = field(raw, "pontos", "Pontos") ?? [];
+
+  return {
+    piscina: {
+      id: field(piscina, "id", "Id"),
+      nome: field(piscina, "nome", "Nome"),
+    },
+    periodo: {
+      inicio: field(periodo, "inicio", "Inicio"),
+      fim: field(periodo, "fim", "Fim"),
+    },
+    faixasIdeais: {
+      ph: fromApiFaixaIdeal(field(faixas, "ph", "Ph")),
+      cloroLivre: fromApiFaixaIdeal(field(faixas, "cloroLivre", "CloroLivre")),
+      alcalinidade: fromApiFaixaIdeal(
+        field(faixas, "alcalinidade", "Alcalinidade"),
+      ),
+      temperatura: fromApiFaixaIdeal(
+        field(faixas, "temperatura", "Temperatura"),
+      ),
+    },
+    resumo: {
+      ultimaAnalise: field(resumo, "ultimaAnalise", "UltimaAnalise") ?? null,
+      ph: fromApiParametroResumo(field(resumo, "ph", "Ph")),
+      cloroLivre: fromApiParametroResumo(
+        field(resumo, "cloroLivre", "CloroLivre"),
+      ),
+      alcalinidade: fromApiParametroResumo(
+        field(resumo, "alcalinidade", "Alcalinidade"),
+      ),
+      temperatura: fromApiParametroResumo(
+        field(resumo, "temperatura", "Temperatura"),
+      ),
+      textoResumo: field(resumo, "textoResumo", "TextoResumo") ?? "",
+    },
+    pontos: pontos.map((p) => ({
+      data: field(p, "data", "Data"),
+      ph: field(p, "ph", "Ph") ?? null,
+      cloroLivre: field(p, "cloroLivre", "CloroLivre") ?? null,
+      alcalinidade: field(p, "alcalinidade", "Alcalinidade") ?? null,
+      temperatura: field(p, "temperatura", "Temperatura") ?? null,
+    })),
+  };
+}
+
 export function toApiAnalise({
   piscinaId,
   usuarioId,

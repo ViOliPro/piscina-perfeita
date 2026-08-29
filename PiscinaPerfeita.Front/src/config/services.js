@@ -21,6 +21,7 @@ import {
   toApiDeposito,
   fromApiAnalise,
   fromApiAnaliseList,
+  fromApiQualidadeAgua,
   toApiAnalise,
   fromApiEstoque,
   fromApiEstoqueList,
@@ -305,6 +306,16 @@ export const analiseService = {
   criar: (dto) =>
     post(API_ENDPOINTS.analises, toApiAnalise(dto)).then(fromApiAnalise),
   excluir: (id) => del(API_ENDPOINTS.analiseById(id)),
+  // inicio/fim opcionais — string ISO ("2026-08-01"). Sem eles, o backend
+  // usa os últimos 30 dias por padrão.
+  obterQualidadeAgua: (piscinaId, { inicio, fim } = {}) => {
+    const params = new URLSearchParams({ piscinaId });
+    if (inicio) params.set("inicio", inicio);
+    if (fim) params.set("fim", fim);
+    return get(`${API_ENDPOINTS.analisesQualidadeAgua}?${params}`).then(
+      fromApiQualidadeAgua,
+    );
+  },
 };
 
 // ----------------------------------------------------------

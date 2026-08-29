@@ -635,6 +635,18 @@ ansi-styles@^4.1.0:
   dependencies:
     color-convert "^2.0.1"
 
+apex-commons@^0.5.0:
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/apex-commons/-/apex-commons-0.5.0.tgz#de0a38b1c9d15fa13eac26097305a219020bc525"
+  integrity sha512-xz83SgPREE1wGtoflvxjwJtcjzl5bKTz2/bDxWCZNL6QVjUNE47kMg/1Zqt0bSh6eOnmFCWlTDc3RU8o85N+wg==
+
+apexcharts@^7.0.0:
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/apexcharts/-/apexcharts-7.0.0.tgz#4b3137851ab60c17354559baca75c64434b0b187"
+  integrity sha512-wX0LP5WajZXIAvQpCcDMVOlBUhlfhzUmEaKxPkUs54WFm0/GBbEyYCpw4G6iK7W5nU/R+kRzk+NHQSWlmp0qCA==
+  dependencies:
+    apex-commons "^0.5.0"
+
 argparse@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/argparse/-/argparse-2.0.1.tgz#246f50f3ca78a3240f6c997e8a9bd1eac49e4b38"
@@ -1916,6 +1928,13 @@ punycode@^2.1.0:
   version "2.3.1"
   resolved "https://registry.yarnpkg.com/punycode/-/punycode-2.3.1.tgz#027422e2faec0b25e1549c3e1bd8309b9133b6e5"
   integrity sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==
+
+react-apexcharts@^2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/react-apexcharts/-/react-apexcharts-2.1.1.tgz#63c141072e64c03b3e07201b36264e4e4001f745"
+  integrity sha512-aV25n+1ZdAzRG0KhODVC48K8WbhMKBAr3yWSeaaBqM1ySn22kSSKblsNCUvlwegsT+cdMLuOrK9xGZb+IK+OkQ==
+  dependencies:
+    prop-types "^15.8.1"
 
 react-dom@^18.3.1:
   version "18.3.1"

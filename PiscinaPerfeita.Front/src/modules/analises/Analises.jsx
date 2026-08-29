@@ -25,6 +25,7 @@ import { getLocalDateTimeInput } from "../../utils/getLocalDateTimeInput.js";
 import { PERMISSIONS } from "../../helpers/Permissions.js";
 import ProtecaoDeRota from "../../helpers/ProtecaoDeRota.jsx";
 import { useUsuariosSelecionaveis } from "../../hooks/useUsuariosSelecionaveis.js";
+import QualidadeAguaHistoricoCard from "./QualidadeAguaHistoricoCard.jsx";
 
 // ----------------------------------------------------------
 // Helpers
@@ -230,6 +231,7 @@ export default function Analises({ onRegistrarAplicacao }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("");
+  const [piscinaHistorico, setPiscinaHistorico] = useState("");
 
   useEffect(() => {
     async function load() {
@@ -241,6 +243,7 @@ export default function Analises({ onRegistrarAplicacao }) {
         ]);
         setAnalises(a ?? []);
         setPiscinas(p ?? []);
+        if (p?.length) setPiscinaHistorico((atual) => atual || p[0].id);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -385,6 +388,42 @@ export default function Analises({ onRegistrarAplicacao }) {
             ]}
           />
         </Toolbar>
+
+        {piscinas.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: 12,
+                fontWeight: 600,
+                marginBottom: 6,
+                color: "#0A1628",
+              }}
+            >
+              Histórico de qualidade da água
+            </label>
+            <select
+              style={{ ...inputStyle, marginBottom: 10, maxWidth: 320 }}
+              value={piscinaHistorico}
+              onChange={(e) => setPiscinaHistorico(e.target.value)}
+            >
+              {piscinas.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nome}
+                </option>
+              ))}
+            </select>
+            {piscinaHistorico && (
+              <QualidadeAguaHistoricoCard
+                key={piscinaHistorico}
+                piscinaId={piscinaHistorico}
+                piscinaNome={
+                  piscinas.find((p) => p.id === piscinaHistorico)?.nome ?? ""
+                }
+              />
+            )}
+          </div>
+        )}
 
         <Card noPadding>
           <DataTable
