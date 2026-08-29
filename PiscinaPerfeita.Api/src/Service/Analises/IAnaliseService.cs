@@ -10,6 +10,10 @@ namespace PiscinaPerfeita.Api.Service.Analises
         Task<AnaliseResponseDto> Create(AnaliseRequestDto dto);
         Task<AnaliseResponseDto> Update(Guid id, AnaliseRequestDto dto);
         Task Delete(Guid id);
-
+        Task<QualidadeAguaResponseDto> ObterQualidadeAgua(
+            Guid piscinaId,
+            DateTimeOffset? inicio,
+            DateTimeOffset? fim
+        );
     }
 }

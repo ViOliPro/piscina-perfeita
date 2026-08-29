@@ -1,5 +1,6 @@
 ﻿using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
+using PiscinaPerfeita.Api.Helpers;
 using PiscinaPerfeita.Api.Helpers.Authenticated;
 using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Repository.Analises;
@@ -54,7 +55,7 @@ namespace PiscinaPerfeita.Api.Service.Analises
         public async Task<AnaliseResponseDto> Create(AnaliseRequestDto dto)
         {
             var piscinaDb = await _piscinaRepository.GetById(dto.PiscinaId);
-            if (piscinaDb ==null)
+            if (piscinaDb == null)
                 throw new KeyNotFoundException("Problemas ao registrar, piscina não localizado");
 
             var userDb = await _userRepository.GetById(_user.GetUserId());
@@ -62,7 +63,6 @@ namespace PiscinaPerfeita.Api.Service.Analises
                 throw new KeyNotFoundException(
                     "Problemas ao registrar, usuario ID analise não localizado"
                 );
-
 
             var analise = new Analise
             {
@@ -73,7 +73,7 @@ namespace PiscinaPerfeita.Api.Service.Analises
                 Alcalinidade = dto.Alcalinidade ?? null,
                 Temperatura = dto.Temperatura ?? null,
                 Observacoes = dto.Observacoes,
-                DataAnalise = dto.DataAnalise?.ToUniversalTime() ?? DateTimeOffset.UtcNow
+                DataAnalise = dto.DataAnalise?.ToUniversalTime() ?? DateTimeOffset.UtcNow,
             };
 
             await _analiseRepository.Create(analise);
@@ -138,6 +138,141 @@ namespace PiscinaPerfeita.Api.Service.Analises
             }
 
             await _analiseRepository.Delete(id);
+        }
+
+        public async Task<QualidadeAguaResponseDto> ObterQualidadeAgua(
+            Guid piscinaId,
+            DateTimeOffset? inicio,
+            DateTimeOffset? fim
+        )
+        {
+            var piscinaDb = await _piscinaRepository.GetById(piscinaId);
+            if (piscinaDb == null)
+                throw new KeyNotFoundException("Piscina não encontrada.");
+
+            var fimReal = fim ?? DateTimeOffset.UtcNow;
+            var inicioReal = inicio ?? fimReal.AddDays(-30);
+
+            // Show() já vem em ordem decrescente (mais recente primeiro) —
+            // conveniente pra achar a última análise sem ordenar de novo.
+            var analises = await _analiseRepository.Show(inicioReal, fimReal, piscinaId);
+
+            var ultima = analises.FirstOrDefault();
+
+            var resumo = new ResumoQualidadeAguaDto
+            {
+                UltimaAnalise = ultima?.DataAnalise,
+                Ph = MontarParametroResumo(ultima?.Ph, AnaliseFaixasIdeais.Ph),
+                CloroLivre = MontarParametroResumo(
+                    ultima?.CloroLivre,
+                    AnaliseFaixasIdeais.CloroLivre
+                ),
+                Alcalinidade = MontarParametroResumo(
+                    ultima?.Alcalinidade,
+                    AnaliseFaixasIdeais.Alcalinidade
+                ),
+                Temperatura = MontarParametroResumo(
+                    ultima?.Temperatura,
+                    AnaliseFaixasIdeais.Temperatura
+                ),
+            };
+            resumo.TextoResumo = MontarTextoResumo(resumo);
+
+            return new QualidadeAguaResponseDto
+            {
+                Piscina = new NomeIdDto(piscinaId, piscinaDb.Nome),
+                Periodo = new PeriodoDto { Inicio = inicioReal, Fim = fimReal },
+                FaixasIdeais = new FaixasIdeaisDto
+                {
+                    Ph = new FaixaIdealDto
+                    {
+                        Min = AnaliseFaixasIdeais.Ph.Min,
+                        Max = AnaliseFaixasIdeais.Ph.Max,
+                    },
+                    CloroLivre = new FaixaIdealDto
+                    {
+                        Min = AnaliseFaixasIdeais.CloroLivre.Min,
+                        Max = AnaliseFaixasIdeais.CloroLivre.Max,
+                    },
+                    Alcalinidade = new FaixaIdealDto
+                    {
+                        Min = AnaliseFaixasIdeais.Alcalinidade.Min,
+                        Max = AnaliseFaixasIdeais.Alcalinidade.Max,
+                    },
+                    Temperatura = new FaixaIdealDto
+                    {
+                        Min = AnaliseFaixasIdeais.Temperatura.Min,
+                        Max = AnaliseFaixasIdeais.Temperatura.Max,
+                    },
+                },
+                Resumo = resumo,
+                // analises vem decrescente (Show()); o gráfico de linha
+                // precisa de ordem ascendente (esquerda = mais antigo).
+                Pontos = analises
+                    .OrderBy(a => a.DataAnalise)
+                    .Select(a => new PontoQualidadeAguaDto
+                    {
+                        Data = a.DataAnalise,
+                        Ph = a.Ph,
+                        CloroLivre = a.CloroLivre,
+                        Alcalinidade = a.Alcalinidade,
+                        Temperatura = a.Temperatura,
+                    })
+                    .ToList(),
+            };
+        }
+
+        private static ParametroResumoDto MontarParametroResumo(decimal? valor, FaixaIdeal faixa)
+        {
+            if (valor is null)
+                return new ParametroResumoDto { Valor = null, Status = StatusParametro.SemDados };
+
+            var status =
+                valor < faixa.Min ? StatusParametro.Abaixo
+                : valor > faixa.Max ? StatusParametro.Acima
+                : StatusParametro.Ideal;
+
+            return new ParametroResumoDto { Valor = valor, Status = status };
+        }
+
+        // Prioridade de destaque quando mais de um parâmetro está fora da
+        // faixa: cloro primeiro (afeta desinfecção/segurança da água mais
+        // diretamente), depois pH, alcalinidade e temperatura.
+        private static string MontarTextoResumo(ResumoQualidadeAguaDto resumo)
+        {
+            if (resumo.UltimaAnalise is null)
+                return "Nenhuma análise registrada no período.";
+
+            (
+                string Nome,
+                ParametroResumoDto Parametro,
+                string Unidade,
+                FaixaIdeal Faixa
+            )[] parametros =
+            [
+                ("Cloro", resumo.CloroLivre, "ppm", AnaliseFaixasIdeais.CloroLivre),
+                ("pH", resumo.Ph, "", AnaliseFaixasIdeais.Ph),
+                ("Alcalinidade", resumo.Alcalinidade, "ppm", AnaliseFaixasIdeais.Alcalinidade),
+                ("Temperatura", resumo.Temperatura, "°C", AnaliseFaixasIdeais.Temperatura),
+            ];
+
+            var foraDaFaixa = parametros.FirstOrDefault(p =>
+                p.Parametro.Status is StatusParametro.Abaixo or StatusParametro.Acima
+            );
+
+            if (foraDaFaixa != default)
+            {
+                var direcao =
+                    foraDaFaixa.Parametro.Status == StatusParametro.Abaixo ? "abaixo" : "acima";
+                return $"{foraDaFaixa.Nome} {direcao} do ideal na última medição "
+                    + $"({foraDaFaixa.Parametro.Valor}{foraDaFaixa.Unidade}, ideal "
+                    + $"{foraDaFaixa.Faixa.Min}–{foraDaFaixa.Faixa.Max}{foraDaFaixa.Unidade})";
+            }
+
+            if (parametros.All(p => p.Parametro.Status == StatusParametro.SemDados))
+                return "Última análise não registrou nenhum parâmetro numérico.";
+
+            return "Todos os parâmetros dentro da faixa ideal na última medição.";
         }
     }
 }

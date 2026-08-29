@@ -42,6 +42,7 @@ export const API_ENDPOINTS = {
 
   // Análises
   analises: `${API_BASE_URL}/analises`,
+  analisesQualidadeAgua: `${API_BASE_URL}/analises/qualidade-agua`,
   analiseById: (id) => `${API_BASE_URL}/analises/${id}`,
 
   // Estoque
