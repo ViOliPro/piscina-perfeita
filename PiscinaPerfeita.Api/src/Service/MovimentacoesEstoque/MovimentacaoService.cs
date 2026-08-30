@@ -534,5 +534,36 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
             await _estoqueRepository.Create(novoEstoque);
             return novoEstoque;
         }
+
+        public async Task<ConsumoResponseDto> ObterConsumo(
+            Guid depositoId,
+            DateTimeOffset? inicio,
+            DateTimeOffset? fim
+        )
+        {
+            var depositoDb = await _depositoRepository.GetById(depositoId);
+            if (depositoDb == null)
+                throw new KeyNotFoundException("Depósito não encontrado.");
+
+            var fimReal = fim ?? DateTimeOffset.UtcNow;
+            // Início do mês atual como padrão — mesmo critério já usado em
+            // AnaliseRepository.Show() pra "análises deste mês".
+            var inicioReal =
+                inicio
+                ?? new DateTimeOffset(fimReal.Year, fimReal.Month, 1, 0, 0, 0, fimReal.Offset);
+
+            var produtos = await _movimentacaoRepository.ObterConsumoPorProduto(
+                depositoId,
+                inicioReal,
+                fimReal
+            );
+
+            return new ConsumoResponseDto
+            {
+                Deposito = new NomeIdDto(depositoId, depositoDb.Nome),
+                Periodo = new PeriodoDto { Inicio = inicioReal, Fim = fimReal },
+                Produtos = produtos,
+            };
+        }
     }
 }

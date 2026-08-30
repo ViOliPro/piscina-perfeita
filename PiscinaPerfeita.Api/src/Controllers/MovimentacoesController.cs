@@ -21,14 +21,45 @@ namespace PiscinaPerfeita.Api.Controllers
                 ?? throw new ArgumentNullException(nameof(movimentacoesService));
         }
 
-        // GET: api/movimentacoes
-        [HttpGet]
+        // GET: api/movimentacoes/consumo
+        // Precisa vir declarado antes de GetById({id}) — "consumo" não é
+        // Guid, mas o ASP.NET Core resolve por especificidade de rota
+        // independente da ordem; mantido no topo só por legibilidade.
+        [HttpGet("consumo")]
         [Authorize(Policy = Policies.Listar)]
-        public async Task<ActionResult<IEnumerable<MovimentacaoEstoqueResponseDto>>> Get([FromQuery] DateTimeOffset? dataInicio = null, DateTimeOffset? dataFim = null, Guid? piscinaId = null)
+        public async Task<ActionResult<ConsumoResponseDto>> Consumo(
+            [FromQuery] Guid depositoId,
+            [FromQuery] DateTimeOffset? inicio,
+            [FromQuery] DateTimeOffset? fim
+        )
         {
             try
             {
-                var movimentacoes = await _movimentacoesService.Show(dataInicio, dataFim, piscinaId);
+                var resultado = await _movimentacoesService.ObterConsumo(depositoId, inicio, fim);
+                return Ok(resultado);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
+        // GET: api/movimentacoes
+        [HttpGet]
+        [Authorize(Policy = Policies.Listar)]
+        public async Task<ActionResult<IEnumerable<MovimentacaoEstoqueResponseDto>>> Get(
+            [FromQuery] DateTimeOffset? dataInicio = null,
+            DateTimeOffset? dataFim = null,
+            Guid? piscinaId = null
+        )
+        {
+            try
+            {
+                var movimentacoes = await _movimentacoesService.Show(
+                    dataInicio,
+                    dataFim,
+                    piscinaId
+                );
                 return Ok(movimentacoes);
             }
             catch (Exception ex)
@@ -153,16 +184,26 @@ namespace PiscinaPerfeita.Api.Controllers
         // deixar saldos ou histórico parcialmente gravados.
         [HttpPost("lote-inventario")]
         [Authorize(Policy = Policies.Cadastrar)]
-        public async Task<ActionResult<IEnumerable<MovimentacaoLoteInventarioResultadoDto>>>
-            LoteInventario(MovimentacaoLoteInventarioRequestDto dto)
+        public async Task<
+            ActionResult<IEnumerable<MovimentacaoLoteInventarioResultadoDto>>
+        > LoteInventario(MovimentacaoLoteInventarioRequestDto dto)
         {
             try
             {
                 return Ok(await _movimentacoesService.RegistrarLoteInventario(dto));
             }
-            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
-            catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
-            catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
         }
     }
 }

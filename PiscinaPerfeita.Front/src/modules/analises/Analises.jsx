@@ -1,7 +1,7 @@
 // ============================================================
 //  Piscina Perfeita — Módulo: Análises
 // ============================================================
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import {
   PageHeader,
   Card,
@@ -25,7 +25,14 @@ import { getLocalDateTimeInput } from "../../utils/getLocalDateTimeInput.js";
 import { PERMISSIONS } from "../../helpers/Permissions.js";
 import ProtecaoDeRota from "../../helpers/ProtecaoDeRota.jsx";
 import { useUsuariosSelecionaveis } from "../../hooks/useUsuariosSelecionaveis.js";
-import QualidadeAguaHistoricoCard from "./QualidadeAguaHistoricoCard.jsx";
+
+// Lazy: o ApexCharts sozinho quase triplicou o bundle (~310KB → ~1.23MB).
+// Com import() em vez de import estático, esse peso só é baixado quando a
+// tela de Análises efetivamente monta o card — não em toda visita ao app,
+// nem em telas que nunca chegam a renderizar este componente.
+const QualidadeAguaHistoricoCard = lazy(
+  () => import("./QualidadeAguaHistoricoCard.jsx"),
+);
 
 // ----------------------------------------------------------
 // Helpers
@@ -414,13 +421,21 @@ export default function Analises({ onRegistrarAplicacao }) {
               ))}
             </select>
             {piscinaHistorico && (
-              <QualidadeAguaHistoricoCard
-                key={piscinaHistorico}
-                piscinaId={piscinaHistorico}
-                piscinaNome={
-                  piscinas.find((p) => p.id === piscinaHistorico)?.nome ?? ""
+              <Suspense
+                fallback={
+                  <p style={{ color: "#6B8CAE", fontSize: 13 }}>
+                    Carregando gráfico...
+                  </p>
                 }
-              />
+              >
+                <QualidadeAguaHistoricoCard
+                  key={piscinaHistorico}
+                  piscinaId={piscinaHistorico}
+                  piscinaNome={
+                    piscinas.find((p) => p.id === piscinaHistorico)?.nome ?? ""
+                  }
+                />
+              </Suspense>
             )}
           </div>
         )}

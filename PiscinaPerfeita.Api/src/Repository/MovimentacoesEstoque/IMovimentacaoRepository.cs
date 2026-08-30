@@ -36,5 +36,15 @@ namespace PiscinaPerfeita.Api.Repository.MovimentacoesEstoque
             IReadOnlyCollection<Estoque> estoquesNovos,
             IReadOnlyCollection<(Guid EstoqueId, decimal QuantidadeAtual)> estoquesAtualizados
         );
+
+        // Soma Quantidade (magnitude, já positiva — ver CalculadoraEstoque)
+        // agrupado por produto, restrito aos tipos de saída (Saida,
+        // Aplicacao, Perda, Descarte). Base tanto do gráfico de "consumo do
+        // mês" quanto do cálculo de duração/média diária por produto.
+        Task<List<ConsumoProdutoDto>> ObterConsumoPorProduto(
+            Guid depositoId,
+            DateTimeOffset inicio,
+            DateTimeOffset fim
+        );
     }
 }
