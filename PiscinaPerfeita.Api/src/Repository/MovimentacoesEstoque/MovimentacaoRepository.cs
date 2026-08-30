@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PiscinaPerfeita.Api.Dtos.Response;
+using PiscinaPerfeita.Api.Helpers.Estoque;
 using PiscinaPerfeita.Api.Models;
 
 namespace PiscinaPerfeita.Api.Repository.MovimentacoesEstoque;
@@ -151,5 +152,36 @@ public class MovimentacaoRepository : IMovimentacaoRepository
 
         _context.Remove(mov);
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<List<ConsumoProdutoDto>> ObterConsumoPorProduto(
+        Guid depositoId,
+        DateTimeOffset inicio,
+        DateTimeOffset fim
+    )
+    {
+        return await _context
+            .MovimentacoesEstoques.AsNoTracking()
+            .Where(m =>
+                m.DepositoId == depositoId
+                && m.DataMovimentacao >= inicio
+                && m.DataMovimentacao <= fim
+                && CalculadoraEstoque.TiposDeSaida.Contains(m.TipoMovimentacao)
+            )
+            .GroupBy(m => new
+            {
+                m.ProdutoId,
+                m.Produto.Nome,
+                m.Produto.UnidadeMedida,
+            })
+            .Select(g => new ConsumoProdutoDto
+            {
+                ProdutoId = g.Key.ProdutoId,
+                ProdutoNome = g.Key.Nome,
+                UnidadeMedida = g.Key.UnidadeMedida,
+                QuantidadeConsumida = g.Sum(m => m.Quantidade ?? 0),
+            })
+            .OrderByDescending(c => c.QuantidadeConsumida)
+            .ToListAsync();
     }
 }
