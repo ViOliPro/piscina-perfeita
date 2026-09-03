@@ -56,10 +56,11 @@ namespace PiscinaPerfeita.Api.Service.MovimentacoesEstoque
         public async Task<List<MovimentacaoEstoqueResponseDto>> Show(
             DateTimeOffset? dataInicio = null,
             DateTimeOffset? dataFim = null,
-            Guid? piscinaId = null
+            Guid? piscinaId = null,
+            int? limit = null
         )
         {
-            return await _movimentacaoRepository.Show(dataInicio, dataFim, piscinaId);
+            return await _movimentacaoRepository.Show(dataInicio, dataFim, piscinaId, limit);
         }
 
         public async Task<MovimentacaoEstoqueResponseDto?> GetById(Guid id)

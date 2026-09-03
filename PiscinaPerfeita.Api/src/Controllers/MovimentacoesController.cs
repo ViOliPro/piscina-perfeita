@@ -49,8 +49,9 @@ namespace PiscinaPerfeita.Api.Controllers
         [Authorize(Policy = Policies.Listar)]
         public async Task<ActionResult<IEnumerable<MovimentacaoEstoqueResponseDto>>> Get(
             [FromQuery] DateTimeOffset? dataInicio = null,
-            DateTimeOffset? dataFim = null,
-            Guid? piscinaId = null
+            [FromQuery] DateTimeOffset? dataFim = null,
+            [FromQuery] Guid? piscinaId = null,
+            [FromQuery] int? limit = null
         )
         {
             try
@@ -58,7 +59,8 @@ namespace PiscinaPerfeita.Api.Controllers
                 var movimentacoes = await _movimentacoesService.Show(
                     dataInicio,
                     dataFim,
-                    piscinaId
+                    piscinaId,
+                    limit
                 );
                 return Ok(movimentacoes);
             }

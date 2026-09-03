@@ -244,8 +244,12 @@ export default function Analises({ onRegistrarAplicacao }) {
     async function load() {
       try {
         setLoading(true);
+        const dataInicio = new Date();
+        dataInicio.setDate(dataInicio.getDate() - 30);
+        dataInicio.setHours(0, 0, 0, 0);
+
         const [a, p] = await Promise.all([
-          analiseService.listar(),
+          analiseService.listar({ dataInicio: dataInicio.toISOString() }),
           piscinaService.listar(),
         ]);
         setAnalises(a ?? []);

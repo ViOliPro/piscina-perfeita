@@ -13,7 +13,12 @@ public class AnaliseRepository : IAnaliseRepository
         _context = context ?? throw new ArgumentNullException(nameof(context));
     }
 
-    public async Task<List<AnaliseResponseDto>> Show(DateTimeOffset? dataInicio = null, DateTimeOffset? dataFim = null, Guid? piscinaId = null)
+    public async Task<List<AnaliseResponseDto>> Show(
+        DateTimeOffset? dataInicio = null,
+        DateTimeOffset? dataFim = null,
+        Guid? piscinaId = null,
+        int? limit = null
+    )
     {
         var query = _context.Analises.AsNoTracking().AsQueryable();
 
@@ -34,6 +39,13 @@ public class AnaliseRepository : IAnaliseRepository
         if (piscinaId.HasValue)
         {
             query = query.Where(a => a.PiscinaId == piscinaId.Value);
+        }
+
+        query = query.OrderByDescending(a => a.DataAnalise);
+
+        if (limit is > 0)
+        {
+            query = query.Take(limit.Value);
         }
 
         return await query

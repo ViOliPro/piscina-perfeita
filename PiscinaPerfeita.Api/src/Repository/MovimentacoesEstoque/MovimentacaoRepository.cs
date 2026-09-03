@@ -35,7 +35,8 @@ public class MovimentacaoRepository : IMovimentacaoRepository
     public async Task<List<MovimentacaoEstoqueResponseDto>> Show(
         DateTimeOffset? dataInicio = null,
         DateTimeOffset? dataFim = null,
-        Guid? piscinaId = null
+        Guid? piscinaId = null,
+        int? limit = null
     )
     {
         var query = _context.MovimentacoesEstoques.AsNoTracking().AsQueryable();
@@ -60,6 +61,12 @@ public class MovimentacaoRepository : IMovimentacaoRepository
         }
 
         query = query.OrderByDescending(d => d.DataMovimentacao);
+
+        if (limit is > 0)
+        {
+            query = query.Take(limit.Value);
+        }
+
         return await query.Select(Projecao).ToListAsync();
     }
 

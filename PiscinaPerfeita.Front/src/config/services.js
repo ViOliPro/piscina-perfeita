@@ -145,7 +145,23 @@ async function request(url, options = {}, _retry = true) {
   return texto ? JSON.parse(texto) : null;
 }
 
-const get = (url) => request(url);
+function buildUrl(url, params) {
+  if (!params || typeof params !== "object") return url;
+  const qs = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null || value === "") continue;
+    qs.set(key, String(value));
+  }
+  const s = qs.toString();
+  if (!s) return url;
+  return url.includes("?") ? `${url}&${s}` : `${url}?${s}`;
+}
+
+const get = (url, options = {}) => {
+  const { params, ...rest } = options;
+  return request(buildUrl(url, params), rest);
+};
+
 const post = (url, body, opts = {}) =>
   request(
     url,
@@ -301,7 +317,13 @@ export const depositoService = {
 // Análises
 // ----------------------------------------------------------
 export const analiseService = {
-  listar: () => get(API_ENDPOINTS.analises).then(fromApiAnaliseList),
+  listar: ({ dataInicio, dataFim, piscinaId } = {}) => {
+    const params = {};
+    if (dataInicio) params.dataInicio = dataInicio;
+    if (dataFim) params.dataFim = dataFim;
+    if (piscinaId) params.piscinaId = piscinaId;
+    return get(API_ENDPOINTS.analises, { params }).then(fromApiAnaliseList);
+  },
   buscar: (id) => get(API_ENDPOINTS.analiseById(id)).then(fromApiAnalise),
   criar: (dto) =>
     post(API_ENDPOINTS.analises, toApiAnalise(dto)).then(fromApiAnalise),

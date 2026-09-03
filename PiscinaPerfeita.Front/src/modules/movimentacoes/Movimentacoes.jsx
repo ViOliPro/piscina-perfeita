@@ -294,18 +294,19 @@ export default function Movimentacoes() {
     async function load() {
       try {
         setLoading(true);
+        const dataInicio = new Date();
+        dataInicio.setDate(dataInicio.getDate() - 30);
+
         const [m, p, pr, d, e] = await Promise.all([
-          carregarMovimentacoes(),
+          movimentacaoService.listar({
+            dataInicio: dataInicio.toISOString(),
+          }),
           piscinaService.listar(),
           produtoService.listar(),
           depositoService.listar(),
           estoqueService.listar(),
         ]);
-        setMovimentos(m ?? []);
-        setPiscinas(p ?? []);
-        setProdutos(pr ?? []);
-        setDepositos(d ?? []);
-        setEstoques(e ?? []);
+        // ...
       } catch (err) {
         setError(err.message);
       } finally {
