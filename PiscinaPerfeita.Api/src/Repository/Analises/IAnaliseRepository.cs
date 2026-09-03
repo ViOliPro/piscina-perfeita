@@ -1,12 +1,16 @@
-﻿using PiscinaPerfeita.Api.Models;
-using PiscinaPerfeita.Api.Dtos.Response;
+﻿using PiscinaPerfeita.Api.Dtos.Response;
+using PiscinaPerfeita.Api.Models;
 
 namespace PiscinaPerfeita.Api.Repository.Analises
 {
     public interface IAnaliseRepository
     {
-
-        Task<List<AnaliseResponseDto>> Show(DateTimeOffset? dataInicio = null, DateTimeOffset? dataFim = null, Guid? piscinaId = null);
+        Task<List<AnaliseResponseDto>> Show(
+            DateTimeOffset? dataInicio = null,
+            DateTimeOffset? dataFim = null,
+            Guid? piscinaId = null,
+            int? limit = null
+        );
 
         Task<AnaliseResponseDto?> GetById(Guid id);
 

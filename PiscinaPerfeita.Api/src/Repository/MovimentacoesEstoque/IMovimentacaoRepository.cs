@@ -8,7 +8,8 @@ namespace PiscinaPerfeita.Api.Repository.MovimentacoesEstoque
         Task<List<MovimentacaoEstoqueResponseDto>> Show(
             DateTimeOffset? dataInicio = null,
             DateTimeOffset? dataFim = null,
-            Guid? piscinaId = null
+            Guid? piscinaId = null,
+            int? limit = null
         );
 
         Task<MovimentacaoEstoqueResponseDto?> GetById(Guid id);

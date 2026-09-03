@@ -5,7 +5,12 @@ namespace PiscinaPerfeita.Api.Service.Analises
 {
     public interface IAnaliseService
     {
-        Task<List<AnaliseResponseDto>> Show();
+        Task<List<AnaliseResponseDto>> Show(
+            DateTimeOffset? dataInicio = null,
+            DateTimeOffset? dataFim = null,
+            Guid? piscinaId = null,
+            int? limit = null
+        );
         Task<AnaliseResponseDto> GetById(Guid id);
         Task<AnaliseResponseDto> Create(AnaliseRequestDto dto);
         Task<AnaliseResponseDto> Update(Guid id, AnaliseRequestDto dto);

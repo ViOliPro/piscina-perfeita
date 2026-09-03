@@ -34,9 +34,14 @@ namespace PiscinaPerfeita.Api.Service.Analises
 
         // Implementação dos métodos do serviço
         // Metodo Show: Retorna uma lista de todos os estoques, incluindo as informações relacionadas de piscina e produto.
-        public async Task<List<AnaliseResponseDto>> Show()
+        public async Task<List<AnaliseResponseDto>> Show(
+            DateTimeOffset? dataInicio = null,
+            DateTimeOffset? dataFim = null,
+            Guid? piscinaId = null,
+            int? limit = null
+        )
         {
-            return await _analiseRepository.Show();
+            return await _analiseRepository.Show(dataInicio, dataFim, piscinaId, limit);
         }
 
         // Metodo GetById: Retorna um estoque específico com base no ID, incluindo as informações relacionadas de piscina e produto.

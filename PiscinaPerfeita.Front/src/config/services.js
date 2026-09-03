@@ -317,7 +317,13 @@ export const depositoService = {
 // Análises
 // ----------------------------------------------------------
 export const analiseService = {
-  listar: () => get(API_ENDPOINTS.analises).then(fromApiAnaliseList),
+  listar: ({ dataInicio, dataFim, piscinaId } = {}) => {
+    const params = {};
+    if (dataInicio) params.dataInicio = dataInicio;
+    if (dataFim) params.dataFim = dataFim;
+    if (piscinaId) params.piscinaId = piscinaId;
+    return get(API_ENDPOINTS.analises, { params }).then(fromApiAnaliseList);
+  },
   buscar: (id) => get(API_ENDPOINTS.analiseById(id)).then(fromApiAnalise),
   criar: (dto) =>
     post(API_ENDPOINTS.analises, toApiAnalise(dto)).then(fromApiAnalise),

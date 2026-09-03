@@ -47,16 +47,21 @@ namespace PiscinaPerfeita.Api.Controllers
         // 1. GET: api/clientes (Retorna todos os registros do banco)
         [HttpGet]
         [Authorize(Policy = Policies.Listar)]
-        public async Task<ActionResult<IEnumerable<AnaliseResponseDto>>> Get()
+        public async Task<ActionResult<IEnumerable<AnaliseResponseDto>>> Get(
+            [FromQuery] DateTimeOffset? dataInicio = null,
+            [FromQuery] DateTimeOffset? dataFim = null,
+            [FromQuery] Guid? piscinaId = null,
+            [FromQuery] int? limit = null
+        )
         {
             try
             {
-                var analises = await _analisesService.Show();
+                var analises = await _analisesService.Show(dataInicio, dataFim, piscinaId, limit);
                 return Ok(analises);
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new { message = ex.Message });
             }
         }
 
