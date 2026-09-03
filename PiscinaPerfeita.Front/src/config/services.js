@@ -145,7 +145,23 @@ async function request(url, options = {}, _retry = true) {
   return texto ? JSON.parse(texto) : null;
 }
 
-const get = (url) => request(url);
+function buildUrl(url, params) {
+  if (!params || typeof params !== "object") return url;
+  const qs = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null || value === "") continue;
+    qs.set(key, String(value));
+  }
+  const s = qs.toString();
+  if (!s) return url;
+  return url.includes("?") ? `${url}&${s}` : `${url}?${s}`;
+}
+
+const get = (url, options = {}) => {
+  const { params, ...rest } = options;
+  return request(buildUrl(url, params), rest);
+};
+
 const post = (url, body, opts = {}) =>
   request(
     url,
