@@ -49,7 +49,6 @@ public class AnaliseRepository : IAnaliseRepository
         }
 
         return await query
-            .OrderByDescending(a => a.DataAnalise)
             .Select(a => new AnaliseResponseDto
             {
                 Id = a.Id,

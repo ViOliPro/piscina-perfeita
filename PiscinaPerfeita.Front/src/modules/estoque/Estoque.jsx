@@ -1,7 +1,8 @@
 // ============================================================
 //  Piscina Perfeita — Módulo: Estoque
 // ============================================================
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   PageHeader,
   Card,
@@ -25,6 +26,7 @@ import {
   produtoService,
   depositoService,
 } from "../../config/services.js";
+import { qk } from "../../helpers/queryKeys.js";
 import { ESTOQUE_LIMITES, APP_META } from "../../config/index.js";
 import { PERMISSIONS } from "../../helpers/Permissions.js";
 import ProtecaoDeRota from "../../helpers/ProtecaoDeRota.jsx";
@@ -444,59 +446,55 @@ function PedidoOrcamento({ estoques, depositos }) {
 // Módulo principal
 // ----------------------------------------------------------
 export default function Estoque() {
-  const [estoques, setEstoques] = useState([]);
-  const [piscinas, setPiscinas] = useState([]);
-  const [produtos, setProdutos] = useState([]);
+  const queryClient = useQueryClient();
   const { usuarios, podeVerUsuario } = useUsuariosSelecionaveis();
-  const [depositos, setDepositos] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
   const [modal, setModal] = useState({ open: false, editing: null });
   const [tab, setTab] = useState("todos");
   const [search, setSearch] = useState("");
   const [filtroDeposito, setFiltroDeposito] = useState("");
 
-  useEffect(() => {
-    async function load() {
-      try {
-        setLoading(true);
-        const [e, p, pr, d] = await Promise.all([
-          estoqueService.listar(),
-          piscinaService.listar(),
-          produtoService.listar(),
-          depositoService.listar(),
-        ]);
-        setEstoques(e ?? []);
-        setPiscinas(p ?? []);
-        setProdutos(pr ?? []);
-        setDepositos(d ?? []);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
+  const {
+    data: estoques = [],
+    isLoading: loadingEstoques,
+    error: errorEstoques,
+  } = useQuery({
+    queryKey: qk.estoques(),
+    queryFn: () => estoqueService.listar(),
+  });
+
+  const { data: piscinas = [], isLoading: loadingPiscinas } = useQuery({
+    queryKey: qk.piscinas,
+    queryFn: () => piscinaService.listar(),
+    staleTime: 10 * 60_000,
+  });
+
+  const { data: produtos = [], isLoading: loadingProdutos } = useQuery({
+    queryKey: qk.produtos,
+    queryFn: () => produtoService.listar(),
+    staleTime: 10 * 60_000,
+  });
+
+  const { data: depositos = [], isLoading: loadingDepositos } = useQuery({
+    queryKey: qk.depositos,
+    queryFn: () => depositoService.listar(),
+    staleTime: 10 * 60_000,
+  });
+
+  const loading =
+    loadingEstoques || loadingPiscinas || loadingProdutos || loadingDepositos;
 
   async function handleSave(dto) {
     try {
       setSaving(true);
+      setError(null);
       if (modal.editing) {
-        const atualizado = await estoqueService.atualizar(
-          modal.editing.id,
-          dto,
-        );
-        setEstoques((prev) =>
-          prev.map((l) => (l.id === atualizado.id ? atualizado : l)),
-        );
+        await estoqueService.atualizar(modal.editing.id, dto);
       } else {
-        const novo = await estoqueService.criar(dto);
-        setEstoques((prev) => [novo, ...prev]);
-        setModalOpen(false);
+        await estoqueService.criar(dto);
       }
+      await queryClient.invalidateQueries({ queryKey: ["estoques"] });
       setModal({ open: false, editing: null });
     } catch (err) {
       setError(err.message);
@@ -508,8 +506,9 @@ export default function Estoque() {
   async function handleDelete(id) {
     if (!confirm("Excluir este estoque?")) return;
     try {
+      setError(null);
       await estoqueService.excluir(id);
-      setEstoques((prev) => prev.filter((d) => d.id !== id));
+      await queryClient.invalidateQueries({ queryKey: ["estoques"] });
     } catch (err) {
       setError(err.message);
     }
@@ -603,7 +602,9 @@ export default function Estoque() {
             }
           />
 
-          {error && <ErrorMessage message={error} />}
+          {(error || errorEstoques) && (
+            <ErrorMessage message={error || errorEstoques?.message} />
+          )}
 
           <Tabs
             active={tab}

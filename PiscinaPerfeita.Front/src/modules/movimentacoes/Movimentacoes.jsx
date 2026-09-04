@@ -2,6 +2,7 @@
 //  Piscina Perfeita — Módulo: Movimentações de Estoque
 // ============================================================
 import { useState, useEffect, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   PageHeader,
   Card,
@@ -25,6 +26,12 @@ import {
   depositoService,
   estoqueService,
 } from "../../config/services.js";
+import {
+  qk,
+  diasAtrasISO,
+  inicioDoDiaISO,
+  fimDoDiaISO,
+} from "../../helpers/queryKeys.js";
 import {
   TIPO_MOVIMENTACAO,
   TIPO_LABELS,
@@ -274,95 +281,88 @@ function MovimentacaoForm({
 // Módulo principal
 // ----------------------------------------------------------
 export default function Movimentacoes() {
-  const [movimentos, setMovimentos] = useState([]);
-  const [piscinas, setPiscinas] = useState([]);
-  const [produtos, setProdutos] = useState([]);
+  const queryClient = useQueryClient();
   const { usuarios, podeVerUsuario } = useUsuariosSelecionaveis();
-  const [depositos, setDepositos] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [filtroTipo, setFiltroTipo] = useState("");
-  const [estoques, setEstoques] = useState([]);
   const [filtroPiscina, setFiltroPiscina] = useState("");
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
+  // Filtros aplicados (só mudam ao clicar Aplicar / Limpar)
+  const [filtrosApi, setFiltrosApi] = useState(() => ({
+    dataInicio: diasAtrasISO(30),
+  }));
 
-  useEffect(() => {
-    async function load() {
-      try {
-        setLoading(true);
-        const dataInicio = new Date();
-        dataInicio.setDate(dataInicio.getDate() - 30);
+  const {
+    data: movimentos = [],
+    isLoading: loadingMov,
+    error: errorMov,
+  } = useQuery({
+    queryKey: qk.movimentacoes(filtrosApi),
+    queryFn: () => movimentacaoService.listar(filtrosApi),
+  });
 
-        const [m, p, pr, d, e] = await Promise.all([
-          movimentacaoService.listar({
-            dataInicio: dataInicio.toISOString(),
-          }),
-          piscinaService.listar(),
-          produtoService.listar(),
-          depositoService.listar(),
-          estoqueService.listar(),
-        ]);
-        // ...
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
+  const { data: piscinas = [], isLoading: loadingPiscinas } = useQuery({
+    queryKey: qk.piscinas,
+    queryFn: () => piscinaService.listar(),
+    staleTime: 10 * 60_000,
+  });
 
-  function paraInicioDoDia(data) {
-    return data ? new Date(`${data}T00:00:00`).toISOString() : undefined;
-  }
+  const { data: produtos = [], isLoading: loadingProdutos } = useQuery({
+    queryKey: qk.produtos,
+    queryFn: () => produtoService.listar(),
+    staleTime: 10 * 60_000,
+  });
 
-  function paraFimDoDia(data) {
-    return data ? new Date(`${data}T23:59:59.999`).toISOString() : undefined;
-  }
+  const { data: depositos = [], isLoading: loadingDepositos } = useQuery({
+    queryKey: qk.depositos,
+    queryFn: () => depositoService.listar(),
+    staleTime: 10 * 60_000,
+  });
 
-  async function carregarMovimentacoes(filtros = {}) {
-    try {
-      setLoading(true);
-      setError(null);
-      const movimentacoes = await movimentacaoService.listar(filtros);
-      setMovimentos(movimentacoes ?? []);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const { data: estoques = [], isLoading: loadingEstoques } = useQuery({
+    queryKey: qk.estoques(),
+    queryFn: () => estoqueService.listar(),
+  });
 
-  async function aplicarFiltros() {
+  const loading =
+    loadingMov ||
+    loadingPiscinas ||
+    loadingProdutos ||
+    loadingDepositos ||
+    loadingEstoques;
+
+  function aplicarFiltros() {
     if (dataInicio && dataFim && dataFim < dataInicio) {
       setError("A data final deve ser posterior ou igual à data inicial.");
       return;
     }
-
-    await carregarMovimentacoes({
-      dataInicio: paraInicioDoDia(dataInicio),
-      dataFim: paraFimDoDia(dataFim),
+    setError(null);
+    setFiltrosApi({
+      dataInicio: inicioDoDiaISO(dataInicio) || diasAtrasISO(30),
+      dataFim: fimDoDiaISO(dataFim),
       piscinaId: filtroPiscina || undefined,
     });
   }
 
-  async function limparFiltros() {
+  function limparFiltros() {
     setDataInicio("");
     setDataFim("");
     setFiltroPiscina("");
-    await carregarMovimentacoes();
+    setError(null);
+    setFiltrosApi({ dataInicio: diasAtrasISO(30) });
   }
 
   async function handleSave(dto) {
     try {
       setSaving(true);
       setError(null);
-      const nova = await movimentacaoService.criar(dto);
-      setMovimentos((prev) => [nova, ...prev]);
+      await movimentacaoService.criar(dto);
+      await queryClient.invalidateQueries({ queryKey: ["movimentacoes"] });
+      await queryClient.invalidateQueries({ queryKey: ["estoques"] });
       setModalOpen(false);
     } catch (err) {
       setError(err.message);
@@ -439,7 +439,9 @@ export default function Movimentacoes() {
           }
         />
 
-        {error && <ErrorMessage message={error} />}
+        {(error || errorMov) && (
+          <ErrorMessage message={error || errorMov?.message} />
+        )}
 
         <Toolbar>
           <SearchInput
