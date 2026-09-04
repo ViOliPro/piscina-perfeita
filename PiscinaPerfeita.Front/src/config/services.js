@@ -161,7 +161,6 @@ const get = (url, options = {}) => {
   const { params, ...rest } = options;
   return request(buildUrl(url, params), rest);
 };
-
 const post = (url, body, opts = {}) =>
   request(
     url,
@@ -317,11 +316,12 @@ export const depositoService = {
 // Análises
 // ----------------------------------------------------------
 export const analiseService = {
-  listar: ({ dataInicio, dataFim, piscinaId } = {}) => {
+  listar: ({ dataInicio, dataFim, piscinaId, limit } = {}) => {
     const params = {};
     if (dataInicio) params.dataInicio = dataInicio;
     if (dataFim) params.dataFim = dataFim;
     if (piscinaId) params.piscinaId = piscinaId;
+    if (limit != null) params.limit = limit;
     return get(API_ENDPOINTS.analises, { params }).then(fromApiAnaliseList);
   },
   buscar: (id) => get(API_ENDPOINTS.analiseById(id)).then(fromApiAnalise),
@@ -379,13 +379,12 @@ export const hidrometroService = {
 // Movimentações
 // ----------------------------------------------------------
 export const movimentacaoService = {
-  listar: ({ dataInicio, dataFim, piscinaId } = {}) => {
+  listar: ({ dataInicio, dataFim, piscinaId, limit } = {}) => {
     const params = {};
-
     if (dataInicio) params.dataInicio = dataInicio;
     if (dataFim) params.dataFim = dataFim;
     if (piscinaId) params.piscinaId = piscinaId;
-
+    if (limit != null) params.limit = limit;
     return get(API_ENDPOINTS.movimentacoes, { params }).then(
       fromApiMovimentacaoList,
     );

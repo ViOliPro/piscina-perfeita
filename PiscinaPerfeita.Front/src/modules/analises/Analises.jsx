@@ -1,7 +1,8 @@
 // ============================================================
 //  Piscina Perfeita — Módulo: Análises
 // ============================================================
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, lazy, Suspense } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   PageHeader,
   Card,
@@ -20,6 +21,7 @@ import {
 } from "../../components/ui/index.jsx";
 import { inputStyle } from "../../components/ui/styles.js";
 import { analiseService, piscinaService } from "../../config/services.js";
+import { qk, diasAtrasISO } from "../../helpers/queryKeys.js";
 import { ANALISE_FAIXAS } from "../../config/index.js";
 import { getLocalDateTimeInput } from "../../utils/getLocalDateTimeInput.js";
 import { PERMISSIONS } from "../../helpers/Permissions.js";
@@ -230,9 +232,7 @@ function AnaliseForm({ piscinas, onSubmit, onCancel, loading }) {
 // Módulo principal
 // ----------------------------------------------------------
 export default function Analises({ onRegistrarAplicacao }) {
-  const [analises, setAnalises] = useState([]);
-  const [piscinas, setPiscinas] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -240,35 +240,37 @@ export default function Analises({ onRegistrarAplicacao }) {
   const [filtroStatus, setFiltroStatus] = useState("");
   const [piscinaHistorico, setPiscinaHistorico] = useState("");
 
-  useEffect(() => {
-    async function load() {
-      try {
-        setLoading(true);
-        const dataInicio = new Date();
-        dataInicio.setDate(dataInicio.getDate() - 30);
-        dataInicio.setHours(0, 0, 0, 0);
+  const filtrosAnalises = { dataInicio: diasAtrasISO(30) };
 
-        const [a, p] = await Promise.all([
-          analiseService.listar({ dataInicio: dataInicio.toISOString() }),
-          piscinaService.listar(),
-        ]);
-        setAnalises(a ?? []);
-        setPiscinas(p ?? []);
-        if (p?.length) setPiscinaHistorico((atual) => atual || p[0].id);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
+  const {
+    data: analises = [],
+    isLoading: loadingAnalises,
+    error: errorAnalises,
+  } = useQuery({
+    queryKey: qk.analises(filtrosAnalises),
+    queryFn: () => analiseService.listar(filtrosAnalises),
+  });
+
+  const {
+    data: piscinas = [],
+    isLoading: loadingPiscinas,
+    error: errorPiscinas,
+  } = useQuery({
+    queryKey: qk.piscinas,
+    queryFn: () => piscinaService.listar(),
+    staleTime: 10 * 60_000,
+  });
+
+  const loading = loadingAnalises || loadingPiscinas;
+
+  const piscinaHistoricoEfetivo = piscinaHistorico || (piscinas[0]?.id ?? "");
 
   async function handleSave(dto) {
     try {
       setSaving(true);
-      const nova = await analiseService.criar(dto);
-      setAnalises((prev) => [nova, ...prev]);
+      setError(null);
+      await analiseService.criar(dto);
+      await queryClient.invalidateQueries({ queryKey: ["analises"] });
       setModalOpen(false);
     } catch (err) {
       setError(err.message);
@@ -280,8 +282,9 @@ export default function Analises({ onRegistrarAplicacao }) {
   async function handleDelete(id) {
     if (!confirm("Excluir esta análise?")) return;
     try {
+      setError(null);
       await analiseService.excluir(id);
-      setAnalises((prev) => prev.filter((a) => a.id !== id));
+      await queryClient.invalidateQueries({ queryKey: ["analises"] });
     } catch (err) {
       setError(err.message);
     }
@@ -380,7 +383,11 @@ export default function Analises({ onRegistrarAplicacao }) {
           }
         />
 
-        {error && <ErrorMessage message={error} />}
+        {(error || errorAnalises || errorPiscinas) && (
+          <ErrorMessage
+            message={error || errorAnalises?.message || errorPiscinas?.message}
+          />
+        )}
 
         <Toolbar>
           <SearchInput
@@ -415,7 +422,7 @@ export default function Analises({ onRegistrarAplicacao }) {
             </label>
             <select
               style={{ ...inputStyle, marginBottom: 10, maxWidth: 320 }}
-              value={piscinaHistorico}
+              value={piscinaHistoricoEfetivo}
               onChange={(e) => setPiscinaHistorico(e.target.value)}
             >
               {piscinas.map((p) => (
@@ -424,7 +431,7 @@ export default function Analises({ onRegistrarAplicacao }) {
                 </option>
               ))}
             </select>
-            {piscinaHistorico && (
+            {piscinaHistoricoEfetivo && (
               <Suspense
                 fallback={
                   <p style={{ color: "#6B8CAE", fontSize: 13 }}>
@@ -433,10 +440,11 @@ export default function Analises({ onRegistrarAplicacao }) {
                 }
               >
                 <QualidadeAguaHistoricoCard
-                  key={piscinaHistorico}
-                  piscinaId={piscinaHistorico}
+                  key={piscinaHistoricoEfetivo}
+                  piscinaId={piscinaHistoricoEfetivo}
                   piscinaNome={
-                    piscinas.find((p) => p.id === piscinaHistorico)?.nome ?? ""
+                    piscinas.find((p) => p.id === piscinaHistoricoEfetivo)
+                      ?.nome ?? ""
                   }
                 />
               </Suspense>
