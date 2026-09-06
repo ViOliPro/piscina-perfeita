@@ -30,13 +30,36 @@ public class AplicacaoProdutoRepository : IAplicacaoProdutoRepository
         Observacoes = a.Observacoes,
     };
 
-    public async Task<List<AplicacaoProdutoResponseDto>> Show()
+    public async Task<List<AplicacaoProdutoResponseDto>> Show(
+        DateTimeOffset? dataInicio = null,
+        DateTimeOffset? dataFim = null,
+        Guid? piscinaId = null,
+        int? limit = null
+    )
     {
-        return await _context
-            .Set<AplicacaoProduto>()
-            .Select(Projecao)
-            .OrderByDescending(a => a.DataAplicacao)
-            .ToListAsync();
+        var query = _context.Set<AplicacaoProduto>().AsNoTracking().AsQueryable();
+
+        // Sem dataInicio: início do mês corrente (mesmo padrão de Análises/Movimentações).
+        if (!dataInicio.HasValue)
+        {
+            var agora = DateTimeOffset.UtcNow;
+            dataInicio = new DateTimeOffset(agora.Year, agora.Month, 1, 0, 0, 0, agora.Offset);
+        }
+
+        query = query.Where(a => a.DataAplicacao >= dataInicio.Value);
+
+        if (dataFim.HasValue)
+            query = query.Where(a => a.DataAplicacao <= dataFim.Value);
+
+        if (piscinaId.HasValue)
+            query = query.Where(a => a.PiscinaId == piscinaId.Value);
+
+        query = query.OrderByDescending(a => a.DataAplicacao);
+
+        if (limit is > 0)
+            query = query.Take(limit.Value);
+
+        return await query.Select(Projecao).ToListAsync();
     }
 
     public async Task<AplicacaoProdutoResponseDto?> GetById(Guid id)
@@ -46,6 +69,29 @@ public class AplicacaoProdutoRepository : IAplicacaoProdutoRepository
             .Where(a => a.Id == id)
             .Select(Projecao)
             .FirstOrDefaultAsync();
+    }
+
+    public async Task<List<AplicacaoUsoRaw>> ListarParaUsoProdutos(
+        Guid piscinaId,
+        DateTimeOffset inicio,
+        DateTimeOffset fim
+    )
+    {
+        return await _context
+            .Set<AplicacaoProduto>()
+            .AsNoTracking()
+            .Where(a =>
+                a.PiscinaId == piscinaId && a.DataAplicacao >= inicio && a.DataAplicacao <= fim
+            )
+            .Select(a => new AplicacaoUsoRaw
+            {
+                ProdutoId = a.ProdutoId,
+                ProdutoNome = a.Produto.Nome,
+                UnidadeMedidaProduto = a.Produto.UnidadeMedida,
+                Quantidade = a.Quantidade,
+                UnidadeLancamento = a.UnidadeLancamento,
+            })
+            .ToListAsync();
     }
 
     public async Task Create(

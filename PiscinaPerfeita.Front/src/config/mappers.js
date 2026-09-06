@@ -685,6 +685,33 @@ export function toApiAplicacaoProduto({
   };
 }
 
+export function fromApiUsoProdutos(raw) {
+  if (!raw) return null;
+  const piscina = field(raw, "piscina", "Piscina");
+  const periodo = field(raw, "periodo", "Periodo");
+  const itens = field(raw, "itens", "Itens") ?? [];
+
+  return {
+    piscina: {
+      id: field(piscina, "id", "Id"),
+      nome: field(piscina, "nome", "Nome"),
+    },
+    periodo: {
+      inicio: field(periodo, "inicio", "Inicio"),
+      fim: field(periodo, "fim", "Fim"),
+    },
+    itens: itens.map((i) => ({
+      produtoId: field(i, "produtoId", "ProdutoId"),
+      produtoNome: field(i, "produtoNome", "ProdutoNome") ?? "",
+      unidade: field(i, "unidade", "Unidade") ?? "",
+      quantidadeTotal: field(i, "quantidadeTotal", "QuantidadeTotal") ?? 0,
+      quantidadeAplicacoes:
+        field(i, "quantidadeAplicacoes", "QuantidadeAplicacoes") ?? 0,
+    })),
+    textoResumo: field(raw, "textoResumo", "TextoResumo") ?? "",
+  };
+}
+
 // ----------------------------------------------------------
 // Hidrometro (medidor de consumo de água)
 // ----------------------------------------------------------

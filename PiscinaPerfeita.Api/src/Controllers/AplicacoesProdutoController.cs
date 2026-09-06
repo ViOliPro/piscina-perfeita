@@ -20,12 +20,39 @@ namespace PiscinaPerfeita.Api.Controllers
                 aplicacaoService ?? throw new ArgumentNullException(nameof(aplicacaoService));
         }
 
+        // GET: api/aplicacoesproduto/uso-produtos
+        // Precisa estar declarado antes de GetById({id}) — "uso-produtos"
+        // não é um Guid; o ASP.NET Core resolve por especificidade de rota.
+        [HttpGet("uso-produtos")]
+        [Authorize(Policy = Policies.Listar)]
+        public async Task<ActionResult<UsoProdutosResponseDto>> UsoProdutos(
+            [FromQuery] Guid piscinaId,
+            [FromQuery] DateTimeOffset? inicio,
+            [FromQuery] DateTimeOffset? fim
+        )
+        {
+            try
+            {
+                var resultado = await _aplicacaoService.ObterUsoProdutos(piscinaId, inicio, fim);
+                return Ok(resultado);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
         // GET: api/aplicacoesproduto
         [HttpGet]
         [Authorize(Policy = Policies.Listar)]
-        public async Task<ActionResult<IEnumerable<AplicacaoProdutoResponseDto>>> Get()
+        public async Task<ActionResult<IEnumerable<AplicacaoProdutoResponseDto>>> Get(
+            [FromQuery] DateTimeOffset? dataInicio = null,
+            [FromQuery] DateTimeOffset? dataFim = null,
+            [FromQuery] Guid? piscinaId = null,
+            [FromQuery] int? limit = null
+        )
         {
-            var aplicacoes = await _aplicacaoService.Show();
+            var aplicacoes = await _aplicacaoService.Show(dataInicio, dataFim, piscinaId, limit);
             return Ok(aplicacoes);
         }
 
