@@ -3,8 +3,17 @@ import { ANALISE_FAIXAS } from "../../../config/index.js";
 import { ParametroGauge } from "./ParametroGauge.jsx";
 import { PhScale } from "./PhScale.jsx";
 import styles from "./components.module.css";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { analiseService } from "../../../config/services.js";
+import { qk } from "../../../helpers/queryKeys.js";
 
-export function QualidadeAguaCard({ ultimaAnalise }) {
+export function QualidadeAguaCard() {
+  const { data: analises } = useSuspenseQuery({
+    queryKey: qk.analises({ limit: 10 }),
+    queryFn: () => analiseService.listar({ limit: 10 }),
+  });
+  const ultimaAnalise = analises[0];
+
   return (
     <Card
       title="Qualidade da água"

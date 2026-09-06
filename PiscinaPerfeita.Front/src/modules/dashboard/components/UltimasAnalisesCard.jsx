@@ -1,6 +1,9 @@
 import { Badge, Card } from "../../../components/ui/index.jsx";
 import { ANALISE_FAIXAS } from "../../../config/index.js";
 import styles from "./components.module.css";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { analiseService } from "../../../config/services.js";
+import { qk } from "../../../helpers/queryKeys.js";
 
 function statusDaAnalise(analise) {
   const phOk =
@@ -12,7 +15,12 @@ function statusDaAnalise(analise) {
   return { variant: "warn", label: "Atenção" };
 }
 
-export function UltimasAnalisesCard({ analises }) {
+export function UltimasAnalisesCard() {
+  const { data: analises } = useSuspenseQuery({
+    queryKey: qk.analises({ limit: 10 }),
+    queryFn: () => analiseService.listar({ limit: 10 }),
+  });
+
   const exibidas = analises.slice(0, 4);
 
   return (
