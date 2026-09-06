@@ -1,11 +1,11 @@
 // ============================================================
-//  Piscina Perfeita — Módulo: Piscinas
+//  Piscina Perfeita — Módulo: Piscinas (listagem leve + useQuery)
 // ============================================================
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   PageHeader,
   Card,
-  Badge,
   Button,
   Modal,
   Toolbar,
@@ -21,6 +21,7 @@ import { piscinaService } from "../../config/services.js";
 import { PERMISSIONS } from "../../helpers/Permissions.js";
 import ProtecaoDeRota from "../../helpers/ProtecaoDeRota.jsx";
 import { useUsuariosSelecionaveis } from "../../hooks/useUsuariosSelecionaveis.js";
+import { qk } from "../../helpers/queryKeys.js";
 
 // ----------------------------------------------------------
 // Formulário
@@ -135,46 +136,37 @@ function PiscinaForm({ initial, onSubmit, onCancel, loading }) {
 }
 
 // ----------------------------------------------------------
-// Módulo principal
+// Módulo principal — listagem leve via TanStack Query
 // ----------------------------------------------------------
 export default function Piscinas() {
-  const [piscinas, setPiscinas] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [modal, setModal] = useState({ open: false, editing: null });
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    async function load() {
-      try {
-        setLoading(true);
-        const p = await piscinaService.listar();
-        setPiscinas(p ?? []);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
+  // Query leve compartilhada com selects (qk.piscinas)
+  const {
+    data: piscinas = [],
+    isLoading,
+    isError,
+    error: queryError,
+  } = useQuery({
+    queryKey: qk.piscinas,
+    queryFn: () => piscinaService.listar(),
+    staleTime: 10 * 60 * 1000, // 10 min — ref estável
+  });
 
   async function handleSave(dto) {
     try {
       setSaving(true);
+      setError(null);
       if (modal.editing) {
-        const atualizada = await piscinaService.atualizar(
-          modal.editing.id,
-          dto,
-        );
-        setPiscinas((prev) =>
-          prev.map((p) => (p.id === atualizada.id ? atualizada : p)),
-        );
+        await piscinaService.atualizar(modal.editing.id, dto);
       } else {
-        const nova = await piscinaService.criar(dto);
-        setPiscinas((prev) => [nova, ...prev]);
+        await piscinaService.criar(dto);
       }
+      await queryClient.invalidateQueries({ queryKey: qk.piscinas });
       setModal({ open: false, editing: null });
     } catch (err) {
       setError(err.message);
@@ -191,15 +183,16 @@ export default function Piscinas() {
     )
       return;
     try {
+      setError(null);
       await piscinaService.excluir(id);
-      setPiscinas((prev) => prev.filter((p) => p.id !== id));
+      await queryClient.invalidateQueries({ queryKey: qk.piscinas });
     } catch (err) {
       setError(err.message);
     }
   }
 
   const filtered = piscinas.filter((p) =>
-    p.nome.toLowerCase().includes(search.toLowerCase()),
+    (p.nome ?? "").toLowerCase().includes(search.toLowerCase()),
   );
 
   const columns = [
@@ -250,7 +243,7 @@ export default function Piscinas() {
     },
   ];
 
-  if (loading) return <LoadingSpinner />;
+  if (isLoading) return <LoadingSpinner />;
 
   return (
     <ProtecaoDeRota permissao={PERMISSIONS.PISCINAS.VIEW}>
@@ -269,7 +262,9 @@ export default function Piscinas() {
           }
         />
 
-        {error && <ErrorMessage message={error} />}
+        {(error || isError) && (
+          <ErrorMessage message={error ?? queryError?.message} />
+        )}
 
         <Toolbar>
           <SearchInput
@@ -293,7 +288,19 @@ export default function Piscinas() {
           title={modal.editing ? "Editar piscina" : "Nova piscina"}
         >
           <PiscinaForm
-            initial={modal.editing}
+            initial={
+              modal.editing
+                ? {
+                    nome: modal.editing.nome ?? "",
+                    volumeLitros: modal.editing.volumeLitros ?? "",
+                    profundidadeMedia: modal.editing.profundidadeMedia ?? "",
+                    usuarioId:
+                      modal.editing.usuarioId ??
+                      modal.editing.usuario?.id ??
+                      "",
+                  }
+                : null
+            }
             onSubmit={handleSave}
             onCancel={() => setModal({ open: false, editing: null })}
             loading={saving}
