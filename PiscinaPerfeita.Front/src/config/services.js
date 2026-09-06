@@ -12,6 +12,7 @@ import {
   toApiUsuario,
   fromApiPiscina,
   fromApiPiscinaList,
+  fromApiPiscinaDashboard,
   toApiPiscina,
   fromApiProduto,
   fromApiProdutoList,
@@ -276,12 +277,34 @@ export const usuarioService = {
 // Piscinas
 // ----------------------------------------------------------
 export const piscinaService = {
+  /** Listagem leve — só cadastro + responsável (refs / tabela). */
   listar: () => get(API_ENDPOINTS.piscinas).then(fromApiPiscinaList),
+
   buscar: (id) => get(API_ENDPOINTS.piscinaById(id)).then(fromApiPiscina),
+
+  /**
+   * Dashboard analítico sob demanda.
+   * Só chamar quando o usuário abrir o dashboard da piscina.
+   * params: { inicio?, fim?, limitAnalises?, limitMovimentacoes? }
+   */
+  dashboard: (id, { inicio, fim, limitAnalises, limitMovimentacoes } = {}) => {
+    const params = {};
+    if (inicio) params.inicio = inicio;
+    if (fim) params.fim = fim;
+    if (limitAnalises != null) params.limitAnalises = limitAnalises;
+    if (limitMovimentacoes != null)
+      params.limitMovimentacoes = limitMovimentacoes;
+    return get(API_ENDPOINTS.piscinaDashboard(id), { params }).then(
+      fromApiPiscinaDashboard,
+    );
+  },
+
   criar: (dto) =>
     post(API_ENDPOINTS.piscinas, toApiPiscina(dto)).then(fromApiPiscina),
+
   atualizar: (id, dto) =>
     put(API_ENDPOINTS.piscinaById(id), toApiPiscina(dto)).then(fromApiPiscina),
+
   excluir: (id) => del(API_ENDPOINTS.piscinaById(id)),
 };
 

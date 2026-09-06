@@ -31,6 +31,7 @@ export const API_ENDPOINTS = {
   // Piscinas
   piscinas: `${API_BASE_URL}/piscinas`,
   piscinaById: (id) => `${API_BASE_URL}/piscinas/${id}`,
+  piscinaDashboard: (id) => `${API_BASE_URL}/piscinas/${id}/dashboard`,
 
   // Produtos
   produtos: `${API_BASE_URL}/produtos`,

@@ -14,10 +14,6 @@ namespace PiscinaPerfeita.Api.Dtos.Response
     {
         public NomeIdDto Deposito { get; set; } = null!;
         public PeriodoDto Periodo { get; set; } = new();
-
-        // Ordenado por QuantidadeConsumida decrescente — o produto que
-        // mais saiu no período já vem primeiro, sem o front precisar
-        // reordenar pra montar o gráfico de barras.
         public List<ConsumoProdutoDto> Produtos { get; set; } = [];
     }
 }

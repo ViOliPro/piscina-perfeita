@@ -36,7 +36,35 @@ namespace PiscinaPerfeita.Api.Controllers
             }
         }
 
-        // 2. GET: api/clientes/id (Retorna o registro com id)
+        // GET: api/piscinas/{id}/dashboard — analítico sob demanda
+        // Rota estática antes de {id} genérico para não conflitar com GetById.
+        [HttpGet("{id:guid}/dashboard")]
+        [Authorize(Policy = Policies.Listar)]
+        public async Task<ActionResult<PiscinaDashboardResponseDto>> GetDashboard(
+            Guid id,
+            [FromQuery] DateTimeOffset? inicio = null,
+            [FromQuery] DateTimeOffset? fim = null,
+            [FromQuery] int limitAnalises = 10,
+            [FromQuery] int limitMovimentacoes = 10
+        )
+        {
+            try
+            {
+                var dashboard = await _piscinasService.GetDashboard(
+                    id,
+                    inicio,
+                    fim,
+                    limitAnalises,
+                    limitMovimentacoes
+                );
+                return Ok(dashboard);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
         [HttpGet("{id}")]
         [Authorize(Policy = Policies.Listar)]
         public async Task<ActionResult<PiscinaResponseDto>> GetById(Guid id)

@@ -46,7 +46,45 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
             return piscina;
         }
 
-        // Metodo Create: Cria um novo piscina com base nos dados fornecidos.
+        public async Task<PiscinaDashboardResponseDto> GetDashboard(
+            Guid piscinaId,
+            DateTimeOffset? inicio,
+            DateTimeOffset? fim,
+            int limitAnalises = 10,
+            int limitMovimentacoes = 10
+        )
+        {
+            // Default: mês corrente (mesmo padrão de Análises/Movimentações)
+            var agora = DateTimeOffset.UtcNow;
+            var inicioEfetivo =
+                inicio ?? new DateTimeOffset(agora.Year, agora.Month, 1, 0, 0, 0, TimeSpan.Zero);
+            var fimEfetivo = fim ?? agora;
+
+            if (limitAnalises <= 0)
+                limitAnalises = 10;
+            if (limitAnalises > 50)
+                limitAnalises = 50;
+            if (limitMovimentacoes <= 0)
+                limitMovimentacoes = 10;
+            if (limitMovimentacoes > 50)
+                limitMovimentacoes = 50;
+
+            var dashboard = await _piscinaRepository.GetDashboard(
+                piscinaId,
+                inicioEfetivo,
+                fimEfetivo,
+                limitAnalises,
+                limitMovimentacoes
+            );
+
+            if (dashboard == null)
+            {
+                throw new KeyNotFoundException($"Piscina com ID {piscinaId} não encontrada.");
+            }
+
+            return dashboard;
+        }
+
         public async Task<PiscinaResponseDto> Create(PiscinaRequestDto dto)
         {
             var usuario = await _usuarioRepository.GetById(dto.UsuarioId);
@@ -64,7 +102,7 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
                 VolumeLitros = dto.VolumeLitros,
                 ProfundidadeMedia = dto.ProfundidadeMedia,
                 UsuarioId = dto.UsuarioId,
-                LocalId = dto.LocalId
+                LocalId = dto.LocalId,
             };
 
             await _piscinaRepository.Create(piscina);

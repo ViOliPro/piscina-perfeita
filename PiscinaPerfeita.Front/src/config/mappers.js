@@ -191,9 +191,72 @@ export function toApiPiscina({
   };
 }
 
+export function fromApiPiscinaDashboard(raw) {
+  if (!raw) return null;
+
+  const piscina = field(raw, "piscina", "Piscina") ?? {};
+  const periodo = field(raw, "periodo", "Periodo") ?? {};
+  const contagens = field(raw, "contagens", "Contagens") ?? {};
+  const ultimasAnalises =
+    field(raw, "ultimasAnalises", "UltimasAnalises") ?? [];
+  const ultimasMovimentacoes =
+    field(raw, "ultimasMovimentacoes", "UltimasMovimentacoes") ?? [];
+  const produtosUtilizados =
+    field(raw, "produtosUtilizados", "ProdutosUtilizados") ?? [];
+
+  const usuarioRaw =
+    field(piscina, "usuarioPiscina", "UsuarioPiscina") ??
+    field(piscina, "usuario", "Usuario");
+
+  return {
+    piscina: {
+      id: field(piscina, "id", "Id"),
+      nome: field(piscina, "nome", "Nome"),
+      volumeLitros: field(piscina, "volumeLitros", "VolumeLitros") ?? null,
+      profundidadeMedia:
+        field(piscina, "profundidadeMedia", "ProfundidadeMedia") ?? null,
+      usuario: usuarioRaw
+        ? {
+            id: field(usuarioRaw, "id", "Id"),
+            nome: field(usuarioRaw, "nome", "Nome"),
+          }
+        : null,
+    },
+    periodo: {
+      inicio: field(periodo, "inicio", "Inicio"),
+      fim: field(periodo, "fim", "Fim"),
+    },
+    contagens: {
+      analises: field(contagens, "analises", "Analises") ?? 0,
+      movimentacoes: field(contagens, "movimentacoes", "Movimentacoes") ?? 0,
+      aplicacoes: field(contagens, "aplicacoes", "Aplicacoes") ?? 0,
+    },
+    ultimasAnalises: ultimasAnalises.map((a) => ({
+      id: field(a, "id", "Id"),
+      dataAnalise: field(a, "dataAnalise", "DataAnalise"),
+      ph: field(a, "ph", "Ph") ?? null,
+      cloroLivre: field(a, "cloroLivre", "CloroLivre") ?? null,
+      alcalinidade: field(a, "alcalinidade", "Alcalinidade") ?? null,
+      temperatura: field(a, "temperatura", "Temperatura") ?? null,
+    })),
+    ultimasMovimentacoes: ultimasMovimentacoes.map((m) => ({
+      id: field(m, "id", "Id"),
+      tipo: field(m, "tipo", "Tipo"),
+      dataMovimentacao: field(m, "dataMovimentacao", "DataMovimentacao"),
+      produtoNome: field(m, "produtoNome", "ProdutoNome") ?? null,
+    })),
+    produtosUtilizados: produtosUtilizados.map((p) => ({
+      produtoId: field(p, "produtoId", "ProdutoId"),
+      nome: field(p, "nome", "Nome"),
+      quantidade: field(p, "quantidade", "Quantidade") ?? 0,
+      unidade: field(p, "unidade", "Unidade") ?? "",
+      ocorrencias: field(p, "ocorrencias", "Ocorrencias") ?? 0,
+    })),
+  };
+}
 // ----------------------------------------------------------
 // Produto
-// ----------------------------------------------------------
+// --------------------------------------------------
 
 /**
  * ProdutoDto  →  Produto (front)

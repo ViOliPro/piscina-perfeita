@@ -4,6 +4,7 @@
 // ============================================================
 
 export const qk = {
+  // Refs leves (staleTime alto) — NÃO incluir dashboard aqui
   piscinas: ["piscinas"],
   produtos: ["produtos"],
   depositos: ["depositos"],
@@ -18,6 +19,8 @@ export const qk = {
   aplicacoes: (filtros = {}) => ["aplicacoes", filtros],
 
   usoProdutos: (filtros = {}) => ["aplicacoes", "uso-produtos", filtros],
+
+  piscinaDashboard: (filtros = {}) => ["piscina-dashboard", filtros],
 };
 
 /** Helpers de data para filtros padrão */

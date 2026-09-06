@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Dtos.Response;
+using PiscinaPerfeita.Api.Models;
 
 namespace PiscinaPerfeita.Api.Repository.Piscinas;
 
@@ -15,38 +15,25 @@ public class PiscinaRepository : IPiscinaRepository
 
     public async Task<List<PiscinaResponseDto>> Show()
     {
-        return await _context.Piscinas.Select(u => new PiscinaResponseDto
-        {
-            Id = u.Id,
-            Nome = u.Nome,
-            VolumeLitros = u.VolumeLitros,
-            ProfundidadeMedia = u.ProfundidadeMedia,
-            CreatedAt = u.CreatedAt,
-            UsuarioPiscina = u.Usuario != null ? new NomeIdDto(u.Usuario.Id, u.Usuario.Nome) : null,
-
-
-            AnalisePiscina = u.Analises != null ? u.Analises.Select(a => new AnalisePiscinaResponseDto
+        return await _context
+            .Piscinas.AsNoTracking()
+            .Select(u => new PiscinaResponseDto
             {
-                Id = a.Id,
-                DataAnalise = a.DataAnalise
-            }).ToList() : new List<AnalisePiscinaResponseDto>(),
-
-            Estoques = u.Estoques.Select(e => new NomeIdDto(e.Produto.Id, e.Produto.Nome)).ToList(),
-
-
-            MovimentacoesEstoques = u.MovimentacoesEstoques.Select(m => new MovimentacaoEstoquePiscinaResponsetDto
-            {
-                Id = m.Id,
-                Nome = m.TipoMovimentacao.ToString(),
-                DataMovimentacao = m.DataMovimentacao
-            }).ToList()
-
-        }).ToListAsync();
+                Id = u.Id,
+                Nome = u.Nome,
+                VolumeLitros = u.VolumeLitros,
+                ProfundidadeMedia = u.ProfundidadeMedia,
+                CreatedAt = u.CreatedAt,
+                UsuarioPiscina =
+                    u.Usuario != null ? new NomeIdDto(u.Usuario.Id, u.Usuario.Nome) : null,
+            })
+            .ToListAsync();
     }
 
     public async Task<PiscinaResponseDto?> GetById(Guid id)
     {
-        var piscinaDto = await _context.Piscinas
+        return await _context
+            .Piscinas.AsNoTracking()
             .Where(p => p.Id == id)
             .Select(u => new PiscinaResponseDto
             {
@@ -55,26 +42,127 @@ public class PiscinaRepository : IPiscinaRepository
                 VolumeLitros = u.VolumeLitros,
                 ProfundidadeMedia = u.ProfundidadeMedia,
                 CreatedAt = u.CreatedAt,
-                UsuarioPiscina = u.Usuario != null ? new NomeIdDto(u.Usuario.Id, u.Usuario.Nome) : null,
+                UsuarioPiscina =
+                    u.Usuario != null ? new NomeIdDto(u.Usuario.Id, u.Usuario.Nome) : null,
+            })
+            .FirstOrDefaultAsync();
+    }
 
-                AnalisePiscina = u.Analises.Select(a => new AnalisePiscinaResponseDto
-                {
-                    Id = a.Id,
-                    DataAnalise = a.DataAnalise
-                }).ToList(),
+    public async Task<PiscinaDashboardResponseDto?> GetDashboard(
+        Guid piscinaId,
+        DateTimeOffset inicio,
+        DateTimeOffset fim,
+        int limitAnalises,
+        int limitMovimentacoes
+    )
+    {
+        var piscina = await _context
+            .Piscinas.AsNoTracking()
+            .Where(p => p.Id == piscinaId)
+            .Select(u => new PiscinaResumoDto
+            {
+                Id = u.Id,
+                Nome = u.Nome,
+                VolumeLitros = u.VolumeLitros,
+                ProfundidadeMedia = u.ProfundidadeMedia,
+                UsuarioPiscina =
+                    u.Usuario != null ? new NomeIdDto(u.Usuario.Id, u.Usuario.Nome) : null,
+            })
+            .FirstOrDefaultAsync();
 
-                Estoques =u.Estoques.Select(e => new NomeIdDto(e.Produto.Id, e.Produto.Nome)).ToList(),
+        if (piscina == null)
+            return null;
 
-                MovimentacoesEstoques = u.MovimentacoesEstoques.Select(m => new MovimentacaoEstoquePiscinaResponsetDto
-                {
-                    Id = m.Id,
-                    Nome = m.TipoMovimentacao.ToString(),
-                    DataMovimentacao = m.DataMovimentacao,
-                }).ToList(),
+        var analisesQuery = _context
+            .Analises.AsNoTracking()
+            .Where(a =>
+                a.PiscinaId == piscinaId && a.DataAnalise >= inicio && a.DataAnalise <= fim
+            );
 
-            }).FirstOrDefaultAsync();
+        var movQuery = _context
+            .MovimentacoesEstoques.AsNoTracking()
+            .Where(m =>
+                m.PiscinaId == piscinaId
+                && m.DataMovimentacao >= inicio
+                && m.DataMovimentacao <= fim
+            );
 
-        return piscinaDto ?? null;
+        // Contagem de aplicações: preferir tabela AplicacoesProduto;
+        // fallback para movimentações Tipo = Aplicacao.
+        var aplicacoesCount = await _context
+            .Set<AplicacaoProduto>()
+            .AsNoTracking()
+            .CountAsync(ap =>
+                ap.PiscinaId == piscinaId && ap.DataAplicacao >= inicio && ap.DataAplicacao <= fim
+            );
+
+        var contagens = new ContagensDto
+        {
+            Analises = await analisesQuery.CountAsync(),
+            Movimentacoes = await movQuery.CountAsync(),
+            Aplicacoes = aplicacoesCount,
+        };
+
+        var ultimasAnalises = await analisesQuery
+            .OrderByDescending(a => a.DataAnalise)
+            .Take(limitAnalises)
+            .Select(a => new AnaliseResumoDto
+            {
+                Id = a.Id,
+                DataAnalise = a.DataAnalise,
+                Ph = a.Ph,
+                CloroLivre = a.CloroLivre,
+                Alcalinidade = a.Alcalinidade,
+                Temperatura = a.Temperatura,
+            })
+            .ToListAsync();
+
+        var ultimasMovimentacoes = await movQuery
+            .OrderByDescending(m => m.DataMovimentacao)
+            .Take(limitMovimentacoes)
+            .Select(m => new MovimentacaoResumoDto
+            {
+                Id = m.Id,
+                Tipo = m.TipoMovimentacao.ToString(),
+                DataMovimentacao = m.DataMovimentacao,
+                ProdutoNome = m.Produto != null ? m.Produto.Nome : null,
+            })
+            .ToListAsync();
+
+        // Produtos utilizados no período (agregado simples via AplicacaoProduto)
+        var produtosUtilizados = await _context
+            .Set<AplicacaoProduto>()
+            .AsNoTracking()
+            .Where(ap =>
+                ap.PiscinaId == piscinaId && ap.DataAplicacao >= inicio && ap.DataAplicacao <= fim
+            )
+            .GroupBy(ap => new
+            {
+                ap.ProdutoId,
+                Nome = ap.Produto.Nome,
+                Unidade = ap.Produto.UnidadeMedida,
+            })
+            .Select(g => new ProdutoUsoResumoDto
+            {
+                ProdutoId = g.Key.ProdutoId,
+                Nome = g.Key.Nome,
+                Quantidade = g.Sum(x => x.Quantidade),
+                Unidade = g.Key.Unidade ?? "",
+                Ocorrencias = g.Count(),
+            })
+            .OrderByDescending(p => p.Quantidade)
+            .Take(20)
+            .ToListAsync();
+
+        return new PiscinaDashboardResponseDto
+        {
+            Piscina = piscina,
+            Periodo = new PeriodoDto { Inicio = inicio, Fim = fim },
+            Contagens = contagens,
+            UltimasAnalises = ultimasAnalises,
+            UltimasMovimentacoes = ultimasMovimentacoes,
+            ProdutosUtilizados = produtosUtilizados,
+        };
     }
 
     public async Task Create(Piscina piscina)
@@ -95,7 +183,6 @@ public class PiscinaRepository : IPiscinaRepository
         piscinaToUpdate.UsuarioId = piscina.UsuarioId;
 
         await _context.SaveChangesAsync();
-
     }
 
     public async Task Delete(Guid id)
@@ -108,9 +195,5 @@ public class PiscinaRepository : IPiscinaRepository
 
         _context.Remove(piscina);
         await _context.SaveChangesAsync();
-
     }
-
-
-
 }
