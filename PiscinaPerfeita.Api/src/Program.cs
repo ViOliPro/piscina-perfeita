@@ -1,3 +1,8 @@
+using System.Globalization;
+using System.Reflection;
+using System.Security.Claims;
+using System.Text;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -9,11 +14,6 @@ using Microsoft.OpenApi;
 using PiscinaPerfeita.Api.Authorization;
 using PiscinaPerfeita.Api.Data;
 using PiscinaPerfeita.Api.Extension;
-using System.Globalization;
-using System.Reflection;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.RateLimiting;
 
 // 1. Inicializa o builder e carrega as variáveis de ambiente IMEDIATAMENTE
 var builder = WebApplication.CreateBuilder(args);
@@ -260,7 +260,6 @@ builder.Services.AddCors(options =>
     );
 });
 
-
 // Rate limiting — hoje o login não tinha nenhum limite de tentativas.
 // Em Development o limite é bem mais alto pra não travar os testes manuais.
 
@@ -395,7 +394,10 @@ try
         catch (Exception ex)
         {
             var logger = services.GetRequiredService<ILogger<Program>>();
-            logger.LogError(ex, "Ocorreu um erro ao aplicar as migrations no banco.");
+
+            logger.LogCritical(ex, "Falha crítica ao aplicar migrations/seed.");
+
+            throw;
         }
     }
     //Fim do bloco

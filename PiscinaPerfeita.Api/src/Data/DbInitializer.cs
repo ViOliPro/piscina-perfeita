@@ -12,8 +12,6 @@ namespace PiscinaPerfeita.Api.Data
             IConfiguration configuration
         )
         {
-            await context.Database.MigrateAsync();
-
             // Verifica se já existem usuários no banco de dados
             if (await context.Usuarios.AnyAsync())
                 return;
