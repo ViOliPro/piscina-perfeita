@@ -1,16 +1,12 @@
 # ============================================================
-#   PiscinaPerfeita — Render Blueprint
+# PiscinaPerfeita — Render Blueprint
 # ============================================================
-databases:
-  - name: piscina-perfeita-db
-    databaseName: piscina_perfeita
-    user: piscina
-    plan: free
 
 services:
   # ------------------------------------------------------------
   # API (.NET) — Web Service via Docker
   # ------------------------------------------------------------
+
   - type: web
     name: piscina-perfeita-api
     runtime: docker
@@ -18,28 +14,33 @@ services:
     dockerfilePath: ./PiscinaPerfeita.Api/Dockerfile
     plan: free
     healthCheckPath: /health
+
     envVars:
       - key: ConnectionStrings__DefaultConnection
         sync: false
 
       - key: Jwt__Key
         generateValue: true
+
       - key: Jwt__Issuer
         value: PiscinaPerfeita
+
       - key: Jwt__Audience
         value: PiscinaPerfeita
 
       - key: ADMIN_NAME
         value: Admin
+
       - key: ADMIN_EMAIL
         sync: false
+
       - key: ADMIN_PASSWORD
         sync: false
+
       - key: ADMIN_CPF
         value: ""
 
-      # Antes: hardcoded. Agora aponta pra URL pública real do front,
-      # atualizando sozinho se o Render mudar o subdomínio.
+      # URL pública do frontend
       - key: Cors__AllowedOrigins
         fromService:
           name: piscina-perfeita-front
@@ -48,9 +49,11 @@ services:
 
       - key: RESEND__APIKEY
         sync: false
+
       - key: RESEND__REMETENTE
         sync: false
-      - key: Google:ClientId
+
+      - key: Google__ClientId
         sync: false
 
       - key: Frontend__BaseUrl
@@ -62,15 +65,16 @@ services:
   # ------------------------------------------------------------
   # Front (React/Vite) — Static Site
   # ------------------------------------------------------------
+
   - type: web
     runtime: static
     name: piscina-perfeita-front
     rootDir: ./PiscinaPerfeita.Front
-    # Monta VITE_API_BASE_URL em tempo de build concatenando "/api"
-    # na URL pública real da API (render.yaml não permite interpolação
-    # direta dentro de envVars, então isso é feito aqui no shell).
+
     buildCommand: yarn install --frozen-lockfile && VITE_API_BASE_URL="${API_PUBLIC_URL}/api" yarn build
+
     staticPublishPath: ./dist
+
     envVars:
       - key: API_PUBLIC_URL
         fromService:
