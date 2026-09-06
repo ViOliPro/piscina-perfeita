@@ -1,7 +1,15 @@
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { qk } from "../../../helpers/queryKeys.js";
 import { Badge, Card } from "../../../components/ui/index.jsx";
 import styles from "./components.module.css";
+import { estoqueService } from "../../../config/services.js";
 
-export function EstoqueCriticoCard({ estoqueBaixo, onNavigate }) {
+export function EstoqueCriticoCard({ onNavigate }) {
+  const { data: estoqueBaixo = [] } = useSuspenseQuery({
+    queryKey: qk.estoques("baixo"),
+    queryFn: () => estoqueService.listarBaixo(),
+  });
+
   return (
     <Card
       title="Estoque crítico"

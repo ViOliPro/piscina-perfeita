@@ -1,47 +1,57 @@
-import { ErrorMessage, LoadingSpinner } from "../../components/ui/index.jsx";
+import { Suspense } from "react";
+import { useQueryErrorResetBoundary } from "@tanstack/react-query";
+import { ErrorBoundary } from "../../components/ui/ErrorBoundary.jsx";
 import { useIsMobile } from "../../hooks/useIsMobile.js";
-import { useDashboardData } from "./hooks/useDashboardData.js";
 import { KpiSummary } from "./components/KpiSummary.jsx";
 import { QualidadeAguaCard } from "./components/QualidadeAguaCard.jsx";
 import { EstoqueCriticoCard } from "./components/EstoqueCriticoCard.jsx";
 import { UltimasAnalisesCard } from "./components/UltimasAnalisesCard.jsx";
 import { MovimentacoesRecentesCard } from "./components/MovimentacoesRecentesCard.jsx";
+import { CardSkeleton } from "./components/CardSkeleton.jsx";
 import styles from "./Dashboard.module.css";
+
+function Section({ children, fallback }) {
+  const { reset } = useQueryErrorResetBoundary();
+  return (
+    <ErrorBoundary onReset={reset}>
+      <Suspense fallback={fallback}>{children}</Suspense>
+    </ErrorBoundary>
+  );
+}
 
 export default function Dashboard({ onNavigate }) {
   const isMobile = useIsMobile();
-  const { loading, error, piscinas, analises, estoqueBaixo, movimentos } =
-    useDashboardData();
-
-  if (loading) return <LoadingSpinner />;
-  if (error) return <ErrorMessage message={error} />;
-
-  const ultimaAnalise = analises[0];
-  const analisesHoje = analises.filter((analise) => {
-    const data = new Date(analise.dataAnalise);
-    const agora = new Date();
-    return data.toDateString() === agora.toDateString();
-  });
 
   return (
     <div>
-      <KpiSummary
-        totalPiscinas={piscinas.length}
-        analisesHoje={analisesHoje.length}
-        estoqueBaixoQtd={estoqueBaixo.length}
-        movimentacoesQtd={movimentos.length}
-      />
+      <Section
+        fallback={<div className="pp-kpi-grid">{/* 4 placeholders */}</div>}
+      >
+        <KpiSummary />
+      </Section>
 
       <div
         className={`${styles.mainGrid} ${isMobile ? styles.mainGridMobile : ""}`}
       >
-        <QualidadeAguaCard ultimaAnalise={ultimaAnalise} />
-        <EstoqueCriticoCard
-          estoqueBaixo={estoqueBaixo}
-          onNavigate={onNavigate}
-        />
-        <UltimasAnalisesCard analises={analises} />
-        <MovimentacoesRecentesCard movimentos={movimentos} />
+        <Section
+          fallback={<CardSkeleton title="Qualidade da água" lines={5} />}
+        >
+          <QualidadeAguaCard />
+        </Section>
+
+        <Section fallback={<CardSkeleton title="Estoque crítico" lines={4} />}>
+          <EstoqueCriticoCard onNavigate={onNavigate} />
+        </Section>
+
+        <Section fallback={<CardSkeleton title="Últimas análises" lines={5} />}>
+          <UltimasAnalisesCard />
+        </Section>
+
+        <Section
+          fallback={<CardSkeleton title="Movimentações recentes" lines={4} />}
+        >
+          <MovimentacoesRecentesCard />
+        </Section>
       </div>
     </div>
   );

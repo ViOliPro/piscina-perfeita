@@ -1,8 +1,20 @@
-import { Card } from "../../../components/ui/index.jsx";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { qk, diasAtrasISO } from "../../../helpers/queryKeys.js";
+import { movimentacaoService } from "../../../config/services.js";
 import { TIPO_LABELS, TIPO_MOVIMENTACAO } from "../../../config/index.js";
+import { Card } from "../../../components/ui/index.jsx";
 import styles from "./components.module.css";
 
-export function MovimentacoesRecentesCard({ movimentos }) {
+export function MovimentacoesRecentesCard() {
+  const { data: movimentos } = useSuspenseQuery({
+    queryKey: qk.movimentacoes({ dias: 14, limit: 5 }),
+    queryFn: () =>
+      movimentacaoService.listar({
+        dataInicio: diasAtrasISO(14),
+        limit: 5,
+      }),
+  });
+
   return (
     <Card title="Movimentações recentes">
       {movimentos.length === 0 ? (
