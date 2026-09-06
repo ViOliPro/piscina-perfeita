@@ -61,6 +61,7 @@ export const API_ENDPOINTS = {
   // Aplicações de produto (gera movimentação + baixa de estoque automaticamente)
   aplicacoesProduto: `${API_BASE_URL}/aplicacoesproduto`,
   aplicacaoProdutoById: (id) => `${API_BASE_URL}/aplicacoesproduto/${id}`,
+  aplicacoesUsoProdutos: `${API_BASE_URL}/aplicacoesproduto/uso-produtos`,
 
   // Locais (condomínios/unidades)
   locais: `${API_BASE_URL}/locais`,

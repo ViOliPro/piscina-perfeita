@@ -48,9 +48,14 @@ namespace PiscinaPerfeita.Api.Service.AplicacoesProduto
             _user = user ?? throw new ArgumentNullException(nameof(user));
         }
 
-        public async Task<List<AplicacaoProdutoResponseDto>> Show()
+        public async Task<List<AplicacaoProdutoResponseDto>> Show(
+            DateTimeOffset? dataInicio = null,
+            DateTimeOffset? dataFim = null,
+            Guid? piscinaId = null,
+            int? limit = null
+        )
         {
-            return await _aplicacaoRepository.Show();
+            return await _aplicacaoRepository.Show(dataInicio, dataFim, piscinaId, limit);
         }
 
         public async Task<AplicacaoProdutoResponseDto> GetById(Guid id)
@@ -79,9 +84,7 @@ namespace PiscinaPerfeita.Api.Service.AplicacoesProduto
 
             var deposito = await _depositoRepository.GetById(dto.DepositoId);
             if (deposito == null)
-                throw new KeyNotFoundException(
-                    $"Depósito com id {dto.DepositoId} não encontrado."
-                );
+                throw new KeyNotFoundException($"Depósito com id {dto.DepositoId} não encontrado.");
 
             if (dto.AnaliseId.HasValue)
             {
@@ -165,5 +168,84 @@ namespace PiscinaPerfeita.Api.Service.AplicacoesProduto
                 Observacoes = aplicacao.Observacoes,
             };
         }
+
+        public async Task<UsoProdutosResponseDto> ObterUsoProdutos(
+            Guid piscinaId,
+            DateTimeOffset? inicio,
+            DateTimeOffset? fim
+        )
+        {
+            var piscinaDb = await _piscinaRepository.GetById(piscinaId);
+            if (piscinaDb == null)
+                throw new KeyNotFoundException("Piscina não encontrada.");
+
+            var fimReal = fim ?? DateTimeOffset.UtcNow;
+            var inicioReal = inicio ?? fimReal.AddDays(-30);
+
+            var linhas = await _aplicacaoRepository.ListarParaUsoProdutos(
+                piscinaId,
+                inicioReal,
+                fimReal
+            );
+
+            // Converte cada lançamento para a unidade base do produto e
+            // agrega em memória — volume típico (30 dias) é pequeno.
+            var itens = linhas
+                .GroupBy(l => new
+                {
+                    l.ProdutoId,
+                    l.ProdutoNome,
+                    l.UnidadeMedidaProduto,
+                })
+                .Select(g =>
+                {
+                    decimal total = 0;
+                    foreach (var l in g)
+                    {
+                        try
+                        {
+                            total += ConversorUnidade.ConverterParaUnidadeBase(
+                                l.Quantidade,
+                                l.UnidadeLancamento,
+                                g.Key.UnidadeMedidaProduto
+                            );
+                        }
+                        catch (InvalidOperationException)
+                        {
+                            // Unidade incompatível/desconhecida: conta o valor bruto
+                            // para não descartar o registro do gráfico.
+                            total += l.Quantidade;
+                        }
+                    }
+
+                    return new UsoProdutoItemDto
+                    {
+                        ProdutoId = g.Key.ProdutoId,
+                        ProdutoNome = g.Key.ProdutoNome,
+                        Unidade = g.Key.UnidadeMedidaProduto,
+                        QuantidadeTotal = total,
+                        QuantidadeAplicacoes = g.Count(),
+                    };
+                })
+                .OrderByDescending(i => i.QuantidadeTotal)
+                .ToList();
+
+            var textoResumo =
+                itens.Count == 0 ? "Nenhuma aplicação registrada no período."
+                : itens.Count == 1
+                    ? $"{itens[0].ProdutoNome}: {FormatQtd(itens[0].QuantidadeTotal)} {itens[0].Unidade} ({itens[0].QuantidadeAplicacoes} aplicação(ões))"
+                : $"{itens.Count} produtos — líder: {itens[0].ProdutoNome} ({FormatQtd(itens[0].QuantidadeTotal)} {itens[0].Unidade})";
+
+            return new UsoProdutosResponseDto
+            {
+                Piscina = new NomeIdDto(piscinaId, piscinaDb.Nome),
+                Periodo = new PeriodoDto { Inicio = inicioReal, Fim = fimReal },
+                Itens = itens,
+                TextoResumo = textoResumo,
+            };
+        }
+
+        private static string FormatQtd(decimal v) =>
+            v == Math.Truncate(v) ? ((int)v).ToString() : v.ToString("0.####");
     }
 }

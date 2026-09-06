@@ -14,6 +14,10 @@ export const qk = {
   analises: (filtros = {}) => ["analises", filtros],
 
   movimentacoes: (filtros = {}) => ["movimentacoes", filtros],
+
+  aplicacoes: (filtros = {}) => ["aplicacoes", filtros],
+
+  usoProdutos: (filtros = {}) => ["aplicacoes", "uso-produtos", filtros],
 };
 
 /** Helpers de data para filtros padrão */

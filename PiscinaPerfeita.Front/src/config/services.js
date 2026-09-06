@@ -31,6 +31,7 @@ import {
   toApiMovimentacao,
   fromApiAplicacaoProduto,
   fromApiAplicacaoProdutoList,
+  fromApiUsoProdutos,
   toApiAplicacaoProduto,
   fromApiLocal,
   fromApiLocalList,
@@ -423,12 +424,29 @@ export const movimentacaoService = {
 // Aplicações de Produto
 // ----------------------------------------------------------
 export const aplicacaoProdutoService = {
-  listar: () =>
-    get(API_ENDPOINTS.aplicacoesProduto).then(fromApiAplicacaoProdutoList),
+  listar: ({ dataInicio, dataFim, piscinaId, limit } = {}) => {
+    const params = {};
+    if (dataInicio) params.dataInicio = dataInicio;
+    if (dataFim) params.dataFim = dataFim;
+    if (piscinaId) params.piscinaId = piscinaId;
+    if (limit != null) params.limit = limit;
+    return get(API_ENDPOINTS.aplicacoesProduto, { params }).then(
+      fromApiAplicacaoProdutoList,
+    );
+  },
   buscar: (id) =>
     get(API_ENDPOINTS.aplicacaoProdutoById(id)).then(fromApiAplicacaoProduto),
   criar: (dto) =>
     post(API_ENDPOINTS.aplicacoesProduto, toApiAplicacaoProduto(dto)).then(
       fromApiAplicacaoProduto,
     ),
+  // inicio/fim opcionais — string ISO. Sem eles, o backend usa os últimos 30 dias.
+  obterUsoProdutos: (piscinaId, { inicio, fim } = {}) => {
+    const params = { piscinaId };
+    if (inicio) params.inicio = inicio;
+    if (fim) params.fim = fim;
+    return get(API_ENDPOINTS.aplicacoesUsoProdutos, { params }).then(
+      fromApiUsoProdutos,
+    );
+  },
 };
