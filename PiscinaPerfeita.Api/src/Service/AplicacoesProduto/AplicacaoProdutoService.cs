@@ -10,6 +10,7 @@ using PiscinaPerfeita.Api.Repository.Depositos;
 using PiscinaPerfeita.Api.Repository.Estoques;
 using PiscinaPerfeita.Api.Repository.Piscinas;
 using PiscinaPerfeita.Api.Repository.Produtos;
+using PiscinaPerfeita.Api.Service.Audit;
 
 namespace PiscinaPerfeita.Api.Service.AplicacoesProduto
 {
@@ -22,6 +23,7 @@ namespace PiscinaPerfeita.Api.Service.AplicacoesProduto
         private readonly IDepositoRepository _depositoRepository;
         private readonly IAnaliseRepository _analiseRepository;
         private readonly IAuthenticatedUser _user;
+        private readonly IAuditService _audit;
 
         public AplicacaoProdutoService(
             IAplicacaoProdutoRepository aplicacaoRepository,
@@ -30,7 +32,8 @@ namespace PiscinaPerfeita.Api.Service.AplicacoesProduto
             IProdutoRepository produtoRepository,
             IDepositoRepository depositoRepository,
             IAnaliseRepository analiseRepository,
-            IAuthenticatedUser user
+            IAuthenticatedUser user,
+            IAuditService audit
         )
         {
             _aplicacaoRepository =
@@ -45,6 +48,7 @@ namespace PiscinaPerfeita.Api.Service.AplicacoesProduto
                 depositoRepository ?? throw new ArgumentNullException(nameof(depositoRepository));
             _analiseRepository =
                 analiseRepository ?? throw new ArgumentNullException(nameof(analiseRepository));
+            _audit = audit ?? throw new ArgumentNullException(nameof(audit));
             _user = user ?? throw new ArgumentNullException(nameof(user));
         }
 
@@ -151,6 +155,26 @@ namespace PiscinaPerfeita.Api.Service.AplicacoesProduto
                 movimentacao,
                 estoqueDb.Id,
                 novaQuantidadeEstoque
+            );
+
+            await _audit.WriteAsync(
+                new AuditEntry
+                {
+                    Action = AuditActions.AplicacaoProdutoCreate,
+                    EntityType = "AplicacaoProduto",
+                    EntityId = aplicacao.Id,
+                    Summary = $"Aplicação de produto {dto.ProdutoId} na piscina {dto.PiscinaId}",
+                    Payload = new
+                    {
+                        piscinaId = dto.PiscinaId,
+                        produtoId = dto.ProdutoId,
+                        depositoId = dto.DepositoId,
+                        quantidade = aplicacao.Quantidade,
+                        unidade = aplicacao.UnidadeLancamento,
+                        analiseId = aplicacao.AnaliseId,
+                        movimentacaoEstoqueId = movimentacao.Id,
+                    },
+                }
             );
 
             return new AplicacaoProdutoResponseDto
