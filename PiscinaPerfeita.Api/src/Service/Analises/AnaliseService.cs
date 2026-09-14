@@ -1,4 +1,4 @@
-﻿using PiscinaPerfeita.Api.Dtos.Request;
+using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Helpers;
 using PiscinaPerfeita.Api.Helpers.Authenticated;
@@ -6,6 +6,7 @@ using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Repository.Analises;
 using PiscinaPerfeita.Api.Repository.Piscinas;
 using PiscinaPerfeita.Api.Repository.Usuarios;
+using PiscinaPerfeita.Api.Service.Audit;
 
 namespace PiscinaPerfeita.Api.Service.Analises
 {
@@ -15,12 +16,14 @@ namespace PiscinaPerfeita.Api.Service.Analises
         private readonly IAuthenticatedUser _user;
         private readonly IUsuarioRepository _userRepository;
         private readonly IPiscinaRepository _piscinaRepository;
+        private readonly IAuditService _audit;
 
         public AnaliseService(
             IAnaliseRepository analisesRepository,
             IAuthenticatedUser user,
             IUsuarioRepository userRepository,
-            IPiscinaRepository piscinaRepository
+            IPiscinaRepository piscinaRepository,
+            IAuditService audit
         )
         {
             _analiseRepository =
@@ -30,6 +33,7 @@ namespace PiscinaPerfeita.Api.Service.Analises
                 userRepository ?? throw new ArgumentNullException(nameof(userRepository));
             _piscinaRepository =
                 piscinaRepository ?? throw new ArgumentNullException(nameof(piscinaRepository));
+            _audit = audit ?? throw new ArgumentNullException(nameof(audit));
         }
 
         // Implementação dos métodos do serviço
@@ -82,6 +86,24 @@ namespace PiscinaPerfeita.Api.Service.Analises
             };
 
             await _analiseRepository.Create(analise);
+
+            await _audit.WriteAsync(
+                new AuditEntry
+                {
+                    Action = AuditActions.AnaliseCreate,
+                    EntityType = "Analise",
+                    EntityId = analise.Id,
+                    Summary = $"Análise na piscina {dto.PiscinaId}",
+                    Payload = new
+                    {
+                        piscinaId = dto.PiscinaId,
+                        ph = dto.Ph,
+                        cloroLivre = dto.CloroLivre,
+                        alcalinidade = dto.Alcalinidade,
+                        temperatura = dto.Temperatura,
+                    },
+                }
+            );
 
             return new AnaliseResponseDto
             {
@@ -143,6 +165,17 @@ namespace PiscinaPerfeita.Api.Service.Analises
             }
 
             await _analiseRepository.Delete(id);
+
+            await _audit.WriteAsync(
+                new AuditEntry
+                {
+                    Action = AuditActions.AnaliseDelete,
+                    EntityType = "Analise",
+                    EntityId = id,
+                    Summary = $"Exclusão de análise {id}",
+                    Payload = new { piscinaId = analisesDb.PiscinaId },
+                }
+            );
         }
 
         public async Task<QualidadeAguaResponseDto> ObterQualidadeAgua(
