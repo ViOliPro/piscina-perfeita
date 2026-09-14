@@ -1,4 +1,4 @@
-﻿using PiscinaPerfeita.Api.Data;
+using PiscinaPerfeita.Api.Data;
 using PiscinaPerfeita.Api.Helpers.Authenticated;
 using PiscinaPerfeita.Api.Repository;
 using PiscinaPerfeita.Api.Repository.Analises;
@@ -12,8 +12,6 @@ using PiscinaPerfeita.Api.Repository.Piscinas;
 using PiscinaPerfeita.Api.Repository.Produtos;
 using PiscinaPerfeita.Api.Repository.Usuarios;
 using PiscinaPerfeita.Api.Repository.UsuariosLocal;
-// <summary>
-// Classe responsável por configurar a injeção de dependências para os serviços e repositórios
 using PiscinaPerfeita.Api.Service.Account;
 using PiscinaPerfeita.Api.Service.Account.Google;
 using PiscinaPerfeita.Api.Service.Analises;
@@ -28,6 +26,8 @@ using PiscinaPerfeita.Api.Service.Piscinas;
 using PiscinaPerfeita.Api.Service.Produtos;
 using PiscinaPerfeita.Api.Service.Usuarios;
 using PiscinaPerfeita.Api.Service.UsuariosLocal;
+using PiscinaPerfeita.Api.Service.Audit;
+using PiscinaPerfeita.Api.Repository.AuditLogs;
 
 namespace PiscinaPerfeita.Api.Extension
 {
@@ -35,7 +35,6 @@ namespace PiscinaPerfeita.Api.Extension
     {
         public static IServiceCollection ResolveDependencies(this IServiceCollection services)
         {
-            // 1. Registre aqui todos os seus Services
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IUsuarioService, UsuarioService>();
             services.AddScoped<IEstoqueService, EstoqueService>();
@@ -51,13 +50,12 @@ namespace PiscinaPerfeita.Api.Extension
             services.AddScoped<IHidrometroService, HidrometroService>();
             services.AddHttpClient();
             services.AddScoped<IEmailService, ResendEmailService>();
-            //Autheticated
             services.AddScoped<IAuthenticatedUser, AuthenticatedUser>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IGoogleAuthService, GoogleAuthService>();
             services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
+            services.AddScoped<IAuditService, AuditService>();
 
-            // 2. Registre aqui todos os seus Repositories
             services.AddScoped<IUsuarioRepository, UsuarioRepository>();
             services.AddScoped<IEstoqueRepository, EstoqueRepository>();
             services.AddScoped<IPiscinaRepository, PiscinaRepository>();
@@ -70,8 +68,7 @@ namespace PiscinaPerfeita.Api.Extension
             services.AddScoped<IAplicacaoProdutoRepository, AplicacaoProdutoRepository>();
             services.AddScoped<IHidrometroRepository, HidrometroRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-
-            // Qualquer outra injeção (Validadores, Helpers, etc) entra aqui embaixo
+            services.AddScoped<IAuditLogRepository, AuditLogRepository>();
 
             return services;
         }
