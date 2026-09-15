@@ -76,6 +76,7 @@ namespace PiscinaPerfeita.Api.Service.Analises
                 Ph = dto.Ph ?? null,
                 CloroLivre = dto.CloroLivre ?? null,
                 Alcalinidade = dto.Alcalinidade ?? null,
+                DurezaCalcica = dto.DurezaCalcica ?? null,
                 Temperatura = dto.Temperatura ?? null,
                 Observacoes = dto.Observacoes,
                 DataAnalise = dto.DataAnalise?.ToUniversalTime() ?? DateTimeOffset.UtcNow,
@@ -90,6 +91,7 @@ namespace PiscinaPerfeita.Api.Service.Analises
                 Ph = analise.Ph,
                 CloroLivre = analise.CloroLivre,
                 Alcalinidade = analise.Alcalinidade,
+                DurezaCalcica = analise.DurezaCalcica,
                 Temperatura = analise.Temperatura,
                 Observacoes = analise.Observacoes,
                 Piscina = new NomeIdDto(analise.PiscinaId, piscinaDb.Nome),
@@ -113,6 +115,7 @@ namespace PiscinaPerfeita.Api.Service.Analises
                 Ph = dto.Ph,
                 CloroLivre = dto.CloroLivre,
                 Alcalinidade = dto.Alcalinidade,
+                DurezaCalcica = dto.DurezaCalcica,
                 Temperatura = dto.Temperatura,
                 Observacoes = dto.Observacoes,
             };
@@ -126,6 +129,7 @@ namespace PiscinaPerfeita.Api.Service.Analises
                 Ph = analisesUpdated.Ph,
                 CloroLivre = analisesUpdated.CloroLivre,
                 Alcalinidade = analisesUpdated.Alcalinidade,
+                DurezaCalcica = analisesUpdated.DurezaCalcica,
                 Temperatura = analisesUpdated.Temperatura,
                 Observacoes = analisesUpdated.Observacoes,
                 Piscina = new NomeIdDto(analisesUpdated.PiscinaId, null),
@@ -176,6 +180,10 @@ namespace PiscinaPerfeita.Api.Service.Analises
                     ultima?.Alcalinidade,
                     AnaliseFaixasIdeais.Alcalinidade
                 ),
+                DurezaCalcica = MontarParametroResumo(
+                    ultima?.DurezaCalcica,
+                    AnaliseFaixasIdeais.DurezaCalcica
+                ),
                 Temperatura = MontarParametroResumo(
                     ultima?.Temperatura,
                     AnaliseFaixasIdeais.Temperatura
@@ -204,6 +212,11 @@ namespace PiscinaPerfeita.Api.Service.Analises
                         Min = AnaliseFaixasIdeais.Alcalinidade.Min,
                         Max = AnaliseFaixasIdeais.Alcalinidade.Max,
                     },
+                    DurezaCalcica = new FaixaIdealDto
+                    {
+                        Min = AnaliseFaixasIdeais.DurezaCalcica.Min,
+                        Max = AnaliseFaixasIdeais.DurezaCalcica.Max,
+                    },
                     Temperatura = new FaixaIdealDto
                     {
                         Min = AnaliseFaixasIdeais.Temperatura.Min,
@@ -221,6 +234,7 @@ namespace PiscinaPerfeita.Api.Service.Analises
                         Ph = a.Ph,
                         CloroLivre = a.CloroLivre,
                         Alcalinidade = a.Alcalinidade,
+                        DurezaCalcica = a.DurezaCalcica,
                         Temperatura = a.Temperatura,
                     })
                     .ToList(),
@@ -242,7 +256,7 @@ namespace PiscinaPerfeita.Api.Service.Analises
 
         // Prioridade de destaque quando mais de um parâmetro está fora da
         // faixa: cloro primeiro (afeta desinfecção/segurança da água mais
-        // diretamente), depois pH, alcalinidade e temperatura.
+        // diretamente), depois pH, alcalinidade, dureza cálcica e temperatura.
         private static string MontarTextoResumo(ResumoQualidadeAguaDto resumo)
         {
             if (resumo.UltimaAnalise is null)
@@ -258,6 +272,12 @@ namespace PiscinaPerfeita.Api.Service.Analises
                 ("Cloro", resumo.CloroLivre, "ppm", AnaliseFaixasIdeais.CloroLivre),
                 ("pH", resumo.Ph, "", AnaliseFaixasIdeais.Ph),
                 ("Alcalinidade", resumo.Alcalinidade, "ppm", AnaliseFaixasIdeais.Alcalinidade),
+                (
+                    "Dureza cálcica",
+                    resumo.DurezaCalcica,
+                    "ppm",
+                    AnaliseFaixasIdeais.DurezaCalcica
+                ),
                 ("Temperatura", resumo.Temperatura, "°C", AnaliseFaixasIdeais.Temperatura),
             ];
 
