@@ -69,6 +69,7 @@ function AnaliseForm({ piscinas, onSubmit, onCancel, loading }) {
     ph: "",
     cloroLivre: "",
     alcalinidade: "",
+    durezaCalcica: "",
     temperatura: "",
     observacoes: "",
   });
@@ -84,6 +85,7 @@ function AnaliseForm({ piscinas, onSubmit, onCancel, loading }) {
       ph: form.ph ? parseFloat(form.ph) : null,
       cloroLivre: form.cloroLivre ? parseFloat(form.cloroLivre) : null,
       alcalinidade: form.alcalinidade ? parseFloat(form.alcalinidade) : null,
+      durezaCalcica: form.durezaCalcica ? parseFloat(form.durezaCalcica) : null,
       temperatura: form.temperatura ? parseFloat(form.temperatura) : null,
       // Operador/Visualizador nunca enviam usuarioId — mesmo que o campo
       // nunca apareça na UI para esses perfis, garantimos aqui que o
@@ -174,6 +176,19 @@ function AnaliseForm({ piscinas, onSubmit, onCancel, loading }) {
             style={inputStyle}
             value={form.alcalinidade}
             onChange={set("alcalinidade")}
+          />
+        </FormField>
+        <FormField
+          label={`Dureza cálcica mg/L  (ideal: ${ANALISE_FAIXAS.durezaCalcica.min}–${ANALISE_FAIXAS.durezaCalcica.max})`}
+        >
+          <input
+            type="number"
+            step="1"
+            min="0"
+            placeholder="Ex.: 275"
+            style={inputStyle}
+            value={form.durezaCalcica}
+            onChange={set("durezaCalcica")}
           />
         </FormField>
         <FormField
@@ -324,6 +339,11 @@ export default function Analises({ onRegistrarAplicacao }) {
     {
       key: "alcalinidade",
       label: "Alcalinidade",
+      render: (v) => (v ? `${v} mg/L` : "—"),
+    },
+    {
+      key: "durezaCalcica",
+      label: "Dureza cálcica",
       render: (v) => (v ? `${v} mg/L` : "—"),
     },
     { key: "temperatura", label: "Temp.", render: (v) => (v ? `${v}°C` : "—") },

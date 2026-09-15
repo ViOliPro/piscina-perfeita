@@ -8,6 +8,7 @@ const CORES = {
   ph: "#2E86AB",
   cloroLivre: "#1a7a43",
   alcalinidade: "#8e5fd1",
+  durezaCalcica: "#b5482e",
   temperatura: "#c07a1e",
 };
 
@@ -113,6 +114,7 @@ export default function QualidadeAguaHistoricoCard({ piscinaId, piscinaNome }) {
                       resumo.cloroLivre,
                       resumo.ph,
                       resumo.alcalinidade,
+                      resumo.durezaCalcica,
                       resumo.temperatura,
                     ].find((p) => p.status === "abaixo" || p.status === "acima")
                       ?.status ?? "ideal"
@@ -162,11 +164,18 @@ export default function QualidadeAguaHistoricoCard({ piscinaId, piscinaNome }) {
 }
 
 function montarSeries(dados) {
-  const categorias = ["ph", "cloroLivre", "alcalinidade", "temperatura"];
+  const categorias = [
+    "ph",
+    "cloroLivre",
+    "alcalinidade",
+    "durezaCalcica",
+    "temperatura",
+  ];
   const nomes = {
     ph: "pH",
     cloroLivre: "Cloro livre",
     alcalinidade: "Alcalinidade",
+    durezaCalcica: "Dureza cálcica",
     temperatura: "Temperatura",
   };
 
@@ -186,7 +195,13 @@ function montarOpcoes(dados) {
 
   return {
     chart: { toolbar: { show: false }, zoom: { enabled: false } },
-    colors: [CORES.ph, CORES.cloroLivre, CORES.alcalinidade, CORES.temperatura],
+    colors: [
+      CORES.ph,
+      CORES.cloroLivre,
+      CORES.alcalinidade,
+      CORES.durezaCalcica,
+      CORES.temperatura,
+    ],
     stroke: { width: 2, curve: "smooth" },
     xaxis: { type: "datetime" },
     legend: { position: "top", fontSize: "12px" },
