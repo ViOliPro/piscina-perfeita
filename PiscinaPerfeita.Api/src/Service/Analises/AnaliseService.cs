@@ -165,7 +165,7 @@ namespace PiscinaPerfeita.Api.Service.Analises
             var analisesDb = await _analiseRepository.GetById(id);
             if (analisesDb == null)
             {
-                throw new KeyNotFoundException($"Estoque com id {id} não encontrado.");
+                throw new KeyNotFoundException($"Analise com id {id} não encontrado.");
             }
 
             await _analiseRepository.Delete(id);
@@ -177,7 +177,7 @@ namespace PiscinaPerfeita.Api.Service.Analises
                     EntityType = "Analise",
                     EntityId = id,
                     Summary = $"Exclusão de análise {id}",
-                    Payload = new { piscinaId = analisesDb.PiscinaId },
+                    Payload = new { piscinaId = analisesDb.Piscina?.Id },
                 }
             );
         }
@@ -305,12 +305,7 @@ namespace PiscinaPerfeita.Api.Service.Analises
                 ("Cloro", resumo.CloroLivre, "ppm", AnaliseFaixasIdeais.CloroLivre),
                 ("pH", resumo.Ph, "", AnaliseFaixasIdeais.Ph),
                 ("Alcalinidade", resumo.Alcalinidade, "ppm", AnaliseFaixasIdeais.Alcalinidade),
-                (
-                    "Dureza cálcica",
-                    resumo.DurezaCalcica,
-                    "ppm",
-                    AnaliseFaixasIdeais.DurezaCalcica
-                ),
+                ("Dureza cálcica", resumo.DurezaCalcica, "ppm", AnaliseFaixasIdeais.DurezaCalcica),
                 ("Temperatura", resumo.Temperatura, "°C", AnaliseFaixasIdeais.Temperatura),
             ];
 

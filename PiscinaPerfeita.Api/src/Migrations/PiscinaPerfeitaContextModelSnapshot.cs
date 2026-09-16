@@ -169,6 +169,107 @@ namespace PiscinaPerfeita.Api.Migrations
                     b.ToTable("AplicacoesProduto", "piscina-perfeita");
                 });
 
+            modelBuilder.Entity("PiscinaPerfeita.Api.Models.AuditLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("action");
+
+                    b.Property<Guid?>("CorrelationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("correlationid");
+
+                    b.Property<Guid?>("EntityId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("entityid");
+
+                    b.Property<string>("EntityType")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("entitytype");
+
+                    b.Property<string>("HttpMethod")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("httpmethod");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("ipaddress");
+
+                    b.Property<Guid?>("LocalId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("localid");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurredat")
+                        .HasDefaultValueSql("now() at time zone 'utc'");
+
+                    b.Property<string>("Path")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("path");
+
+                    b.Property<string>("Payload")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("payload");
+
+                    b.Property<int?>("StatusCode")
+                        .HasColumnType("integer")
+                        .HasColumnName("statuscode");
+
+                    b.Property<bool>("Success")
+                        .HasColumnType("boolean")
+                        .HasColumnName("success");
+
+                    b.Property<string>("Summary")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("summary");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("useragent");
+
+                    b.Property<string>("UsuarioEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("usuarioemail");
+
+                    b.Property<Guid?>("UsuarioId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("usuarioid");
+
+                    b.HasKey("Id")
+                        .HasName("pk_auditlogs");
+
+                    b.HasIndex("Action", "OccurredAt")
+                        .HasDatabaseName("ix_auditlogs_action_occurredat");
+
+                    b.HasIndex("LocalId", "OccurredAt")
+                        .HasDatabaseName("ix_auditlogs_localid_occurredat");
+
+                    b.HasIndex("UsuarioId", "OccurredAt")
+                        .HasDatabaseName("ix_auditlogs_usuarioid_occurredat");
+
+                    b.HasIndex("EntityType", "EntityId", "OccurredAt")
+                        .HasDatabaseName("ix_auditlogs_entitytype_entityid_occurredat");
+
+                    b.ToTable("AuditLogs", "piscina-perfeita");
+                });
+
             modelBuilder.Entity("PiscinaPerfeita.Api.Models.ConviteToken", b =>
                 {
                     b.Property<Guid>("Id")
