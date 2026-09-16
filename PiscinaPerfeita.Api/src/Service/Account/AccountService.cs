@@ -3,6 +3,7 @@ using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Helpers;
 using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Repository.Usuarios;
+using PiscinaPerfeita.Api.Service.Audit;
 
 namespace PiscinaPerfeita.Api.Service.Account
 {
@@ -10,21 +11,55 @@ namespace PiscinaPerfeita.Api.Service.Account
     {
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly ITokenService _tokenService;
+        private readonly IAuditService _audit;
 
-        public AccountService(IUsuarioRepository usuarioRepository, ITokenService tokenService)
+        public AccountService(
+            IUsuarioRepository usuarioRepository,
+            ITokenService tokenService,
+            IAuditService audit
+        )
         {
             _usuarioRepository =
                 usuarioRepository ?? throw new ArgumentNullException(nameof(usuarioRepository));
             _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
+            _audit = audit ?? throw new ArgumentNullException(nameof(audit));
         }
 
         public async Task<LoginResult> Login(AccountRequestDto request)
         {
-            var usuario = await ValidacaoDadosLogin(request);
-            VerifyPasswordCheck(request.Password, usuario.SenhaHash);
+            try
+            {
+                var usuario = await ValidacaoDadosLogin(request);
+                VerifyPasswordCheck(request.Password, usuario.SenhaHash);
 
-            var resultado = await _tokenService.GerarTokenAsync(usuario);
-            return new LoginResult(MontarResponse(usuario, resultado), resultado.RefreshToken);
+                var resultado = await _tokenService.GerarTokenAsync(usuario);
+                await _audit.WriteAsync(
+                    new AuditEntry
+                    {
+                        Action = AuditActions.AuthLoginSuccess,
+                        Success = true,
+                        Summary = "Login ok",
+                        UsuarioId = usuario.Id,
+                        UsuarioEmail = usuario.Email,
+                        Payload = new { method = "password" },
+                    }
+                );
+                return new LoginResult(MontarResponse(usuario, resultado), resultado.RefreshToken);
+            }
+            catch (Exception)
+            {
+                await _audit.WriteAsync(
+                    new AuditEntry
+                    {
+                        Action = AuditActions.AuthLoginFailure,
+                        Success = false,
+                        Summary = "Credenciais inválidas",
+                        UsuarioEmail = request.Email,
+                        Payload = new { method = "password" },
+                    }
+                );
+                throw;
+            }
         }
 
         public async Task<LoginResult> SwitchLocal(Guid userId, Guid? newLocalId)
@@ -34,6 +69,18 @@ namespace PiscinaPerfeita.Api.Service.Account
                 throw new KeyNotFoundException("Usuário não encontrado.");
 
             var resultado = await _tokenService.GerarTokenParaLocalAsync(usuario, newLocalId);
+            await _audit.WriteAsync(
+                new AuditEntry
+                {
+                    Action = AuditActions.AuthSwitchLocal,
+                    Success = true,
+                    Summary = $"Troca de Local para {newLocalId}",
+                    UsuarioId = userId,
+                    UsuarioEmail = usuario.Email,
+                    LocalId = newLocalId,
+                    Payload = new { newLocalId },
+                }
+            );
             return new LoginResult(MontarResponse(usuario, resultado), resultado.RefreshToken);
         }
 

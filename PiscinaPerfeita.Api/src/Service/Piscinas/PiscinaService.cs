@@ -1,9 +1,10 @@
-﻿using PiscinaPerfeita.Api.Dtos.Request;
+using PiscinaPerfeita.Api.Dtos.Request;
 using PiscinaPerfeita.Api.Dtos.Response;
 using PiscinaPerfeita.Api.Helpers.Authenticated;
 using PiscinaPerfeita.Api.Models;
 using PiscinaPerfeita.Api.Repository.Piscinas;
 using PiscinaPerfeita.Api.Repository.Usuarios;
+using PiscinaPerfeita.Api.Service.Audit;
 
 namespace PiscinaPerfeita.Api.Service.Piscinas
 {
@@ -12,11 +13,13 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
         private readonly IPiscinaRepository _piscinaRepository;
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IAuthenticatedUser _user;
+        private readonly IAuditService _audit;
 
         public PiscinaService(
             IPiscinaRepository piscinaRepository,
             IUsuarioRepository usuarioRepository,
-            IAuthenticatedUser user
+            IAuthenticatedUser user,
+            IAuditService audit
         )
         {
             _piscinaRepository =
@@ -24,16 +27,14 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
             _usuarioRepository =
                 usuarioRepository ?? throw new ArgumentNullException(nameof(usuarioRepository));
             _user = user ?? throw new ArgumentNullException(nameof(user));
+            _audit = audit ?? throw new ArgumentNullException(nameof(audit));
         }
 
-        // Implementação dos métodos do serviço
-        // Metodo Show: Retorna uma lista de todos as piscinas.
         public async Task<List<PiscinaResponseDto>> Show()
         {
             return await _piscinaRepository.Show();
         }
 
-        // Metodo GetById: Retorna uma piscina específico com base no ID.
         public async Task<PiscinaResponseDto> GetById(Guid id)
         {
             var piscina = await _piscinaRepository.GetById(id);
@@ -54,7 +55,6 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
             int limitMovimentacoes = 10
         )
         {
-            // Default: mês corrente (mesmo padrão de Análises/Movimentações)
             var agora = DateTimeOffset.UtcNow;
             var inicioEfetivo =
                 inicio ?? new DateTimeOffset(agora.Year, agora.Month, 1, 0, 0, 0, TimeSpan.Zero);
@@ -107,6 +107,23 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
 
             await _piscinaRepository.Create(piscina);
 
+            await _audit.WriteAsync(
+                new AuditEntry
+                {
+                    Action = AuditActions.PiscinaCreate,
+                    EntityType = "Piscina",
+                    EntityId = piscina.Id,
+                    Summary = $"Piscina criada: {piscina.Nome}",
+                    Payload = new
+                    {
+                        nome = piscina.Nome,
+                        volumeLitros = piscina.VolumeLitros,
+                        profundidadeMedia = piscina.ProfundidadeMedia,
+                        usuarioId = piscina.UsuarioId,
+                    },
+                }
+            );
+
             return new PiscinaResponseDto
             {
                 Id = piscina.Id,
@@ -118,7 +135,6 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
             };
         }
 
-        // Metodo Update: Atualiza uma piscina existente com base no ID e nos dados fornecidos.
         public async Task<PiscinaResponseDto> Update(Guid id, PiscinaRequestDto dto)
         {
             var piscinaDb = await _piscinaRepository.GetById(id);
@@ -147,6 +163,23 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
 
             await _piscinaRepository.Update(id, piscinaUpdated);
 
+            await _audit.WriteAsync(
+                new AuditEntry
+                {
+                    Action = AuditActions.PiscinaUpdate,
+                    EntityType = "Piscina",
+                    EntityId = id,
+                    Summary = $"Piscina atualizada: {dto.Nome}",
+                    Payload = new
+                    {
+                        nome = dto.Nome,
+                        volumeLitros = dto.VolumeLitros,
+                        profundidadeMedia = dto.ProfundidadeMedia,
+                        usuarioId = dto.UsuarioId,
+                    },
+                }
+            );
+
             return new PiscinaResponseDto
             {
                 Id = id,
@@ -158,7 +191,6 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
             };
         }
 
-        // Metodo Delete: Exclui uma piscina existente com base no ID.
         public async Task Delete(Guid id)
         {
             var piscinaDb = await _piscinaRepository.GetById(id);
@@ -168,6 +200,16 @@ namespace PiscinaPerfeita.Api.Service.Piscinas
             }
 
             await _piscinaRepository.Delete(id);
+
+            await _audit.WriteAsync(
+                new AuditEntry
+                {
+                    Action = AuditActions.PiscinaDelete,
+                    EntityType = "Piscina",
+                    EntityId = id,
+                    Summary = $"Piscina {id} excluída",
+                }
+            );
         }
     }
 }
