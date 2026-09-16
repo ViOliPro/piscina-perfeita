@@ -814,12 +814,12 @@ export function fromApiDashboardHidrometro(raw) {
       field(raw, "dataUltimaLeitura", "DataUltimaLeitura") ?? null,
     ultimoConsumo: field(raw, "ultimoConsumo", "UltimoConsumo") ?? null,
     consumoMedio: field(raw, "consumoMedio", "ConsumoMedio") ?? null,
-    consumoMes: field(raw, "consumoMes", "ConsumoMes") ?? null,
+    consumoPeriodo: field(raw, "consumoPeriodo", "ConsumoPeriodo") ?? null,
     diasSemLeitura: field(raw, "diasSemLeitura", "DiasSemLeitura") ?? null,
     periodoUltimoConsumo:
       field(raw, "periodoUltimoConsumo", "PeriodoUltimoConsumo") ?? null,
     periodoMedia: field(raw, "periodoMedia", "PeriodoMedia") ?? null,
-    mesReferencia: field(raw, "mesReferencia", "MesReferencia") ?? null,
+    periodoReferencia: field(raw, "periodoReferencia", "PeriodoReferencia") ?? null,
   };
 }
 

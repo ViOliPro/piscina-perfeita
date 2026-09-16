@@ -386,8 +386,10 @@ export const estoqueService = {
 export const hidrometroService = {
   listar: () => get(API_ENDPOINTS.hidrometros).then(fromApiHidrometroList),
   buscar: (id) => get(API_ENDPOINTS.hidrometroById(id)).then(fromApiHidrometro),
-  dashboard: () =>
-    get(API_ENDPOINTS.hidrometroDashboard).then(fromApiDashboardHidrometro),
+  dashboard: (params = {}) =>
+    get(API_ENDPOINTS.hidrometroDashboard, { params }).then(
+      fromApiDashboardHidrometro,
+    ),
   criar: (dto) =>
     post(API_ENDPOINTS.hidrometros, toApiHidrometro(dto)).then(
       fromApiHidrometro,

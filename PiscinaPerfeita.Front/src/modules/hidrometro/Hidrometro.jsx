@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Button,
   ErrorMessage,
@@ -10,10 +10,19 @@ import { PERMISSIONS } from "../../helpers/Permissions.js";
 import ProtecaoDeRota from "../../helpers/ProtecaoDeRota.jsx";
 import { useHidrometroData } from "./hooks/useHidrometroData.js";
 import { HidrometroDashboard } from "./components/HidrometroDashboard.jsx";
+import { HidrometroFiltro } from "./components/HidrometroFiltro.jsx";
 import { HidrometroForm } from "./components/HidrometroForm.jsx";
 import { HidrometroHistorico } from "./components/HidrometroHistorico.jsx";
+import { obterOpcoesMes } from "./helpers/hidrometroUtils.js";
 
 export default function Hidrometro() {
+  const [filtro, setFiltro] = useState({
+    tipo: "mes",
+    mes: "",
+    dataInicio: "",
+    dataFim: "",
+  });
+
   const {
     dashboard,
     lancamentos,
@@ -23,9 +32,11 @@ export default function Hidrometro() {
     error,
     salvarLeitura,
     excluirLeitura,
-  } = useHidrometroData();
+  } = useHidrometroData(filtro);
 
   const [modalOpen, setModalOpen] = useState(false);
+
+  const opcoesMes = useMemo(() => obterOpcoesMes(lancamentos), [lancamentos]);
 
   async function handleSave(dto) {
     const ok = await salvarLeitura(dto);
@@ -56,6 +67,12 @@ export default function Hidrometro() {
 
         {error && <ErrorMessage message={error} />}
 
+        <HidrometroFiltro
+          filtro={filtro}
+          opcoesMes={opcoesMes}
+          onChange={setFiltro}
+        />
+
         {loading ? (
           <LoadingSpinner />
         ) : (
@@ -63,6 +80,7 @@ export default function Hidrometro() {
             <HidrometroDashboard dashboard={dashboard} />
             <HidrometroHistorico
               lancamentos={lancamentos}
+              filtro={filtro}
               onDelete={handleDelete}
             />
           </>
