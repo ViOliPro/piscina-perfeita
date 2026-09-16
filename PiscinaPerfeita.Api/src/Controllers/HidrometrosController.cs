@@ -23,8 +23,18 @@ public class HidrometrosController : ControllerBase
 
     [HttpGet("dashboard")]
     [Authorize(Policy = Policies.Listar)]
-    public async Task<ActionResult<HidrometroDashboardResponseDto>> Dashboard(CancellationToken cancellationToken) =>
-        Ok(await _service.ObterDashboardAsync(cancellationToken));
+    public async Task<ActionResult<HidrometroDashboardResponseDto>> Dashboard(
+        [FromQuery] string? mes,
+        [FromQuery] DateTimeOffset? dataInicio,
+        [FromQuery] DateTimeOffset? dataFim,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return Ok(await _service.ObterDashboardAsync(mes, dataInicio, dataFim, cancellationToken));
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+    }
 
     [HttpGet("{id:guid}")]
     [Authorize(Policy = Policies.Listar)]

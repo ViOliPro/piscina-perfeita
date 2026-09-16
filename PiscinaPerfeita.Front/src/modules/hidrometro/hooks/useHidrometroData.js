@@ -1,12 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { hidrometroService } from "../../../config/services.js";
+import { paramsDashboardDoFiltro } from "../helpers/hidrometroUtils.js";
 
 /**
  * Encapsula toda a camada de dados do módulo Hidrômetro:
  * carregamento de dashboard + histórico, criação e exclusão de leituras.
  * Nenhum componente visual deste módulo deve chamar hidrometroService diretamente.
+ *
+ * @param {{tipo: "mes"|"intervalo", mes?: string, dataInicio?: string, dataFim?: string}} [filtro]
+ *   Filtro de período aplicado aos KPIs do dashboard (histórico não filtrado
+ *   aqui — o filtro no cliente acontece em HidrometroHistorico).
  */
-export function useHidrometroData() {
+export function useHidrometroData(filtro) {
   const [dashboard, setDashboard] = useState(null);
   const [lancamentos, setLancamentos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,7 +25,7 @@ export function useHidrometroData() {
     try {
       // O dashboard e o histórico são contratos independentes da API.
       const [dashboardResult, historicoResult] = await Promise.allSettled([
-        hidrometroService.dashboard(),
+        hidrometroService.dashboard(paramsDashboardDoFiltro(filtro)),
         hidrometroService.listar(),
       ]);
 
@@ -39,7 +44,7 @@ export function useHidrometroData() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filtro]);
 
   useEffect(() => {
     carregarDados();

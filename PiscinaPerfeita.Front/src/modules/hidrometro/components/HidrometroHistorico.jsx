@@ -1,36 +1,37 @@
-import { useMemo, useState } from "react";
-import {
-  Button,
-  Card,
-  DataTable,
-  FilterSelect,
-  Toolbar,
-} from "../../../components/ui/index.jsx";
+import { useMemo } from "react";
+import { Button, Card, DataTable } from "../../../components/ui/index.jsx";
 import { PERMISSIONS } from "../../../helpers/Permissions.js";
 import {
+  filtrarLancamentosPorPeriodo,
+  filtroPeriodoVazio,
+  formatarDataCurta,
   formatarDataHora,
   formatarMes,
   formatarMetrosCubicos,
-  obterOpcoesMes,
 } from "../helpers/hidrometroUtils.js";
 import styles from "./components.module.css";
 
-export function HidrometroHistorico({ lancamentos, onDelete }) {
-  const [filtroMes, setFiltroMes] = useState("");
-
-  const opcoesMes = useMemo(() => obterOpcoesMes(lancamentos), [lancamentos]);
-
+export function HidrometroHistorico({ lancamentos, filtro, onDelete }) {
   const exibidos = useMemo(() => {
-    const filtrados = filtroMes
-      ? lancamentos.filter(
-          (item) => item.dataLeitura?.slice(0, 7) === filtroMes,
-        )
-      : lancamentos;
-
+    const filtrados = filtrarLancamentosPorPeriodo(lancamentos, filtro);
     return [...filtrados].sort(
       (a, b) => new Date(b.dataLeitura) - new Date(a.dataLeitura),
     );
-  }, [filtroMes, lancamentos]);
+  }, [lancamentos, filtro]);
+
+  const emptyMessage = useMemo(() => {
+    if (filtroPeriodoVazio(filtro))
+      return "Nenhuma leitura de hidrômetro registrada.";
+
+    if (filtro.tipo === "mes")
+      return `Nenhuma leitura encontrada em ${formatarMes(filtro.mes)}.`;
+
+    const inicio = formatarDataCurta(filtro.dataInicio);
+    const fim = formatarDataCurta(filtro.dataFim);
+    if (inicio && fim) return `Nenhuma leitura encontrada entre ${inicio} e ${fim}.`;
+    if (inicio) return `Nenhuma leitura encontrada a partir de ${inicio}.`;
+    return `Nenhuma leitura encontrada até ${fim}.`;
+  }, [filtro]);
 
   const columns = [
     {
@@ -71,25 +72,12 @@ export function HidrometroHistorico({ lancamentos, onDelete }) {
 
   return (
     <section aria-label="Histórico de leituras">
-      <Toolbar>
-        <FilterSelect
-          value={filtroMes}
-          onChange={setFiltroMes}
-          placeholder="Todos os períodos"
-          options={opcoesMes}
-        />
-      </Toolbar>
-
       <Card title={`Histórico de leituras (${exibidos.length})`} noPadding>
         <div className={styles.historicoTableWrap}>
           <DataTable
             columns={columns}
             data={exibidos}
-            emptyMessage={
-              filtroMes
-                ? `Nenhuma leitura encontrada em ${formatarMes(filtroMes)}.`
-                : "Nenhuma leitura de hidrômetro registrada."
-            }
+            emptyMessage={emptyMessage}
           />
         </div>
       </Card>

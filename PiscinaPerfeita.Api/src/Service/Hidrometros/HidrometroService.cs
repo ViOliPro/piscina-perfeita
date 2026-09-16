@@ -33,35 +33,111 @@ public class HidrometroService : IHidrometroService
     }
 
     public async Task<HidrometroDashboardResponseDto> ObterDashboardAsync(
+        string? mes = null,
+        DateTimeOffset? dataInicio = null,
+        DateTimeOffset? dataFim = null,
         CancellationToken cancellationToken = default
     )
     {
-        var itens = MapearComConsumo(await _repository.ListarOrdenadoAsync(cancellationToken));
-        var ultima = itens.LastOrDefault();
-        var consumos = itens.Where(item => item.Consumo.HasValue).ToList();
-        var agora = DateTimeOffset.UtcNow;
-        var consumoMes = consumos
-            .Where(item =>
-                item.DataLeitura.Year == agora.Year && item.DataLeitura.Month == agora.Month
-            )
-            .Sum(item => item.Consumo!.Value);
         var cultura = CultureInfo.GetCultureInfo("pt-BR");
+        var (inicio, fim, rotulo) = ResolverPeriodo(mes, dataInicio, dataFim, cultura);
+
+        var itens = MapearComConsumo(await _repository.ListarOrdenadoAsync(cancellationToken));
+        // "Última leitura" reflete o hidrômetro real, então nunca é filtrada por período.
+        var ultima = itens.LastOrDefault();
+
+        var itensNoPeriodo = itens
+            .Where(item => item.DataLeitura >= inicio && item.DataLeitura <= fim)
+            .ToList();
+        var ultimaNoPeriodo = itensNoPeriodo.LastOrDefault();
+        var consumosNoPeriodo = itensNoPeriodo.Where(item => item.Consumo.HasValue).ToList();
 
         return new HidrometroDashboardResponseDto
         {
             UltimaLeitura = ultima?.LeituraAtual,
             DataUltimaLeitura = ultima?.DataLeitura,
-            UltimoConsumo = ultima?.Consumo,
-            ConsumoMedio =
-                consumos.Count == 0 ? null : consumos.Average(item => item.Consumo!.Value),
-            ConsumoMes = consumos.Count == 0 ? null : consumoMes,
+            UltimoConsumo = ultimaNoPeriodo?.Consumo,
+            ConsumoMedio = consumosNoPeriodo.Count == 0
+                ? null
+                : consumosNoPeriodo.Average(item => item.Consumo!.Value),
+            ConsumoPeriodo = consumosNoPeriodo.Count == 0
+                ? null
+                : consumosNoPeriodo.Sum(item => item.Consumo!.Value),
             DiasSemLeitura = ultima is null
                 ? null
-                : Math.Max(0, (int)Math.Floor((agora - ultima.DataLeitura).TotalDays)),
-            PeriodoUltimoConsumo = ultima?.Consumo is null ? null : "Desde a leitura anterior",
-            PeriodoMedia = consumos.Count == 0 ? null : $"Baseado em {consumos.Count} consumo(s)",
-            MesReferencia = agora.ToString("MMMM 'de' yyyy", cultura),
+                : Math.Max(0, (int)Math.Floor((DateTimeOffset.UtcNow - ultima.DataLeitura).TotalDays)),
+            PeriodoUltimoConsumo = ultimaNoPeriodo?.Consumo is null
+                ? null
+                : "Desde a leitura anterior",
+            PeriodoMedia = consumosNoPeriodo.Count == 0
+                ? null
+                : $"Baseado em {consumosNoPeriodo.Count} consumo(s)",
+            PeriodoReferencia = rotulo,
         };
+    }
+
+    /// <summary>
+    /// Resolve o intervalo [inicio, fim] e o rótulo exibido no dashboard a partir de,
+    /// no máximo, um dos dois filtros suportados (mês único OU intervalo de datas).
+    /// Sem nenhum filtro informado, mantém o comportamento anterior: mês corrente.
+    /// </summary>
+    private static (DateTimeOffset Inicio, DateTimeOffset Fim, string Rotulo) ResolverPeriodo(
+        string? mes,
+        DateTimeOffset? dataInicio,
+        DateTimeOffset? dataFim,
+        CultureInfo cultura
+    )
+    {
+        var informouMes = !string.IsNullOrWhiteSpace(mes);
+        var informouIntervalo = dataInicio.HasValue || dataFim.HasValue;
+
+        if (informouMes && informouIntervalo)
+            throw new ArgumentException(
+                "Informe apenas um filtro por vez: mês único ou intervalo de datas."
+            );
+
+        if (informouMes)
+        {
+            if (
+                !DateTime.TryParseExact(
+                    mes,
+                    "yyyy-MM",
+                    cultura,
+                    DateTimeStyles.None,
+                    out var referencia
+                )
+            )
+                throw new ArgumentException("O mês informado é inválido. Use o formato AAAA-MM.");
+
+            var inicioMes = new DateTimeOffset(
+                referencia.Year,
+                referencia.Month,
+                1,
+                0,
+                0,
+                0,
+                TimeSpan.Zero
+            );
+            var fimMes = inicioMes.AddMonths(1).AddTicks(-1);
+            return (inicioMes, fimMes, inicioMes.ToString("MMMM 'de' yyyy", cultura));
+        }
+
+        if (informouIntervalo)
+        {
+            var inicioIntervalo = dataInicio ?? DateTimeOffset.MinValue;
+            var fimIntervalo = dataFim ?? DateTimeOffset.UtcNow;
+
+            if (inicioIntervalo > fimIntervalo)
+                throw new ArgumentException("A data inicial não pode ser posterior à data final.");
+
+            var rotulo = $"{inicioIntervalo:dd/MM/yyyy} a {fimIntervalo:dd/MM/yyyy}";
+            return (inicioIntervalo, fimIntervalo, rotulo);
+        }
+
+        var agora = DateTimeOffset.UtcNow;
+        var inicioAtual = new DateTimeOffset(agora.Year, agora.Month, 1, 0, 0, 0, TimeSpan.Zero);
+        var fimAtual = inicioAtual.AddMonths(1).AddTicks(-1);
+        return (inicioAtual, fimAtual, inicioAtual.ToString("MMMM 'de' yyyy", cultura));
     }
 
     public async Task<HidrometroResponseDto> CriarAsync(

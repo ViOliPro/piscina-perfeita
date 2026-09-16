@@ -40,9 +40,9 @@ export function HidrometroDashboard({ dashboard }) {
           subLabel={dashboard.periodoMedia ?? "Período informado pela API"}
         />
         <KpiCard
-          label="Consumo no mês"
-          value={formatarMetrosCubicos(dashboard.consumoMes)}
-          subLabel={dashboard.mesReferencia ?? "Mês atual"}
+          label="Consumo no período"
+          value={formatarMetrosCubicos(dashboard.consumoPeriodo)}
+          subLabel={dashboard.periodoReferencia ?? "Período atual"}
         />
         <KpiCard
           label="Dias sem leitura"
