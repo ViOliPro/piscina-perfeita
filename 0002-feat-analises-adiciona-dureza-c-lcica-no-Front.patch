@@ -1,0 +1,223 @@
+From 58bea13d08578ad4a11d6589c0480d3a35eab544 Mon Sep 17 00:00:00 2001
+From: Vinicius <vinicius@example.com>
+Date: Tue, 15 Sep 2026 21:04:41 +0000
+Subject: [PATCH 2/2] =?UTF-8?q?feat(analises):=20adiciona=20dureza=20c?=
+ =?UTF-8?q?=C3=A1lcica=20no=20Front?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- config/index.js: ANALISE_FAIXAS.durezaCalcica (200-400 mg/L)
+- mappers.js: fromApiAnalise/toApiAnalise e fromApiQualidadeAgua
+  (faixasIdeais, resumo, pontos) mapeando DurezaCalcica
+- Analises.jsx: campo no formulário de nova análise e coluna
+  'Dureza cálcica' na listagem
+- QualidadeAguaHistoricoCard.jsx: nova série no gráfico de histórico
+  e cor própria (durezaCalcica)
+- QualidadeAguaCard.jsx (dashboard): novo gauge de Dureza cálcica,
+  ao lado dos demais parâmetros
+
+Build validado com npm run build.
+---
+ PiscinaPerfeita.Front/src/config/index.js     |  1 +
+ PiscinaPerfeita.Front/src/config/mappers.js   | 10 ++++++++++
+ .../src/modules/analises/Analises.jsx         | 20 +++++++++++++++++++
+ .../analises/QualidadeAguaHistoricoCard.jsx   | 19 ++++++++++++++++--
+ .../components/QualidadeAguaCard.jsx          |  6 ++++++
+ 5 files changed, 54 insertions(+), 2 deletions(-)
+
+diff --git a/PiscinaPerfeita.Front/src/config/index.js b/PiscinaPerfeita.Front/src/config/index.js
+index b7e09c1..ae052e3 100644
+--- a/PiscinaPerfeita.Front/src/config/index.js
++++ b/PiscinaPerfeita.Front/src/config/index.js
+@@ -97,6 +97,7 @@ export const ANALISE_FAIXAS = {
+   ph: { min: 7.2, max: 7.8 },
+   cloroLivre: { min: 1.0, max: 3.0 },
+   alcalinidade: { min: 80, max: 120 },
++  durezaCalcica: { min: 200, max: 400 },
+   temperatura: { min: 26, max: 30 },
+ };
+ 
+diff --git a/PiscinaPerfeita.Front/src/config/mappers.js b/PiscinaPerfeita.Front/src/config/mappers.js
+index ff6ecaf..6e1e890 100644
+--- a/PiscinaPerfeita.Front/src/config/mappers.js
++++ b/PiscinaPerfeita.Front/src/config/mappers.js
+@@ -316,6 +316,7 @@ export function fromApiAnalise(raw) {
+     ph: field(raw, "ph", "Ph") ?? null,
+     cloroLivre: field(raw, "cloroLivre", "CloroLivre") ?? null,
+     alcalinidade: field(raw, "alcalinidade", "Alcalinidade") ?? null,
++    durezaCalcica: field(raw, "durezaCalcica", "DurezaCalcica") ?? null,
+     temperatura: field(raw, "temperatura", "Temperatura") ?? null,
+     observacoes: field(raw, "observacoes", "Observacoes") ?? "",
+     // Relacionamentos
+@@ -381,6 +382,9 @@ export function fromApiQualidadeAgua(raw) {
+       alcalinidade: fromApiFaixaIdeal(
+         field(faixas, "alcalinidade", "Alcalinidade"),
+       ),
++      durezaCalcica: fromApiFaixaIdeal(
++        field(faixas, "durezaCalcica", "DurezaCalcica"),
++      ),
+       temperatura: fromApiFaixaIdeal(
+         field(faixas, "temperatura", "Temperatura"),
+       ),
+@@ -394,6 +398,9 @@ export function fromApiQualidadeAgua(raw) {
+       alcalinidade: fromApiParametroResumo(
+         field(resumo, "alcalinidade", "Alcalinidade"),
+       ),
++      durezaCalcica: fromApiParametroResumo(
++        field(resumo, "durezaCalcica", "DurezaCalcica"),
++      ),
+       temperatura: fromApiParametroResumo(
+         field(resumo, "temperatura", "Temperatura"),
+       ),
+@@ -404,6 +411,7 @@ export function fromApiQualidadeAgua(raw) {
+       ph: field(p, "ph", "Ph") ?? null,
+       cloroLivre: field(p, "cloroLivre", "CloroLivre") ?? null,
+       alcalinidade: field(p, "alcalinidade", "Alcalinidade") ?? null,
++      durezaCalcica: field(p, "durezaCalcica", "DurezaCalcica") ?? null,
+       temperatura: field(p, "temperatura", "Temperatura") ?? null,
+     })),
+   };
+@@ -416,6 +424,7 @@ export function toApiAnalise({
+   ph,
+   cloroLivre,
+   alcalinidade,
++  durezaCalcica,
+   temperatura,
+   observacoes,
+ }) {
+@@ -426,6 +435,7 @@ export function toApiAnalise({
+     Ph: ph != null ? parseFloat(ph) : null,
+     CloroLivre: cloroLivre != null ? parseFloat(cloroLivre) : null,
+     Alcalinidade: alcalinidade != null ? parseFloat(alcalinidade) : null,
++    DurezaCalcica: durezaCalcica != null ? parseFloat(durezaCalcica) : null,
+     Temperatura: temperatura != null ? parseFloat(temperatura) : null,
+     Observacoes: observacoes ?? "",
+   };
+diff --git a/PiscinaPerfeita.Front/src/modules/analises/Analises.jsx b/PiscinaPerfeita.Front/src/modules/analises/Analises.jsx
+index 3282891..92efbb8 100644
+--- a/PiscinaPerfeita.Front/src/modules/analises/Analises.jsx
++++ b/PiscinaPerfeita.Front/src/modules/analises/Analises.jsx
+@@ -69,6 +69,7 @@ function AnaliseForm({ piscinas, onSubmit, onCancel, loading }) {
+     ph: "",
+     cloroLivre: "",
+     alcalinidade: "",
++    durezaCalcica: "",
+     temperatura: "",
+     observacoes: "",
+   });
+@@ -84,6 +85,7 @@ function AnaliseForm({ piscinas, onSubmit, onCancel, loading }) {
+       ph: form.ph ? parseFloat(form.ph) : null,
+       cloroLivre: form.cloroLivre ? parseFloat(form.cloroLivre) : null,
+       alcalinidade: form.alcalinidade ? parseFloat(form.alcalinidade) : null,
++      durezaCalcica: form.durezaCalcica ? parseFloat(form.durezaCalcica) : null,
+       temperatura: form.temperatura ? parseFloat(form.temperatura) : null,
+       // Operador/Visualizador nunca enviam usuarioId — mesmo que o campo
+       // nunca apareça na UI para esses perfis, garantimos aqui que o
+@@ -176,6 +178,19 @@ function AnaliseForm({ piscinas, onSubmit, onCancel, loading }) {
+             onChange={set("alcalinidade")}
+           />
+         </FormField>
++        <FormField
++          label={`Dureza cálcica mg/L  (ideal: ${ANALISE_FAIXAS.durezaCalcica.min}–${ANALISE_FAIXAS.durezaCalcica.max})`}
++        >
++          <input
++            type="number"
++            step="1"
++            min="0"
++            placeholder="Ex.: 275"
++            style={inputStyle}
++            value={form.durezaCalcica}
++            onChange={set("durezaCalcica")}
++          />
++        </FormField>
+         <FormField
+           label={`Temperatura °C  (ideal: ${ANALISE_FAIXAS.temperatura.min}–${ANALISE_FAIXAS.temperatura.max})`}
+         >
+@@ -326,6 +341,11 @@ export default function Analises({ onRegistrarAplicacao }) {
+       label: "Alcalinidade",
+       render: (v) => (v ? `${v} mg/L` : "—"),
+     },
++    {
++      key: "durezaCalcica",
++      label: "Dureza cálcica",
++      render: (v) => (v ? `${v} mg/L` : "—"),
++    },
+     { key: "temperatura", label: "Temp.", render: (v) => (v ? `${v}°C` : "—") },
+     {
+       key: "_status",
+diff --git a/PiscinaPerfeita.Front/src/modules/analises/QualidadeAguaHistoricoCard.jsx b/PiscinaPerfeita.Front/src/modules/analises/QualidadeAguaHistoricoCard.jsx
+index 7229a7f..f4d0b30 100644
+--- a/PiscinaPerfeita.Front/src/modules/analises/QualidadeAguaHistoricoCard.jsx
++++ b/PiscinaPerfeita.Front/src/modules/analises/QualidadeAguaHistoricoCard.jsx
+@@ -8,6 +8,7 @@ const CORES = {
+   ph: "#2E86AB",
+   cloroLivre: "#1a7a43",
+   alcalinidade: "#8e5fd1",
++  durezaCalcica: "#b5482e",
+   temperatura: "#c07a1e",
+ };
+ 
+@@ -113,6 +114,7 @@ export default function QualidadeAguaHistoricoCard({ piscinaId, piscinaNome }) {
+                       resumo.cloroLivre,
+                       resumo.ph,
+                       resumo.alcalinidade,
++                      resumo.durezaCalcica,
+                       resumo.temperatura,
+                     ].find((p) => p.status === "abaixo" || p.status === "acima")
+                       ?.status ?? "ideal"
+@@ -162,11 +164,18 @@ export default function QualidadeAguaHistoricoCard({ piscinaId, piscinaNome }) {
+ }
+ 
+ function montarSeries(dados) {
+-  const categorias = ["ph", "cloroLivre", "alcalinidade", "temperatura"];
++  const categorias = [
++    "ph",
++    "cloroLivre",
++    "alcalinidade",
++    "durezaCalcica",
++    "temperatura",
++  ];
+   const nomes = {
+     ph: "pH",
+     cloroLivre: "Cloro livre",
+     alcalinidade: "Alcalinidade",
++    durezaCalcica: "Dureza cálcica",
+     temperatura: "Temperatura",
+   };
+ 
+@@ -186,7 +195,13 @@ function montarOpcoes(dados) {
+ 
+   return {
+     chart: { toolbar: { show: false }, zoom: { enabled: false } },
+-    colors: [CORES.ph, CORES.cloroLivre, CORES.alcalinidade, CORES.temperatura],
++    colors: [
++      CORES.ph,
++      CORES.cloroLivre,
++      CORES.alcalinidade,
++      CORES.durezaCalcica,
++      CORES.temperatura,
++    ],
+     stroke: { width: 2, curve: "smooth" },
+     xaxis: { type: "datetime" },
+     legend: { position: "top", fontSize: "12px" },
+diff --git a/PiscinaPerfeita.Front/src/modules/dashboard/components/QualidadeAguaCard.jsx b/PiscinaPerfeita.Front/src/modules/dashboard/components/QualidadeAguaCard.jsx
+index 4bd67c3..f92d5ad 100644
+--- a/PiscinaPerfeita.Front/src/modules/dashboard/components/QualidadeAguaCard.jsx
++++ b/PiscinaPerfeita.Front/src/modules/dashboard/components/QualidadeAguaCard.jsx
+@@ -43,6 +43,12 @@ export function QualidadeAguaCard() {
+               faixa={ANALISE_FAIXAS.alcalinidade}
+               unidade=" mg/L"
+             />
++            <ParametroGauge
++              label="Dureza cálcica"
++              value={ultimaAnalise.durezaCalcica}
++              faixa={ANALISE_FAIXAS.durezaCalcica}
++              unidade=" mg/L"
++            />
+             <ParametroGauge
+               label="Temperatura"
+               value={ultimaAnalise.temperatura}
+-- 
+2.43.0
+
