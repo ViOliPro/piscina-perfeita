@@ -56,6 +56,7 @@ public class AnaliseRepository : IAnaliseRepository
                 Ph = a.Ph,
                 CloroLivre = a.CloroLivre,
                 Alcalinidade = a.Alcalinidade,
+                DurezaCalcica = a.DurezaCalcica,
                 Temperatura = a.Temperatura,
                 Observacoes = a.Observacoes,
 
@@ -76,6 +77,7 @@ public class AnaliseRepository : IAnaliseRepository
                 Ph = a.Ph,
                 CloroLivre = a.CloroLivre,
                 Alcalinidade = a.Alcalinidade,
+                DurezaCalcica = a.DurezaCalcica,
                 Temperatura = a.Temperatura,
                 Observacoes = a.Observacoes,
 
@@ -102,6 +104,7 @@ public class AnaliseRepository : IAnaliseRepository
         analiseToUpdate.Ph = analise.Ph;
         analiseToUpdate.CloroLivre = analise.CloroLivre;
         analiseToUpdate.Alcalinidade = analise.Alcalinidade;
+        analiseToUpdate.DurezaCalcica = analise.DurezaCalcica;
         analiseToUpdate.Temperatura = analise.Temperatura;
         analiseToUpdate.Observacoes = analise.Observacoes;
         analiseToUpdate.PiscinaId = analise.PiscinaId;

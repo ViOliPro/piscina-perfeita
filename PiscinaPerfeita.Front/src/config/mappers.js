@@ -316,6 +316,7 @@ export function fromApiAnalise(raw) {
     ph: field(raw, "ph", "Ph") ?? null,
     cloroLivre: field(raw, "cloroLivre", "CloroLivre") ?? null,
     alcalinidade: field(raw, "alcalinidade", "Alcalinidade") ?? null,
+    durezaCalcica: field(raw, "durezaCalcica", "DurezaCalcica") ?? null,
     temperatura: field(raw, "temperatura", "Temperatura") ?? null,
     observacoes: field(raw, "observacoes", "Observacoes") ?? "",
     // Relacionamentos
@@ -381,6 +382,9 @@ export function fromApiQualidadeAgua(raw) {
       alcalinidade: fromApiFaixaIdeal(
         field(faixas, "alcalinidade", "Alcalinidade"),
       ),
+      durezaCalcica: fromApiFaixaIdeal(
+        field(faixas, "durezaCalcica", "DurezaCalcica"),
+      ),
       temperatura: fromApiFaixaIdeal(
         field(faixas, "temperatura", "Temperatura"),
       ),
@@ -394,6 +398,9 @@ export function fromApiQualidadeAgua(raw) {
       alcalinidade: fromApiParametroResumo(
         field(resumo, "alcalinidade", "Alcalinidade"),
       ),
+      durezaCalcica: fromApiParametroResumo(
+        field(resumo, "durezaCalcica", "DurezaCalcica"),
+      ),
       temperatura: fromApiParametroResumo(
         field(resumo, "temperatura", "Temperatura"),
       ),
@@ -404,6 +411,7 @@ export function fromApiQualidadeAgua(raw) {
       ph: field(p, "ph", "Ph") ?? null,
       cloroLivre: field(p, "cloroLivre", "CloroLivre") ?? null,
       alcalinidade: field(p, "alcalinidade", "Alcalinidade") ?? null,
+      durezaCalcica: field(p, "durezaCalcica", "DurezaCalcica") ?? null,
       temperatura: field(p, "temperatura", "Temperatura") ?? null,
     })),
   };
@@ -416,6 +424,7 @@ export function toApiAnalise({
   ph,
   cloroLivre,
   alcalinidade,
+  durezaCalcica,
   temperatura,
   observacoes,
 }) {
@@ -426,6 +435,7 @@ export function toApiAnalise({
     Ph: ph != null ? parseFloat(ph) : null,
     CloroLivre: cloroLivre != null ? parseFloat(cloroLivre) : null,
     Alcalinidade: alcalinidade != null ? parseFloat(alcalinidade) : null,
+    DurezaCalcica: durezaCalcica != null ? parseFloat(durezaCalcica) : null,
     Temperatura: temperatura != null ? parseFloat(temperatura) : null,
     Observacoes: observacoes ?? "",
   };

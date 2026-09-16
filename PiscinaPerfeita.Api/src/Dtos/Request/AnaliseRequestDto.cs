@@ -18,6 +18,9 @@ namespace PiscinaPerfeita.Api.Dtos.Request
         [Range(0, 500, ErrorMessage = "A alcalinidade deve ser um valor positivo.")]
         public decimal? Alcalinidade { get; set; }
 
+        [Range(0, 1000, ErrorMessage = "A dureza cálcica deve ser um valor positivo.")]
+        public decimal? DurezaCalcica { get; set; }
+
         public decimal? Temperatura { get; set; }
 
         [StringLength(500, ErrorMessage = "As observações não podem passar de 500 caracteres.")]

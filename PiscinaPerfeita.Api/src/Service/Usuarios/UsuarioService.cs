@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 using PiscinaPerfeita.Api.Data;
 using PiscinaPerfeita.Api.Dtos.Request;

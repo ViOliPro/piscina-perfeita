@@ -20,6 +20,7 @@ namespace PiscinaPerfeita.Api.Helpers
         public static readonly FaixaIdeal Ph = new(7.2m, 7.8m);
         public static readonly FaixaIdeal CloroLivre = new(1.0m, 3.0m);
         public static readonly FaixaIdeal Alcalinidade = new(80m, 120m);
+        public static readonly FaixaIdeal DurezaCalcica = new(200m, 400m);
         public static readonly FaixaIdeal Temperatura = new(26m, 30m);
     }
 }

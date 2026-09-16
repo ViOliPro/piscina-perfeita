@@ -5,26 +5,26 @@
 namespace PiscinaPerfeita.Api.Migrations
 {
     /// <inheritdoc />
-    public partial class CheckPendingChanges : Migration
+    public partial class AddDurezaCalcicaAnalise : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateIndex(
-                name: "ix_usuarios_email",
+            migrationBuilder.AddColumn<decimal>(
+                name: "durezacalcica",
                 schema: "piscina-perfeita",
-                table: "Usuarios",
-                column: "email",
-                unique: true);
+                table: "Analises",
+                type: "numeric",
+                nullable: true);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "ix_usuarios_email",
+            migrationBuilder.DropColumn(
+                name: "durezacalcica",
                 schema: "piscina-perfeita",
-                table: "Usuarios");
+                table: "Analises");
         }
     }
 }

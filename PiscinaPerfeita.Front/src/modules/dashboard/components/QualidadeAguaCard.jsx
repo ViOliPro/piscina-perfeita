@@ -44,6 +44,12 @@ export function QualidadeAguaCard() {
               unidade=" mg/L"
             />
             <ParametroGauge
+              label="Dureza cálcica"
+              value={ultimaAnalise.durezaCalcica}
+              faixa={ANALISE_FAIXAS.durezaCalcica}
+              unidade=" mg/L"
+            />
+            <ParametroGauge
               label="Temperatura"
               value={ultimaAnalise.temperatura}
               faixa={ANALISE_FAIXAS.temperatura}

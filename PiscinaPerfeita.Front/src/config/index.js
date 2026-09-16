@@ -97,6 +97,7 @@ export const ANALISE_FAIXAS = {
   ph: { min: 7.2, max: 7.8 },
   cloroLivre: { min: 1.0, max: 3.0 },
   alcalinidade: { min: 80, max: 120 },
+  durezaCalcica: { min: 200, max: 400 },
   temperatura: { min: 26, max: 30 },
 };
 

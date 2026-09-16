@@ -8,6 +8,7 @@
 @ph = 7.0
 @cloro = 7.2
 @alcalinidade = 110
+@dureza = 275
 @temp = 30.9
 @obs = Tudo certo, graças a Deus!
 
@@ -35,6 +36,7 @@ Authorization: Bearer {{token}}
   "Ph": {{ph}},
   "CloroLivre": {{cloro}},
   "Alcalinidade": {{alcalinidade}},
+  "DurezaCalcica": {{dureza}},
   "Temperatura": {{temp}},
   "Observacoes": "{{obs}}"
 }
@@ -49,6 +51,7 @@ Authorization: Bearer {{token}}
   "Ph": {ph},
   "CloroLivre": {{cloro}},
   "Alcalinidade": {{alcalinidade}},
+  "DurezaCalcica": {{dureza}},
   "Temperatura": {{temp}},
   "Observacao": "{{obs}}"
 }

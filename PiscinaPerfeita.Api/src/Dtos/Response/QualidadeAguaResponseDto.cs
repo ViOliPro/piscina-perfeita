@@ -38,6 +38,7 @@ namespace PiscinaPerfeita.Api.Dtos.Response
         public ParametroResumoDto Ph { get; set; } = new();
         public ParametroResumoDto CloroLivre { get; set; } = new();
         public ParametroResumoDto Alcalinidade { get; set; } = new();
+        public ParametroResumoDto DurezaCalcica { get; set; } = new();
         public ParametroResumoDto Temperatura { get; set; } = new();
 
         // Frase pronta pra exibir fechada, antes do usuário expandir o
@@ -52,6 +53,7 @@ namespace PiscinaPerfeita.Api.Dtos.Response
         public decimal? Ph { get; set; }
         public decimal? CloroLivre { get; set; }
         public decimal? Alcalinidade { get; set; }
+        public decimal? DurezaCalcica { get; set; }
         public decimal? Temperatura { get; set; }
     }
 
@@ -60,6 +62,7 @@ namespace PiscinaPerfeita.Api.Dtos.Response
         public FaixaIdealDto Ph { get; set; } = new();
         public FaixaIdealDto CloroLivre { get; set; } = new();
         public FaixaIdealDto Alcalinidade { get; set; } = new();
+        public FaixaIdealDto DurezaCalcica { get; set; } = new();
         public FaixaIdealDto Temperatura { get; set; } = new();
     }
 

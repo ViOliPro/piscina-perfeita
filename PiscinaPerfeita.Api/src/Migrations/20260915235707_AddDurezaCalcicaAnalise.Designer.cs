@@ -12,8 +12,8 @@ using PiscinaPerfeita.Api.Data;
 namespace PiscinaPerfeita.Api.Migrations
 {
     [DbContext(typeof(PiscinaPerfeitaContext))]
-    [Migration("20260906173841_CheckPendingChanges")]
-    partial class CheckPendingChanges
+    [Migration("20260915235707_AddDurezaCalcicaAnalise")]
+    partial class AddDurezaCalcicaAnalise
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -47,6 +47,10 @@ namespace PiscinaPerfeita.Api.Migrations
                     b.Property<DateTimeOffset>("DataAnalise")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("dataanalise");
+
+                    b.Property<decimal?>("DurezaCalcica")
+                        .HasColumnType("numeric")
+                        .HasColumnName("durezacalcica");
 
                     b.Property<Guid>("LocalId")
                         .HasColumnType("uuid")

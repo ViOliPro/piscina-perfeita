@@ -15,6 +15,8 @@ namespace PiscinaPerfeita.Api.Dtos.Response
 
         public decimal? Alcalinidade { get; set; }
 
+        public decimal? DurezaCalcica { get; set; }
+
         public decimal? Temperatura { get; set; }
 
         public string? Observacoes { get; set; }
